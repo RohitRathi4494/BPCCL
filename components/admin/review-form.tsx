@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useActionState } from "react";
 import { Check, Loader2, X } from "lucide-react";
 import { reviewPlayer, type ReviewState } from "@/app/admin/(protected)/registrations/actions";
@@ -18,6 +19,7 @@ export function ReviewForm({
     reviewPlayer,
     {},
   );
+  const [reason, setReason] = useState("");
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -50,8 +52,26 @@ export function ReviewForm({
           ))}
         </select>
         <p className="text-xs text-muted-foreground">
-          A grade is required to approve. Reject doesn&apos;t need one.
+          A grade is required to approve.
         </p>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label
+          htmlFor="rejection_reason"
+          className="font-mono text-[11px] tracking-[0.18em] text-muted-foreground uppercase"
+        >
+          Rejection Reason
+        </label>
+        <textarea
+          id="rejection_reason"
+          name="rejection_reason"
+          rows={3}
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          placeholder="Required to reject — this exact text is emailed to the player."
+          className="w-full resize-y rounded-sm border border-input bg-background px-3.5 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
+        />
       </div>
 
       <div className="flex flex-wrap gap-3">

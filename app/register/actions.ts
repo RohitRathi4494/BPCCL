@@ -12,6 +12,8 @@ import {
   computeAge,
 } from "@/lib/registration";
 import type { TablesInsert } from "@/lib/types";
+import { sendEmail } from "@/lib/email/send";
+import { confirmationEmail } from "@/lib/email/templates";
 
 export type RegistrationState = {
   status: "idle" | "success" | "error" | "duplicate";
@@ -58,6 +60,9 @@ export async function submitRegistration(
   const dob = get("dob");
   const phoneRaw = get("phone");
   const email = get("email");
+  const company = get("company");
+  const work_email = get("work_email");
+  const photo_url = get("photo_url");
   const cricheroesRaw = get("cricheroes_url");
   const linkedinRaw = get("linkedin_url");
   const jersey_number = get("jersey_number");
@@ -88,9 +93,17 @@ export async function submitRegistration(
   if (!phoneRaw) errors.phone = "Please enter a contact number.";
   else if (!isValidPhone(phone)) errors.phone = "Enter a valid contact number (10–13 digits).";
 
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!email) errors.email = "Please enter your email.";
-  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-    errors.email = "Enter a valid email address.";
+  else if (!EMAIL_RE.test(email)) errors.email = "Enter a valid email address.";
+
+  if (!company) errors.company = "Please enter your company.";
+
+  if (!work_email) errors.work_email = "Please enter your work email.";
+  else if (!EMAIL_RE.test(work_email))
+    errors.work_email = "Enter a valid work email address.";
+
+  if (!photo_url) errors.photo_url = "Please upload a player photo.";
 
   const cricheroes_url = normalizeUrl(cricheroesRaw);
   if (!cricheroesRaw) errors.cricheroes_url = "A CricHeroes profile link is required.";
@@ -144,6 +157,9 @@ export async function submitRegistration(
     email,
     age,
     dob,
+    company,
+    work_email,
+    photo_url,
     cricheroes_url,
     linkedin_url,
     tshirt_size: tshirt.value,
@@ -162,6 +178,14 @@ export async function submitRegistration(
       status: "error",
       message: "Something went wrong saving your registration. Please try again.",
     };
+  }
+
+  // Fire the confirmation email — never let an email failure break registration.
+  try {
+    const { subject, html } = confirmationEmail(full_name);
+    await sendEmail({ to: email, subject, html });
+  } catch (e) {
+    console.error("confirmation email:", e);
   }
 
   return {

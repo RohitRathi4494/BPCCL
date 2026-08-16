@@ -419,6 +419,7 @@ export type Database = {
           assigned_category: string | null
           batting_style: string | null
           bowling_style: string | null
+          company: string | null
           cricheroes_url: string | null
           dob: string | null
           email: string | null
@@ -435,12 +436,14 @@ export type Database = {
           preferred_category: string | null
           previous_team: string | null
           registration_fee_agreed: boolean
+          rejection_reason: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           role: string | null
           status: string
           submitted_at: string
           tshirt_size: string | null
+          work_email: string | null
         }
         Insert: {
           achievements?: string | null
@@ -448,6 +451,7 @@ export type Database = {
           assigned_category?: string | null
           batting_style?: string | null
           bowling_style?: string | null
+          company?: string | null
           cricheroes_url?: string | null
           dob?: string | null
           email?: string | null
@@ -464,12 +468,14 @@ export type Database = {
           preferred_category?: string | null
           previous_team?: string | null
           registration_fee_agreed?: boolean
+          rejection_reason?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           role?: string | null
           status?: string
           submitted_at?: string
           tshirt_size?: string | null
+          work_email?: string | null
         }
         Update: {
           achievements?: string | null
@@ -477,6 +483,7 @@ export type Database = {
           assigned_category?: string | null
           batting_style?: string | null
           bowling_style?: string | null
+          company?: string | null
           cricheroes_url?: string | null
           dob?: string | null
           email?: string | null
@@ -493,12 +500,14 @@ export type Database = {
           preferred_category?: string | null
           previous_team?: string | null
           registration_fee_agreed?: boolean
+          rejection_reason?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           role?: string | null
           status?: string
           submitted_at?: string
           tshirt_size?: string | null
+          work_email?: string | null
         }
         Relationships: [
           {

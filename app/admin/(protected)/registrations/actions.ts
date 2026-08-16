@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getLeagueSettings, settingsCategories } from "@/lib/queries/settings";
+import { sendEmail } from "@/lib/email/send";
+import { approvalEmail, rejectionEmail } from "@/lib/email/templates";
 
 export type ReviewState = { error?: string };
 
@@ -14,6 +16,7 @@ export async function reviewPlayer(
   const playerId = String(formData.get("player_id") ?? "");
   const decision = String(formData.get("decision") ?? "");
   const category = String(formData.get("assigned_category") ?? "").trim();
+  const rejectionReason = String(formData.get("rejection_reason") ?? "").trim();
 
   if (!playerId) return { error: "Missing player." };
   if (decision !== "approve" && decision !== "reject") {
@@ -30,6 +33,11 @@ export async function reviewPlayer(
     }
   }
 
+  // Rejecting requires a reason (it's emailed to the player).
+  if (decision === "reject" && !rejectionReason) {
+    return { error: "Enter a reason for rejection (the player is emailed this)." };
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -41,6 +49,7 @@ export async function reviewPlayer(
       status: decision === "approve" ? "approved" : "rejected",
       // On reject, keep any previously assigned category as-is unless provided.
       assigned_category: decision === "approve" ? category : category || null,
+      rejection_reason: decision === "reject" ? rejectionReason : null,
       reviewed_at: new Date().toISOString(),
       reviewed_by: user?.id ?? null,
     })
@@ -49,6 +58,25 @@ export async function reviewPlayer(
   if (error) {
     console.error("reviewPlayer:", error.message);
     return { error: "Could not save the review. Please try again." };
+  }
+
+  // Notify the player — never let an email failure block the review.
+  try {
+    const { data: player } = await supabase
+      .from("players")
+      .select("full_name, email")
+      .eq("id", playerId)
+      .maybeSingle();
+
+    if (player?.email) {
+      const mail =
+        decision === "approve"
+          ? approvalEmail(player.full_name, category || null)
+          : rejectionEmail(player.full_name, rejectionReason);
+      await sendEmail({ to: player.email, subject: mail.subject, html: mail.html });
+    }
+  } catch (e) {
+    console.error("review email:", e);
   }
 
   revalidatePath("/admin/registrations");

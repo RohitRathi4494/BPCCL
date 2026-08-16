@@ -93,6 +93,8 @@ export default async function ReviewPlayerPage({
             <div className="grid gap-5 sm:grid-cols-2">
               <Detail label="Contact No." value={player.phone} />
               <Detail label="Email" value={player.email} />
+              <Detail label="Company" value={player.company} />
+              <Detail label="Work Email" value={player.work_email} />
               <Detail label="Date of Birth" value={fmtDate(player.dob)} />
               <Detail label="Age" value={player.age} />
               <Detail label="T-Shirt Size" value={player.tshirt_size} />
@@ -141,6 +143,17 @@ export default async function ReviewPlayerPage({
                   : "Not agreed"
               }
             />
+
+            {player.status === "rejected" && player.rejection_reason && (
+              <div className="mt-5 rounded-sm border border-[var(--closed)]/40 bg-[var(--closed)]/10 p-4">
+                <span className="font-mono text-[10px] tracking-[0.16em] text-[var(--closed)] uppercase">
+                  Rejection reason (emailed to player)
+                </span>
+                <p className="mt-1 text-sm text-foreground">
+                  {player.rejection_reason}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 

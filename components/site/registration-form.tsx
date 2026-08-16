@@ -12,6 +12,7 @@ import {
   OTHER_SIZE,
   MIN_AGE,
 } from "@/lib/registration";
+import { PhotoUpload } from "@/components/site/photo-upload";
 import { cn } from "@/lib/utils";
 
 const fieldClass =
@@ -26,6 +27,9 @@ type FormValues = {
   dob: string;
   phone: string;
   email: string;
+  company: string;
+  work_email: string;
+  photo_url: string;
   cricheroes_url: string;
   linkedin_url: string;
   tshirt_size: string;
@@ -42,6 +46,9 @@ const EMPTY_VALUES: FormValues = {
   dob: "",
   phone: "",
   email: "",
+  company: "",
+  work_email: "",
+  photo_url: "",
   cricheroes_url: "",
   linkedin_url: "",
   tshirt_size: "",
@@ -195,6 +202,12 @@ export function RegistrationForm({ registrationFee }: { registrationFee: number 
           <Field label="Email ID" htmlFor="email" required error={state.errors?.email}>
             <input id="email" name="email" type="email" value={values.email} onChange={set("email")} className={fieldClass} placeholder="you@email.com" />
           </Field>
+          <Field label="Company" htmlFor="company" required error={state.errors?.company}>
+            <input id="company" name="company" value={values.company} onChange={set("company")} className={fieldClass} placeholder="Where you work" />
+          </Field>
+          <Field label="Work Email" htmlFor="work_email" required error={state.errors?.work_email}>
+            <input id="work_email" name="work_email" type="email" value={values.work_email} onChange={set("work_email")} className={fieldClass} placeholder="you@company.com" />
+          </Field>
           <Field
             label="CricHeroes Profile Link"
             htmlFor="cricheroes_url"
@@ -208,6 +221,17 @@ export function RegistrationForm({ registrationFee }: { registrationFee: number 
             <input id="linkedin_url" name="linkedin_url" value={values.linkedin_url} onChange={set("linkedin_url")} className={fieldClass} placeholder="linkedin.com/in/…" />
           </Field>
         </div>
+
+        {/* Photo upload writes its public URL into a hidden field for submit. */}
+        <input type="hidden" name="photo_url" value={values.photo_url} />
+        <PhotoUpload
+          value={values.photo_url}
+          error={state.errors?.photo_url}
+          onUploaded={(url) => {
+            setValues((v) => ({ ...v, photo_url: url }));
+            if (confirmDuplicate) setConfirmDuplicate(false);
+          }}
+        />
       </fieldset>
 
       <hr className="crease-rule w-full" />

@@ -27,6 +27,11 @@ export const OTHER_SIZE = "Other";
 /** Fallback registration fee (₹) if league_settings can't be read. */
 export const DEFAULT_REGISTRATION_FEE = 3000;
 
+/** Player photo upload (Supabase Storage). */
+export const PHOTO_BUCKET = "player-photos";
+export const PHOTO_MAX_BYTES = 5 * 1024 * 1024; // 5 MB
+export const PHOTO_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
 /** Normalise a phone number for storage + duplicate comparison. */
 export function normalizePhone(raw: string): string {
   return raw.replace(/[\s()\-.]/g, "");
