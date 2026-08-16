@@ -1,26 +1,183 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* =============================================================================
+   USCL Season 2 — "VELYXO" clean/minimal theme
+   Light, airy, Swiss-minimal. Navy ink + lime accent + cream/white surfaces.
+   Palette: #0E2A2E navy · #18433F deep green · #31D678 lime · #F2EFE8 cream ·
+   #667280 slate. Single accent, generous whitespace, subtle motion.
+   ========================================================================== */
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+  --font-sans: var(--font-barlow), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-barlow-condensed), var(--font-barlow), sans-serif;
+  /* Labels/eyebrows use the sans face too (Swiss minimal — no mono). */
+  --font-mono: var(--font-barlow), ui-sans-serif, system-ui, sans-serif;
+
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  /* Brand tokens (names kept for backwards-compat; repointed to VELYXO palette).
+     `--gold*` now map to the lime accent so existing references adopt it. */
+  --color-navy: var(--navy);
+  --color-lime: var(--lime);
+  --color-cream: var(--cream);
+  --color-gold: var(--lime);
+  --color-gold-glow: var(--lime-soft);
+  --color-chalk: var(--cream);
+  --color-closed: var(--closed);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  --radius: 0.75rem;
+
+  /* Brand palette (dark "royal" theme) */
+  --navy: #0e2a2e; /* deepest ink-green (base) */
+  --deep-green: #14352f; /* raised surface */
+  --lime: #31d678; /* neon green accent */
+  --lime-soft: #5fe89a;
+  --cream: #edf4ee; /* near-white text */
+  --slate: #9cb7ac; /* muted sage */
+
+  /* Dark, royal surfaces */
+  --background: #0e2a2e; /* deep green background */
+  --foreground: #edf4ee; /* near-white text */
+  --card: #14352f; /* deep-green raised card */
+  --card-foreground: #edf4ee;
+  --popover: #14352f;
+  --popover-foreground: #edf4ee;
+
+  /* Neon green is the accent + primary CTA (dark text on it). */
+  --primary: #31d678;
+  --primary-foreground: #06231e;
+  --secondary: #17392f;
+  --secondary-foreground: #edf4ee;
+  --muted: #163a31;
+  --muted-foreground: #9cb7ac; /* readable sage on dark */
+  --accent: #31d678;
+  --accent-foreground: #06231e;
+  --destructive: #f26d6d;
+
+  --border: #274b42; /* subtle green-grey hairline */
+  --input: #2c5349;
+  --ring: #31d678;
+
+  /* Backwards-compat named tokens */
+  --gold: #31d678;
+  --gold-glow: #5fe89a;
+  --chalk: #edf4ee;
+  --closed: #f26d6d;
+  --pitch-line: #31d678;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-heading {
+    font-family: var(--font-heading);
+    letter-spacing: -0.01em;
+  }
+  /* Subtle, consistent focus ring (accessibility + minimal aesthetic). */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* =============================================================================
+   Motif classes — redefined to clean/minimal (kept so existing markup adopts
+   the new look without churn).
+   ========================================================================== */
+
+/* Was: mown-grass stripes. Now: a whisper-faint diagonal tint, mostly off. */
+.grass-stripes {
+  background-image: none;
+}
+
+/* Neon-green glow wash for hero areas (royal depth on the dark ground). */
+.lamp-glow {
+  background:
+    radial-gradient(
+      75% 65% at 50% -10%,
+      rgba(49, 214, 120, 0.16) 0%,
+      rgba(49, 214, 120, 0.04) 45%,
+      transparent 70%
+    );
+}
+
+/* Divider — a thin lime rule (minimal accent). */
+.crease-rule {
+  border: 0;
+  height: 2px;
+  background: var(--lime);
+  border-radius: 2px;
+  opacity: 1;
+}
+
+/* Countdown cell — raised deep-green tile with a neon digit. */
+.segment-cell {
+  background: #102b26;
+  border: 1px solid var(--border);
+}
+.segment-digit {
+  color: var(--lime);
+  text-shadow: 0 0 14px rgba(49, 214, 120, 0.35);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Ticker marquee (kept, restyled minimal via component classes). */
+@keyframes ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.ticker-track {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: ticker-scroll 40s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track {
+    animation: none;
+  }
+}
+
+/* No-op (was gold text glow). */
+.text-glow-gold {
+  text-shadow: none;
 }

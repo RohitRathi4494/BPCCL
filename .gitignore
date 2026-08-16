@@ -32,6 +32,8 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# ...but keep the committed template
+!.env.example
 
 # vercel
 .vercel
@@ -39,3 +41,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# vendored design skill (third-party tooling, ~23MB — not part of the app)
+/ui-ux-pro-max-skill-main/
+
+# local Claude Code settings (personal)
+.claude/settings.local.json
+
+# supabase CLI local temp
+/supabase/.temp/
+/supabase/.branches/

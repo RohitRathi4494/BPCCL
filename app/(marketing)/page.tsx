@@ -1,0 +1,218 @@
+import Link from "next/link";
+import { MapPin, Trophy, Users, Wallet, Gavel } from "lucide-react";
+import { StatusBadge } from "@/components/site/status-badge";
+import { Countdown } from "@/components/site/countdown";
+import { SectionHeading } from "@/components/site/section-heading";
+import { SponsorCard } from "@/components/site/sponsor-card";
+import { Reveal } from "@/components/site/reveal";
+import { getLeagueSettings, settingsCategories } from "@/lib/queries/settings";
+import { getSponsors } from "@/lib/queries/sponsors";
+import { site } from "@/lib/site";
+
+export default async function HomePage() {
+  const settings = await getLeagueSettings();
+  const categories = settingsCategories(settings);
+  const sponsors = await getSponsors();
+  const featured = sponsors.filter(
+    (s) => s.tier === "Title" || s.tier === "Co-title",
+  );
+
+  const purse = settings
+    ? new Intl.NumberFormat("en-IN").format(settings.purse_per_franchise)
+    : null;
+
+  const stats = [
+    {
+      icon: Users,
+      value: settings ? String(settings.franchise_count) : "16",
+      label: "Franchises",
+    },
+    {
+      icon: Wallet,
+      value: purse ?? "—",
+      label: "Mock Purse / Team",
+    },
+    {
+      icon: Trophy,
+      value: categories.length ? String(categories.length) : "4",
+      label: "Player Grades",
+    },
+    {
+      icon: Gavel,
+      value: settings
+        ? `${settings.squad_min_per_franchise}–${settings.squad_max_per_franchise}`
+        : "15–18",
+      label: "Squad Size",
+    },
+  ];
+
+  return (
+    <>
+      {/* ================= HERO ================= */}
+      <section className="lamp-glow relative overflow-hidden">
+        <div className="mx-auto max-w-6xl px-5 pt-20 pb-16 sm:pt-28">
+          <StatusBadge status="open" />
+
+          <h1 className="mt-6 font-heading text-5xl font-extrabold tracking-tight text-foreground uppercase sm:text-7xl">
+            Urban Sports
+            <br />
+            Champions League
+          </h1>
+
+          <div className="mt-5 h-1.5 w-20 rounded-full bg-[var(--lime)]" />
+
+          <p className="mt-5 max-w-xl font-mono text-sm tracking-[0.16em] text-muted-foreground uppercase">
+            {site.tagline} · {site.season}
+          </p>
+          <p className="mt-3 flex items-center gap-2 text-foreground/85">
+            <MapPin className="size-4 text-primary" />
+            {site.venue.full}
+          </p>
+
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              href="/register"
+              className="inline-flex items-center rounded-sm bg-primary px-6 py-3 font-heading text-sm font-bold tracking-wide text-primary-foreground uppercase shadow-[0_0_24px_rgba(14,42,46,0.35)] transition-shadow hover:shadow-[0_0_34px_rgba(14,42,46,0.6)]"
+            >
+              Register to Play
+            </Link>
+            <Link
+              href="/sponsors"
+              className="inline-flex items-center rounded-sm border border-border bg-card px-6 py-3 font-heading text-sm font-bold tracking-wide text-foreground uppercase transition-colors hover:border-primary/50"
+            >
+              Become a Sponsor
+            </Link>
+          </div>
+
+          {/* Countdowns — dates TBA until wired to league_settings */}
+          <div className="mt-14 grid gap-8 sm:grid-cols-3">
+            <Countdown target={null} title="Registration Closes" />
+            <Countdown target={null} title="Auction Day" />
+            <Countdown target={null} title="Season Starts" />
+          </div>
+        </div>
+      </section>
+
+      {/* ================= STATS ================= */}
+      <section className="border-y border-border bg-[var(--card)]">
+        <Reveal className="mx-auto grid max-w-6xl grid-cols-2 px-5 md:grid-cols-4">
+          {stats.map((s) => (
+            <div
+              key={s.label}
+              className="flex flex-col items-center gap-1 px-4 py-10 text-center"
+            >
+              <s.icon className="mb-1 size-5 text-[var(--lime)]" />
+              <span className="font-heading text-4xl font-bold text-[var(--cream)] sm:text-5xl">
+                {s.value}
+              </span>
+              <span className="font-mono text-[10px] tracking-[0.2em] text-[var(--cream)]/60 uppercase">
+                {s.label}
+              </span>
+            </div>
+          ))}
+        </Reveal>
+      </section>
+
+      {/* ================= REGISTRATION ================= */}
+      <section id="register" className="scroll-mt-24">
+        <div className="mx-auto max-w-6xl px-5 py-20">
+          <SectionHeading kicker="Step 01" title="Player Registration" />
+          <div className="mt-8 grid gap-8 md:grid-cols-2">
+            <p className="text-lg leading-relaxed text-foreground/85">
+              Any player can enter the pool. Submit your details and your
+              CricHeroes profile — our reviewers assign you a grade
+              {categories.length ? ` (${categories.join(", ")})` : ""} ahead of
+              the live auction, where all {settings?.franchise_count ?? 16}{" "}
+              franchises bid to build their squads.
+            </p>
+            <div className="flex flex-col justify-center gap-4 rounded-lg border border-border bg-card p-8">
+              <p className="font-mono text-xs tracking-[0.2em] text-primary uppercase">
+                Registration is open
+              </p>
+              <p className="text-sm text-muted-foreground">
+                No account needed — it&apos;s a quick public form. Open to
+                players aged 30 and above.
+              </p>
+              <Link
+                href="/register"
+                className="inline-flex w-fit items-center rounded-sm bg-primary px-5 py-2.5 font-heading text-sm font-bold tracking-wide text-primary-foreground uppercase shadow-[0_0_20px_rgba(14,42,46,0.3)] transition-shadow hover:shadow-[0_0_28px_rgba(14,42,46,0.5)]"
+              >
+                Register Now
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ================= VENUE ================= */}
+      <section id="venue" className="scroll-mt-24 border-t border-border">
+        <div className="mx-auto max-w-6xl px-5 py-20">
+          <SectionHeading kicker="The Ground" title="Champions Den" />
+          <div className="mt-8 grid gap-8 md:grid-cols-2">
+            <p className="text-lg leading-relaxed text-foreground/85">
+              Every match of {site.shortName} {site.season} is played under
+              lights at{" "}
+              <span className="text-primary">Champions Den, Bandhwari</span> in{" "}
+              {site.venue.city} — the home of the league. Floodlit night
+              cricket, sixteen franchises, one ground.
+            </p>
+            <div className="flex items-start gap-3 rounded-lg border border-border bg-card p-8">
+              <MapPin className="mt-1 size-5 shrink-0 text-primary" />
+              <div>
+                <p className="font-heading text-xl font-bold tracking-tight text-foreground uppercase">
+                  {site.venue.name}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {site.venue.area}, {site.venue.city}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ================= SPONSORS ================= */}
+      <section className="border-t border-border">
+        <div className="mx-auto max-w-6xl px-5 py-20">
+          <SectionHeading
+            kicker="Powered By"
+            title="Our Partners"
+            align="center"
+          />
+          {featured.length > 0 ? (
+            <Reveal className="mt-10 grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4">
+              {featured.map((s) => (
+                <SponsorCard key={s.id} sponsor={s} />
+              ))}
+            </Reveal>
+          ) : (
+            <div className="mx-auto mt-10 flex max-w-xl flex-col items-center gap-4 rounded-lg border border-dashed border-primary/40 bg-card p-10 text-center">
+              <p className="font-heading text-2xl font-bold tracking-tight text-foreground uppercase">
+                This spot is open
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Put your brand in front of sixteen franchises and a season of
+                floodlit night cricket. Title, Co-title, Associate and Ground
+                Partner slots are available.
+              </p>
+              <Link
+                href="/sponsors"
+                className="mt-1 inline-flex items-center rounded-sm bg-primary px-6 py-3 font-heading text-sm font-bold tracking-wide text-primary-foreground uppercase"
+              >
+                Become a Sponsor
+              </Link>
+            </div>
+          )}
+          <div className="mt-8 text-center">
+            <Link
+              href="/sponsors"
+              className="font-mono text-xs tracking-[0.2em] text-primary uppercase hover:underline"
+            >
+              View all partners →
+            </Link>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
