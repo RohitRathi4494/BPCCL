@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { ClipboardList, Gavel, Search } from "lucide-react";
 import { SectionHeading } from "@/components/site/section-heading";
 import { RegistrationForm } from "@/components/site/registration-form";
@@ -26,7 +27,15 @@ export default async function RegisterPage() {
     <>
       {/* Hero */}
       <section className="lamp-glow">
-        <div className="mx-auto max-w-4xl px-5 pt-16 pb-8 sm:pt-20">
+        <div className="mx-auto max-w-4xl px-5 pt-12 pb-8 sm:pt-16">
+          <Image
+            src="/uscl-logo.png"
+            alt="USCL — Urban Sports Champions Den, Season 2"
+            width={1100}
+            height={1430}
+            priority
+            className="mb-6 h-28 w-auto drop-shadow-[0_8px_30px_rgba(0,0,0,0.45)] sm:h-36"
+          />
           <span className="font-mono text-xs tracking-[0.28em] text-primary uppercase">
             Player Registration · {site.season}
           </span>

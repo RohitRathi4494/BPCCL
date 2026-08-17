@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { MapPin, Trophy, Users, Wallet, Gavel } from "lucide-react";
 import { StatusBadge } from "@/components/site/status-badge";
 import { Countdown } from "@/components/site/countdown";
@@ -51,15 +52,17 @@ export default async function HomePage() {
       {/* ================= HERO ================= */}
       <section className="lamp-glow relative overflow-hidden">
         <div className="mx-auto max-w-6xl px-5 pt-20 pb-16 sm:pt-28">
-          <StatusBadge status="open" />
+          <div className="flex flex-col-reverse items-start gap-10 lg:flex-row lg:items-center lg:justify-between">
+            <div className="w-full lg:flex-1">
+              <StatusBadge status="open" />
 
-          <h1 className="mt-6 font-heading text-5xl font-extrabold tracking-tight text-foreground uppercase sm:text-7xl">
-            Urban Sports
-            <br />
-            Champions League
-          </h1>
+              <h1 className="mt-6 font-heading text-5xl font-extrabold tracking-tight text-foreground uppercase sm:text-7xl">
+                Urban Sports
+                <br />
+                Champions League
+              </h1>
 
-          <div className="mt-5 h-1.5 w-20 rounded-full bg-[var(--lime)]" />
+              <div className="mt-5 h-1.5 w-20 rounded-full bg-[var(--lime)]" />
 
           <p className="mt-5 max-w-xl font-mono text-sm tracking-[0.16em] text-muted-foreground uppercase">
             {site.tagline} · {site.season}
@@ -82,6 +85,19 @@ export default async function HomePage() {
             >
               Become a Sponsor
             </Link>
+          </div>
+            </div>
+
+            <div className="mx-auto shrink-0 lg:mx-0">
+              <Image
+                src="/uscl-logo.png"
+                alt="USCL — Urban Sports Champions Den, Season 2"
+                width={1100}
+                height={1430}
+                priority
+                className="h-52 w-auto drop-shadow-[0_10px_40px_rgba(0,0,0,0.45)] sm:h-64 lg:h-80"
+              />
+            </div>
           </div>
 
           {/* Countdowns — dates TBA until wired to league_settings */}

@@ -1,10 +1,15 @@
 import Link from "next/link";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { site } from "@/lib/site";
 
+// Logo intrinsic size (public/uscl-logo.png) — for next/image aspect ratio.
+const LOGO_W = 1100;
+const LOGO_H = 1430;
+
 /**
- * USCL wordmark. A gold "monogram" tile (scoreboard/lamp) next to the short
- * name, with the season as a mono tag.
+ * USCL brand lockup: the official crest logo next to the short name + season.
+ * The logo is full-colour on transparent, so it reads on the dark theme.
  */
 export function BrandMark({
   className,
@@ -16,12 +21,17 @@ export function BrandMark({
   return (
     <Link
       href="/"
-      className={cn("group inline-flex items-center gap-3", className)}
+      className={cn("group inline-flex items-center gap-2.5", className)}
       aria-label={`${site.name} — ${site.season}`}
     >
-      <span className="grid size-9 place-items-center rounded-sm bg-primary font-heading text-lg font-extrabold leading-none text-primary-foreground shadow-[0_0_20px_rgba(14,42,46,0.35)] transition-shadow group-hover:shadow-[0_0_28px_rgba(14,42,46,0.55)]">
-        U
-      </span>
+      <Image
+        src="/uscl-logo.png"
+        alt={`${site.name} logo`}
+        width={LOGO_W}
+        height={LOGO_H}
+        priority
+        className="h-10 w-auto transition-transform group-hover:scale-105"
+      />
       <span className="flex flex-col leading-none">
         <span className="font-heading text-lg font-bold tracking-[0.14em] text-foreground">
           {site.shortName}
