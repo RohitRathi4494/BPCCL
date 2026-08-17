@@ -61,8 +61,8 @@ export default async function HomePage() {
             sizes="100vw"
             className="object-cover object-center"
           />
-          <div className="absolute inset-0 bg-[var(--navy)]/70" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[var(--navy)] via-[var(--navy)]/70 to-[var(--navy)]/85" />
+          <div className="absolute inset-0 bg-[var(--navy)]/35" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[var(--navy)]/90 via-[var(--navy)]/45 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-t from-[var(--navy)] via-transparent to-transparent" />
         </div>
 
@@ -101,17 +101,6 @@ export default async function HomePage() {
               Become a Sponsor
             </Link>
           </div>
-            </div>
-
-            <div className="mx-auto shrink-0 lg:mx-0">
-              <Image
-                src="/uscl-logo.png"
-                alt="USCL — Urban Sports Champions Den, Season 2"
-                width={1100}
-                height={1430}
-                priority
-                className="h-52 w-auto drop-shadow-[0_10px_40px_rgba(0,0,0,0.45)] sm:h-64 lg:h-80"
-              />
             </div>
           </div>
 
