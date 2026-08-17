@@ -205,7 +205,13 @@ export function RegistrationForm({ registrationFee }: { registrationFee: number 
           <Field label="Company" htmlFor="company" required error={state.errors?.company}>
             <input id="company" name="company" value={values.company} onChange={set("company")} className={fieldClass} placeholder="Where you work" />
           </Field>
-          <Field label="Work Email" htmlFor="work_email" required error={state.errors?.work_email}>
+          <Field
+            label="Work Email"
+            htmlFor="work_email"
+            required
+            error={state.errors?.work_email}
+            hint="Company email only — not a personal Gmail/Yahoo address."
+          >
             <input id="work_email" name="work_email" type="email" value={values.work_email} onChange={set("work_email")} className={fieldClass} placeholder="you@company.com" />
           </Field>
           <Field

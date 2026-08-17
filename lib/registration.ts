@@ -42,6 +42,50 @@ export function isValidPhone(normalized: string): boolean {
   return /^\+?\d{10,13}$/.test(normalized);
 }
 
+/**
+ * Free / personal email providers not allowed for the *Work Email* field —
+ * that must be a company-issued address. (Personal "Email ID" is unrestricted.)
+ */
+export const PERSONAL_EMAIL_DOMAINS = new Set([
+  "gmail.com",
+  "googlemail.com",
+  "yahoo.com",
+  "yahoo.in",
+  "yahoo.co.in",
+  "ymail.com",
+  "rocketmail.com",
+  "outlook.com",
+  "hotmail.com",
+  "hotmail.co.uk",
+  "live.com",
+  "live.in",
+  "msn.com",
+  "icloud.com",
+  "me.com",
+  "mac.com",
+  "aol.com",
+  "protonmail.com",
+  "proton.me",
+  "gmx.com",
+  "zoho.com",
+  "zohomail.com",
+  "yandex.com",
+  "mail.com",
+  "rediffmail.com",
+  "rediff.com",
+  "inbox.com",
+  "pm.me",
+]);
+
+/** True only if the email is a valid, non-personal (company) address. */
+export function isWorkEmail(email: string): boolean {
+  const at = email.lastIndexOf("@");
+  if (at === -1) return false;
+  const domain = email.slice(at + 1).trim().toLowerCase();
+  if (!domain.includes(".")) return false;
+  return !PERSONAL_EMAIL_DOMAINS.has(domain);
+}
+
 /** Whole-year age from an ISO date string (YYYY-MM-DD) as of `ref`. */
 export function computeAge(dobISO: string, ref: Date = new Date()): number {
   const dob = new Date(dobISO);

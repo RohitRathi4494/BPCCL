@@ -9,6 +9,7 @@ import {
   OTHER_SIZE,
   normalizePhone,
   isValidPhone,
+  isWorkEmail,
   computeAge,
 } from "@/lib/registration";
 import type { TablesInsert } from "@/lib/types";
@@ -102,6 +103,9 @@ export async function submitRegistration(
   if (!work_email) errors.work_email = "Please enter your work email.";
   else if (!EMAIL_RE.test(work_email))
     errors.work_email = "Enter a valid work email address.";
+  else if (!isWorkEmail(work_email))
+    errors.work_email =
+      "Use your company work email — personal addresses (Gmail, Yahoo, etc.) aren't allowed here.";
 
   if (!photo_url) errors.photo_url = "Please upload a player photo.";
 
