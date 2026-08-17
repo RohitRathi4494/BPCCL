@@ -7,7 +7,7 @@ export const site = {
   name: "Urban Sports Champions League",
   shortName: "USCL",
   season: "Season 2",
-  tagline: "Urban Night Cricket",
+  tagline: "Gurugram's Finest T20 Cricket League",
   venue: {
     name: "Champions Den",
     area: "Bandhwari",

@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     template: "%s · USCL Season 2",
   },
   description:
-    "Urban Sports Champions League Season 2 — urban night cricket at Champions Den, Bandhwari, Gurugram. 16 franchises, live auction, live scoring.",
+    "Urban Sports Champions League Season 2 — Gurugram's finest T20 cricket league at Champions Den, Bandhwari, Gurugram. 16 franchises, live auction, live scoring.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

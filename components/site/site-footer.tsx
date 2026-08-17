@@ -75,7 +75,7 @@ export function SiteFooter() {
             © {site.shortName} {site.season}
           </p>
           <p className="font-mono text-[11px] tracking-wider text-muted-foreground/70 uppercase">
-            {site.venue.city} · Night Cricket
+            {site.venue.city} · T20 Cricket League
           </p>
         </div>
       </div>

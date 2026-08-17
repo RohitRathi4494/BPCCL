@@ -50,8 +50,23 @@ export default async function HomePage() {
   return (
     <>
       {/* ================= HERO ================= */}
-      <section className="lamp-glow relative overflow-hidden">
-        <div className="mx-auto max-w-6xl px-5 pt-20 pb-16 sm:pt-28">
+      <section className="relative overflow-hidden">
+        {/* Champions background + overlay for text legibility */}
+        <div className="absolute inset-0">
+          <Image
+            src="/hero-champions.jpg"
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-center"
+          />
+          <div className="absolute inset-0 bg-[var(--navy)]/70" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[var(--navy)] via-[var(--navy)]/70 to-[var(--navy)]/85" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[var(--navy)] via-transparent to-transparent" />
+        </div>
+
+        <div className="relative z-10 mx-auto max-w-6xl px-5 pt-20 pb-16 sm:pt-28">
           <div className="flex flex-col-reverse items-start gap-10 lg:flex-row lg:items-center lg:justify-between">
             <div className="w-full lg:flex-1">
               <StatusBadge status="open" />
@@ -169,7 +184,7 @@ export default async function HomePage() {
               Every match of {site.shortName} {site.season} is played under
               lights at{" "}
               <span className="text-primary">Champions Den, Bandhwari</span> in{" "}
-              {site.venue.city} — the home of the league. Floodlit night
+              {site.venue.city} — the home of the league. Floodlit T20
               cricket, sixteen franchises, one ground.
             </p>
             <div className="flex items-start gap-3 rounded-lg border border-border bg-card p-8">
@@ -208,7 +223,7 @@ export default async function HomePage() {
               </p>
               <p className="text-sm text-muted-foreground">
                 Put your brand in front of sixteen franchises and a season of
-                floodlit night cricket. Title, Co-title, Associate and Ground
+                floodlit T20 cricket. Title, Co-title, Associate and Ground
                 Partner slots are available.
               </p>
               <Link
