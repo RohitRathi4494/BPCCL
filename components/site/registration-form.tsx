@@ -11,6 +11,9 @@ import {
   LOWER_SIZES,
   OTHER_SIZE,
   MIN_AGE,
+  PLAYER_ROLES,
+  STAT_FIELDS,
+  type StatKey,
 } from "@/lib/registration";
 import { PhotoUpload } from "@/components/site/photo-upload";
 import { cn } from "@/lib/utils";
@@ -22,6 +25,8 @@ const labelClass =
 
 const initial: RegistrationState = { status: "idle" };
 
+type StatValues = Record<StatKey, string>;
+
 type FormValues = {
   full_name: string;
   dob: string;
@@ -32,6 +37,7 @@ type FormValues = {
   photo_url: string;
   cricheroes_url: string;
   linkedin_url: string;
+  roles: string[];
   tshirt_size: string;
   tshirt_size_other: string;
   lower_size: string;
@@ -39,7 +45,11 @@ type FormValues = {
   jersey_number: string;
   jersey_name: string;
   consent: boolean;
-};
+} & StatValues;
+
+const EMPTY_STATS = Object.fromEntries(
+  STAT_FIELDS.map((f) => [f.key, ""]),
+) as StatValues;
 
 const EMPTY_VALUES: FormValues = {
   full_name: "",
@@ -51,6 +61,7 @@ const EMPTY_VALUES: FormValues = {
   photo_url: "",
   cricheroes_url: "",
   linkedin_url: "",
+  roles: [],
   tshirt_size: "",
   tshirt_size_other: "",
   lower_size: "",
@@ -58,6 +69,7 @@ const EMPTY_VALUES: FormValues = {
   jersey_number: "",
   jersey_name: "",
   consent: false,
+  ...EMPTY_STATS,
 };
 
 function Err({ msg }: { msg?: string }) {
@@ -130,6 +142,16 @@ export function RegistrationForm({ registrationFee }: { registrationFee: number 
       setValues((v) => ({ ...v, [key]: value }));
       if (confirmDuplicate) setConfirmDuplicate(false);
     };
+
+  const toggleRole = (role: string) => () => {
+    setValues((v) => ({
+      ...v,
+      roles: v.roles.includes(role)
+        ? v.roles.filter((r) => r !== role)
+        : [...v.roles, role],
+    }));
+    if (confirmDuplicate) setConfirmDuplicate(false);
+  };
 
   const feeText = new Intl.NumberFormat("en-IN").format(registrationFee);
 
@@ -238,6 +260,82 @@ export function RegistrationForm({ registrationFee }: { registrationFee: number 
             if (confirmDuplicate) setConfirmDuplicate(false);
           }}
         />
+      </fieldset>
+
+      <hr className="crease-rule w-full" />
+
+      {/* ---- Playing profile: roles + stats ---- */}
+      <fieldset className="flex flex-col gap-5">
+        <Legend>Playing Profile</Legend>
+
+        {/* Roles — multi-select (pick all that apply). */}
+        {values.roles.map((r) => (
+          <input key={r} type="hidden" name="roles" value={r} />
+        ))}
+        <div className="flex flex-col gap-2">
+          <span className={labelClass}>
+            Playing Role <span className="text-primary">*</span>
+          </span>
+          <p className="text-xs text-muted-foreground">
+            Select all that apply.
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {PLAYER_ROLES.map((role) => {
+              const checked = values.roles.includes(role);
+              return (
+                <label
+                  key={role}
+                  className={cn(
+                    "flex cursor-pointer items-center gap-2.5 rounded-sm border px-3 py-2.5 text-sm transition-colors",
+                    checked
+                      ? "border-primary bg-primary/10 text-foreground"
+                      : "border-input bg-background text-foreground/80 hover:border-primary/50",
+                  )}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={toggleRole(role)}
+                    className="size-4 shrink-0 accent-[var(--gold)]"
+                  />
+                  {role}
+                </label>
+              );
+            })}
+          </div>
+          <Err msg={state.errors?.roles} />
+        </div>
+
+        {/* Career stats — text so "NA" is accepted where a stat doesn't apply. */}
+        <div className="flex flex-col gap-2">
+          <span className={labelClass}>
+            Career Stats <span className="text-primary">*</span>
+          </span>
+          <p className="text-xs text-muted-foreground">
+            Enter <span className="font-medium text-foreground/90">NA</span> for
+            any stat that doesn&apos;t apply to you.
+          </p>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {STAT_FIELDS.map((f) => (
+              <Field
+                key={f.key}
+                label={f.label}
+                htmlFor={f.key}
+                required
+                error={state.errors?.[f.key]}
+              >
+                <input
+                  id={f.key}
+                  name={f.key}
+                  value={values[f.key]}
+                  onChange={set(f.key)}
+                  className={fieldClass}
+                  placeholder="e.g. 42 or NA"
+                />
+              </Field>
+            ))}
+          </div>
+        </div>
       </fieldset>
 
       <hr className="crease-rule w-full" />

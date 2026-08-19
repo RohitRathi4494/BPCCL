@@ -7,6 +7,8 @@ import {
   TSHIRT_SIZES,
   LOWER_SIZES,
   OTHER_SIZE,
+  PLAYER_ROLES,
+  STAT_FIELDS,
   normalizePhone,
   isValidPhone,
   isWorkEmail,
@@ -130,6 +132,23 @@ export async function submitRegistration(
   if (!jersey_name) errors.jersey_name = "Enter the name for your jersey.";
   else if (jersey_name.length > 20) errors.jersey_name = "Keep it under 20 characters.";
 
+  // Playing roles — multi-select, at least one, all from the known list.
+  const allowedRoles = new Set<string>(PLAYER_ROLES);
+  const roles = formData
+    .getAll("roles")
+    .map((r) => String(r).trim())
+    .filter((r) => allowedRoles.has(r));
+  if (roles.length === 0) errors.roles = "Select at least one playing role.";
+
+  // Career stats — all required; "NA" is a valid answer where inapplicable.
+  const stats: Record<string, string> = {};
+  for (const f of STAT_FIELDS) {
+    const v = get(f.key);
+    if (!v) errors[f.key] = `Enter ${f.label} (or NA).`;
+    else if (v.length > 20) errors[f.key] = "Keep it under 20 characters.";
+    else stats[f.key] = v;
+  }
+
   if (!consent)
     errors.consent = "You must agree to the registration fee to register.";
 
@@ -170,6 +189,8 @@ export async function submitRegistration(
     lower_size: lower.value,
     jersey_number,
     jersey_name,
+    roles,
+    ...stats,
     registration_fee_agreed: true,
   };
 

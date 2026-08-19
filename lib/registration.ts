@@ -1,18 +1,37 @@
 /**
  * Registration form option lists and rules.
  *
- * PLAYER_ROLES matches the `players.role` CHECK constraint and is still used by
- * the admin/auction screens, even though the public form no longer collects it.
+ * PLAYER_ROLES is the multi-select playing-role list collected at registration
+ * (stored in `players.roles` as a text[]). A player may pick more than one.
  */
 export const PLAYER_ROLES = [
-  "Batsman",
-  "Fast Bowler",
-  "Spin Bowler",
+  "Left Hand Batsman",
+  "Right Hand Batsman",
+  "Left Arm Pacer",
+  "Left Arm Spinner",
+  "Right Arm Pacer",
+  "Right Arm Spin",
   "Batting All Rounder",
   "Bowling All Rounder",
-  "Wicket-Keeper Batsman",
+  "WK Keeper Batsman",
 ] as const;
 export type PlayerRole = (typeof PLAYER_ROLES)[number];
+
+/**
+ * Self-reported career stats collected at registration. Stored as text so a
+ * player can enter "NA" where a stat doesn't apply (e.g. a pure batsman's
+ * bowling numbers). `key` is the form field name AND the players column name.
+ */
+export const STAT_FIELDS = [
+  { key: "matches_played", label: "Matches Played" },
+  { key: "runs_scored", label: "Runs Scored" },
+  { key: "batting_average", label: "Batting Average" },
+  { key: "batting_strike_rate", label: "Batting Strike Rate" },
+  { key: "wickets_taken", label: "Wickets Taken" },
+  { key: "bowling_strike_rate", label: "Bowling Strike Rate" },
+  { key: "economy", label: "Economy" },
+] as const;
+export type StatKey = (typeof STAT_FIELDS)[number]["key"];
 
 /** Eligibility: USCL Season 2 is open to players aged 30 and above. */
 export const MIN_AGE = 30;

@@ -4,6 +4,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink, User } from "lucide-react";
 import { getPlayer } from "@/lib/queries/players";
+import { STAT_FIELDS } from "@/lib/registration";
 import { getLeagueSettings, settingsCategories } from "@/lib/queries/settings";
 import { RegistrationStatus as StatusBadge } from "@/components/admin/registration-status";
 import { ReviewForm } from "@/components/admin/review-form";
@@ -131,6 +132,40 @@ export default async function ReviewPlayerPage({
                   ) : null
                 }
               />
+            </div>
+
+            <hr className="crease-rule my-6 w-full" />
+
+            {/* Playing role(s) */}
+            <div className="flex flex-col gap-2">
+              <span className="font-mono text-[10px] tracking-[0.16em] text-muted-foreground uppercase">
+                Playing Role
+              </span>
+              {player.roles && player.roles.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {player.roles.map((r) => (
+                    <span
+                      key={r}
+                      className="rounded-sm border border-border bg-background px-2 py-0.5 text-xs text-foreground"
+                    >
+                      {r}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-sm text-foreground">—</span>
+              )}
+            </div>
+
+            {/* Self-reported career stats */}
+            <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {STAT_FIELDS.map((f) => (
+                <Detail
+                  key={f.key}
+                  label={f.label}
+                  value={player[f.key] ?? "—"}
+                />
+              ))}
             </div>
 
             <hr className="crease-rule my-6 w-full" />

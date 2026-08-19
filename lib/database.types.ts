@@ -417,11 +417,15 @@ export type Database = {
           achievements: string | null
           age: number
           assigned_category: string | null
+          batting_average: string | null
+          batting_strike_rate: string | null
           batting_style: string | null
+          bowling_strike_rate: string | null
           bowling_style: string | null
           company: string | null
           cricheroes_url: string | null
           dob: string | null
+          economy: string | null
           email: string | null
           full_name: string
           id: string
@@ -430,6 +434,7 @@ export type Database = {
           linkedin_url: string | null
           locality: string | null
           lower_size: string | null
+          matches_played: string | null
           medical_injury: string | null
           phone: string
           photo_url: string | null
@@ -440,20 +445,27 @@ export type Database = {
           reviewed_at: string | null
           reviewed_by: string | null
           role: string | null
+          roles: string[]
+          runs_scored: string | null
           status: string
           submitted_at: string
           tshirt_size: string | null
+          wickets_taken: string | null
           work_email: string | null
         }
         Insert: {
           achievements?: string | null
           age: number
           assigned_category?: string | null
+          batting_average?: string | null
+          batting_strike_rate?: string | null
           batting_style?: string | null
+          bowling_strike_rate?: string | null
           bowling_style?: string | null
           company?: string | null
           cricheroes_url?: string | null
           dob?: string | null
+          economy?: string | null
           email?: string | null
           full_name: string
           id?: string
@@ -462,6 +474,7 @@ export type Database = {
           linkedin_url?: string | null
           locality?: string | null
           lower_size?: string | null
+          matches_played?: string | null
           medical_injury?: string | null
           phone: string
           photo_url?: string | null
@@ -472,20 +485,27 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           role?: string | null
+          roles?: string[]
+          runs_scored?: string | null
           status?: string
           submitted_at?: string
           tshirt_size?: string | null
+          wickets_taken?: string | null
           work_email?: string | null
         }
         Update: {
           achievements?: string | null
           age?: number
           assigned_category?: string | null
+          batting_average?: string | null
+          batting_strike_rate?: string | null
           batting_style?: string | null
+          bowling_strike_rate?: string | null
           bowling_style?: string | null
           company?: string | null
           cricheroes_url?: string | null
           dob?: string | null
+          economy?: string | null
           email?: string | null
           full_name?: string
           id?: string
@@ -494,6 +514,7 @@ export type Database = {
           linkedin_url?: string | null
           locality?: string | null
           lower_size?: string | null
+          matches_played?: string | null
           medical_injury?: string | null
           phone?: string
           photo_url?: string | null
@@ -504,9 +525,12 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           role?: string | null
+          roles?: string[]
+          runs_scored?: string | null
           status?: string
           submitted_at?: string
           tshirt_size?: string | null
+          wickets_taken?: string | null
           work_email?: string | null
         }
         Relationships: [
