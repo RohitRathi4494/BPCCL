@@ -51,8 +51,8 @@ export default async function HomePage() {
     <>
       {/* ================= HERO ================= */}
       <section className="relative overflow-hidden">
-        {/* Champions background + overlay for text legibility */}
-        <div className="absolute inset-0">
+        {/* Desktop: full-bleed champions background + overlay for legibility */}
+        <div className="absolute inset-0 hidden lg:block">
           <Image
             src="/hero-champions.jpg"
             alt=""
@@ -67,7 +67,22 @@ export default async function HomePage() {
           <div className="absolute inset-0 bg-gradient-to-t from-[var(--navy)] via-transparent to-transparent" />
         </div>
 
-        <div className="relative z-10 mx-auto max-w-6xl px-5 pt-20 pb-16 sm:pt-28">
+        {/* Mobile/tablet: the complete champions photo, uncropped, at the top */}
+        <div className="relative lg:hidden">
+          <Image
+            src="/hero-champions.jpg"
+            alt="USCL Season 2 champions lifting the trophy"
+            width={2400}
+            height={1628}
+            priority
+            unoptimized
+            sizes="100vw"
+            className="h-auto w-full"
+          />
+          <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[var(--navy)] to-transparent" />
+        </div>
+
+        <div className="relative z-10 mx-auto max-w-6xl px-5 pt-8 pb-16 lg:pt-28">
           <div className="flex flex-col-reverse items-start gap-10 lg:flex-row lg:items-center lg:justify-between">
             <div className="w-full lg:flex-1">
               <StatusBadge status="open" />
