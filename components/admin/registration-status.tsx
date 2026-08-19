@@ -7,7 +7,7 @@ const MAP: Record<string, { label: string; className: string }> = {
   },
   approved: {
     label: "Approved",
-    className: "border-[#31d678]/40 text-[#31d678] bg-[#31d678]/10",
+    className: "border-accent/40 text-accent bg-accent/10",
   },
   rejected: {
     label: "Rejected",

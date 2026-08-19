@@ -3,10 +3,12 @@
 @import "shadcn/tailwind.css";
 
 /* =============================================================================
-   USCL Season 2 — "VELYXO" clean/minimal theme
-   Light, airy, Swiss-minimal. Navy ink + lime accent + cream/white surfaces.
-   Palette: #0E2A2E navy · #18433F deep green · #31D678 lime · #F2EFE8 cream ·
-   #667280 slate. Single accent, generous whitespace, subtle motion.
+   USCL Season 2 — "VELYXO" royal crest theme (logo-matched)
+   Dark & premium, drawn straight from the league crest:
+   deep royal NAVY (dominant/primary), championship GOLD (accent),
+   crest CRIMSON (secondary). Barlow type, crisp rules, restrained glow.
+   Palette: #0A1E3D navy · #0F2950 raised navy · #3D7BEF royal blue ·
+   #F4B324 gold · #D42433 crimson · #EAF1FB near-white · #9BB0D0 slate.
    ========================================================================== */
 
 @theme inline {
@@ -35,13 +37,16 @@
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
 
-  /* Brand tokens (names kept for backwards-compat; repointed to VELYXO palette).
-     `--gold*` now map to the lime accent so existing references adopt it. */
+  /* Brand tokens (names kept for backwards-compat; repointed to the crest
+     palette). `--gold*` are now truly gold; `--lime*` alias gold so any
+     leftover references adopt the accent. Adds `--royal` + `--crimson`. */
   --color-navy: var(--navy);
-  --color-lime: var(--lime);
+  --color-royal: var(--royal);
+  --color-gold: var(--gold);
+  --color-gold-glow: var(--gold-soft);
+  --color-crimson: var(--crimson);
+  --color-lime: var(--gold);
   --color-cream: var(--cream);
-  --color-gold: var(--lime);
-  --color-gold-glow: var(--lime-soft);
   --color-chalk: var(--cream);
   --color-closed: var(--closed);
 
@@ -55,43 +60,48 @@
 :root {
   --radius: 0.75rem;
 
-  /* Brand palette (dark "royal" theme) */
-  --navy: #0e2a2e; /* deepest ink-green (base) */
-  --deep-green: #14352f; /* raised surface */
-  --lime: #31d678; /* neon green accent */
-  --lime-soft: #5fe89a;
-  --cream: #edf4ee; /* near-white text */
-  --slate: #9cb7ac; /* muted sage */
+  /* Brand palette — pulled from the USCL crest */
+  --navy: #0a1e3d; /* deepest royal navy (base) — the dominant brand color */
+  --navy-2: #0f2950; /* raised navy surface (cards/panels) */
+  --royal: #3d7bef; /* royal blue — primary interactive (links, focus) */
+  --royal-deep: #1e56d6; /* deeper royal for gradients/edges */
+  --gold: #f4b324; /* championship gold — accent */
+  --gold-soft: #fbd24b; /* gold highlight */
+  --crimson: #d42433; /* crest crimson — secondary accent / live */
+  --cream: #eaf1fb; /* near-white text (cool tint) */
+  --slate: #9bb0d0; /* muted blue-grey */
 
   /* Dark, royal surfaces */
-  --background: #0e2a2e; /* deep green background */
-  --foreground: #edf4ee; /* near-white text */
-  --card: #14352f; /* deep-green raised card */
-  --card-foreground: #edf4ee;
-  --popover: #14352f;
-  --popover-foreground: #edf4ee;
+  --background: #0a1e3d; /* deep navy background */
+  --foreground: #eaf1fb; /* near-white text */
+  --card: #0f2950; /* raised navy card */
+  --card-foreground: #eaf1fb;
+  --popover: #0f2950;
+  --popover-foreground: #eaf1fb;
 
-  /* Neon green is the accent + primary CTA (dark text on it). */
-  --primary: #31d678;
-  --primary-foreground: #06231e;
-  --secondary: #17392f;
-  --secondary-foreground: #edf4ee;
-  --muted: #163a31;
-  --muted-foreground: #9cb7ac; /* readable sage on dark */
-  --accent: #31d678;
-  --accent-foreground: #06231e;
-  --destructive: #f26d6d;
+  /* Royal blue is the primary; gold is the accent/CTA pop (dark text on it). */
+  --primary: #3d7bef;
+  --primary-foreground: #ffffff;
+  --secondary: #14315c;
+  --secondary-foreground: #eaf1fb;
+  --muted: #12305a;
+  --muted-foreground: #9bb0d0; /* readable slate on navy */
+  --accent: #f4b324;
+  --accent-foreground: #0a1e3d;
+  --destructive: #e24b57; /* crimson-leaning red for errors */
 
-  --border: #274b42; /* subtle green-grey hairline */
-  --input: #2c5349;
-  --ring: #31d678;
+  --border: #223b66; /* subtle navy hairline */
+  --input: #2a4677;
+  --ring: #3d7bef;
 
   /* Backwards-compat named tokens */
-  --gold: #31d678;
-  --gold-glow: #5fe89a;
-  --chalk: #edf4ee;
-  --closed: #f26d6d;
-  --pitch-line: #31d678;
+  --gold-glow: #fbd24b;
+  --chalk: #eaf1fb;
+  --closed: #d42433; /* crimson for closed/urgent states */
+  --pitch-line: #f4b324;
+  /* `--lime*` kept as aliases → gold, so any legacy `var(--lime)` adopts the accent. */
+  --lime: var(--gold);
+  --lime-soft: var(--gold-soft);
 }
 
 @layer base {
@@ -121,39 +131,44 @@
    the new look without churn).
    ========================================================================== */
 
-/* Was: mown-grass stripes. Now: a whisper-faint diagonal tint, mostly off. */
+/* Was: mown-grass stripes. Now: a whisper-faint royal-navy sheen, mostly off. */
 .grass-stripes {
   background-image: none;
 }
 
-/* Neon-green glow wash for hero areas (royal depth on the dark ground). */
+/* Hero glow wash — royal-blue depth crowned with a warm gold halo. */
 .lamp-glow {
   background:
     radial-gradient(
-      75% 65% at 50% -10%,
-      rgba(49, 214, 120, 0.16) 0%,
-      rgba(49, 214, 120, 0.04) 45%,
-      transparent 70%
+      70% 60% at 50% -12%,
+      rgba(61, 123, 239, 0.22) 0%,
+      rgba(61, 123, 239, 0.06) 45%,
+      transparent 72%
+    ),
+    radial-gradient(
+      42% 40% at 50% -6%,
+      rgba(244, 179, 36, 0.16) 0%,
+      transparent 68%
     );
 }
 
-/* Divider — a thin lime rule (minimal accent). */
+/* Divider — a thin gold rule (championship accent). */
 .crease-rule {
   border: 0;
   height: 2px;
-  background: var(--lime);
+  background: linear-gradient(90deg, var(--gold), var(--gold-soft));
   border-radius: 2px;
   opacity: 1;
 }
 
-/* Countdown cell — raised deep-green tile with a neon digit. */
+/* Countdown cell — raised navy tile with a glowing gold digit. */
 .segment-cell {
-  background: #102b26;
+  background: #0c2347;
   border: 1px solid var(--border);
 }
 .segment-digit {
-  color: var(--lime);
-  text-shadow: 0 0 14px rgba(49, 214, 120, 0.35);
+  color: var(--gold);
+  text-shadow: 0 0 14px rgba(244, 179, 36, 0.4);
   font-variant-numeric: tabular-nums;
 }
 
@@ -177,7 +192,7 @@
   }
 }
 
-/* No-op (was gold text glow). */
+/* Subtle warm halo behind gold headline words. */
 .text-glow-gold {
-  text-shadow: none;
+  text-shadow: 0 0 18px rgba(244, 179, 36, 0.28);
 }

@@ -156,7 +156,7 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
                 type="button"
                 onClick={sell}
                 disabled={busy || !hasBid}
-                className="inline-flex items-center gap-2 rounded-sm bg-[#31d678] px-6 py-3 font-heading text-sm font-bold tracking-wide text-[#0e2a2e] uppercase transition-opacity hover:opacity-90 disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-sm bg-accent px-6 py-3 font-heading text-sm font-bold tracking-wide text-accent-foreground uppercase transition-opacity hover:opacity-90 disabled:opacity-50"
               >
                 {busy ? <Loader2 className="size-4 animate-spin" /> : <Flag className="size-4" />}
                 Sell {hasBid ? `· ${formatMoney(data.state.current_bid)}` : ""}

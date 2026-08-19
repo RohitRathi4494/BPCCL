@@ -7,11 +7,11 @@ export function LiveBadge({ live }: { live: boolean }) {
         className={cn(
           "size-2 rounded-full",
           live
-            ? "bg-[#31d678] shadow-[0_0_10px_#31d678] animate-pulse"
+            ? "bg-crimson shadow-[0_0_10px_var(--crimson)] animate-pulse"
             : "bg-muted-foreground",
         )}
       />
-      <span className={live ? "text-[#31d678]" : "text-muted-foreground"}>
+      <span className={live ? "text-crimson" : "text-muted-foreground"}>
         {live ? "Live" : "Connecting…"}
       </span>
     </span>

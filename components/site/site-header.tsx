@@ -52,7 +52,7 @@ export function SiteHeader() {
         <div className="hidden md:block">
           <Link
             href="/register"
-            className="inline-flex items-center rounded-sm bg-primary px-4 py-2 font-heading text-sm font-bold tracking-wide text-primary-foreground uppercase shadow-[0_0_20px_rgba(14,42,46,0.3)] transition-shadow hover:shadow-[0_0_28px_rgba(14,42,46,0.5)]"
+            className="inline-flex items-center rounded-sm bg-primary px-4 py-2 font-heading text-sm font-bold tracking-wide text-primary-foreground uppercase shadow-[0_0_20px_rgba(61,123,239,0.3)] transition-shadow hover:shadow-[0_0_28px_rgba(61,123,239,0.5)]"
           >
             Register to Play
           </Link>

@@ -304,7 +304,7 @@ export function RegistrationForm({ registrationFee }: { registrationFee: number 
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex items-center justify-center gap-2 self-start rounded-sm bg-primary px-7 py-3 font-heading text-sm font-bold tracking-wide text-primary-foreground uppercase shadow-[0_0_20px_rgba(14,42,46,0.3)] transition-shadow hover:shadow-[0_0_30px_rgba(14,42,46,0.55)] disabled:opacity-70"
+        className="inline-flex items-center justify-center gap-2 self-start rounded-sm bg-primary px-7 py-3 font-heading text-sm font-bold tracking-wide text-primary-foreground uppercase shadow-[0_0_20px_rgba(61,123,239,0.3)] transition-shadow hover:shadow-[0_0_30px_rgba(61,123,239,0.55)] disabled:opacity-70"
       >
         {pending && !confirmDuplicate && <Loader2 className="size-4 animate-spin" />}
         {pending ? "Submitting…" : "Submit Registration"}

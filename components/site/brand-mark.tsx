@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils";
 import { site } from "@/lib/site";
 
 // Logo intrinsic size (public/uscl-logo.png) — for next/image aspect ratio.
-const LOGO_W = 1100;
-const LOGO_H = 1430;
+const LOGO_W = 480;
+const LOGO_H = 600;
 
 /**
  * USCL brand lockup: the official crest logo next to the short name + season.

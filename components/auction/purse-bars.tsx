@@ -52,7 +52,7 @@ export function PurseBars({
               <div
                 className={cn(
                   "h-full rounded-full",
-                  isLeader ? "bg-primary" : "bg-[#31d678]",
+                  isLeader ? "bg-accent" : "bg-primary",
                 )}
                 style={{ width: `${pct}%` }}
               />

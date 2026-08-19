@@ -103,7 +103,7 @@ export function FranchiseConsole({
                 type="button"
                 onClick={bid}
                 disabled={!canPlace || bidding}
-                className="inline-flex items-center gap-2 rounded-sm bg-primary px-8 py-4 font-heading text-lg font-bold tracking-wide text-primary-foreground uppercase shadow-[0_0_24px_rgba(14,42,46,0.35)] transition-shadow hover:shadow-[0_0_34px_rgba(14,42,46,0.6)] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+                className="inline-flex items-center gap-2 rounded-sm bg-primary px-8 py-4 font-heading text-lg font-bold tracking-wide text-primary-foreground uppercase shadow-[0_0_24px_rgba(61,123,239,0.35)] transition-shadow hover:shadow-[0_0_34px_rgba(61,123,239,0.6)] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
               >
                 {bidding ? (
                   <Loader2 className="size-5 animate-spin" />

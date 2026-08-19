@@ -31,8 +31,8 @@ export default async function RegisterPage() {
           <Image
             src="/uscl-logo.png"
             alt="USCL — Urban Sports Champions Den, Season 2"
-            width={1100}
-            height={1430}
+            width={480}
+            height={600}
             priority
             className="mb-6 h-28 w-auto drop-shadow-[0_8px_30px_rgba(0,0,0,0.45)] sm:h-36"
           />

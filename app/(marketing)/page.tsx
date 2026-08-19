@@ -58,11 +58,12 @@ export default async function HomePage() {
             alt=""
             fill
             priority
+            unoptimized
             sizes="100vw"
             className="object-cover object-center"
           />
-          <div className="absolute inset-0 bg-[var(--navy)]/35" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[var(--navy)]/90 via-[var(--navy)]/45 to-transparent" />
+          <div className="absolute inset-0 bg-[var(--navy)]/20" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[var(--navy)]/85 via-[var(--navy)]/35 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-t from-[var(--navy)] via-transparent to-transparent" />
         </div>
 
@@ -90,7 +91,7 @@ export default async function HomePage() {
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
               href="/register"
-              className="inline-flex items-center rounded-sm bg-primary px-6 py-3 font-heading text-sm font-bold tracking-wide text-primary-foreground uppercase shadow-[0_0_24px_rgba(14,42,46,0.35)] transition-shadow hover:shadow-[0_0_34px_rgba(14,42,46,0.6)]"
+              className="inline-flex items-center rounded-sm bg-primary px-6 py-3 font-heading text-sm font-bold tracking-wide text-primary-foreground uppercase shadow-[0_0_24px_rgba(61,123,239,0.35)] transition-shadow hover:shadow-[0_0_34px_rgba(61,123,239,0.6)]"
             >
               Register to Play
             </Link>
@@ -155,7 +156,7 @@ export default async function HomePage() {
               </p>
               <Link
                 href="/register"
-                className="inline-flex w-fit items-center rounded-sm bg-primary px-5 py-2.5 font-heading text-sm font-bold tracking-wide text-primary-foreground uppercase shadow-[0_0_20px_rgba(14,42,46,0.3)] transition-shadow hover:shadow-[0_0_28px_rgba(14,42,46,0.5)]"
+                className="inline-flex w-fit items-center rounded-sm bg-primary px-5 py-2.5 font-heading text-sm font-bold tracking-wide text-primary-foreground uppercase shadow-[0_0_20px_rgba(61,123,239,0.3)] transition-shadow hover:shadow-[0_0_28px_rgba(61,123,239,0.5)]"
               >
                 Register Now
               </Link>

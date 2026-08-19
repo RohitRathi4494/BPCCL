@@ -81,7 +81,7 @@ export function ReviewForm({
           value="approve"
           disabled={pending}
           className={cn(
-            "inline-flex items-center gap-2 rounded-sm bg-[#31d678] px-5 py-2.5 font-heading text-sm font-bold tracking-wide text-[#0e2a2e] uppercase transition-opacity hover:opacity-90 disabled:opacity-60",
+            "inline-flex items-center gap-2 rounded-sm bg-accent px-5 py-2.5 font-heading text-sm font-bold tracking-wide text-accent-foreground uppercase transition-opacity hover:opacity-90 disabled:opacity-60",
           )}
         >
           {pending && <Loader2 className="size-4 animate-spin" />}
