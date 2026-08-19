@@ -65,6 +65,7 @@
   --navy-2: #0f2950; /* raised navy surface (cards/panels) */
   --royal: #3d7bef; /* royal blue — primary interactive (links, focus) */
   --royal-deep: #1e56d6; /* deeper royal for gradients/edges */
+  --royal-light: #9cc0ff; /* light sky-blue — highlights on the deep navy */
   --gold: #f4b324; /* championship gold — accent */
   --gold-soft: #fbd24b; /* gold highlight */
   --crimson: #d42433; /* crest crimson — secondary accent / live */
