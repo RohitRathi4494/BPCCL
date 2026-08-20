@@ -42,7 +42,7 @@ export default async function RegisterPage() {
           <h1 className="mt-4 font-heading text-4xl font-extrabold tracking-tight text-foreground uppercase sm:text-6xl">
             Enter the pool
           </h1>
-          <p className="mt-5 max-w-2xl text-lg text-foreground/85">
+          <p className="mt-5 text-lg text-foreground/85">
             Register to be part of{" "}
             <span className="font-semibold text-primary">
               {site.name} {site.season}
