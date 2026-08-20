@@ -18,6 +18,21 @@ export const PLAYER_ROLES = [
 export type PlayerRole = (typeof PLAYER_ROLES)[number];
 
 /**
+ * Playing roles grouped into categories. A player may pick at most one role per
+ * category (single-select within a group) but can select across categories
+ * (e.g. a batter who also bowls). The flat set is still stored in `players.roles`.
+ */
+export const ROLE_GROUPS = [
+  { label: "Batting", roles: ["Left Hand Batsman", "Right Hand Batsman"] },
+  {
+    label: "Bowling",
+    roles: ["Left Arm Pacer", "Left Arm Spinner", "Right Arm Pacer", "Right Arm Spin"],
+  },
+  { label: "All Rounder", roles: ["Batting All Rounder", "Bowling All Rounder"] },
+  { label: "Wicket Keeper", roles: ["WK Keeper Batsman"] },
+] as const satisfies ReadonlyArray<{ label: string; roles: readonly PlayerRole[] }>;
+
+/**
  * Self-reported career stats collected at registration. Stored as text so a
  * player can enter "NA" where a stat doesn't apply (e.g. a pure batsman's
  * bowling numbers). `key` is the form field name AND the players column name.

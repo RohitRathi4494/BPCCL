@@ -11,7 +11,7 @@ import {
   LOWER_SIZES,
   OTHER_SIZE,
   MIN_AGE,
-  PLAYER_ROLES,
+  ROLE_GROUPS,
   STAT_FIELDS,
   type StatKey,
 } from "@/lib/registration";
@@ -143,15 +143,20 @@ export function RegistrationForm({ registrationFee }: { registrationFee: number 
       if (confirmDuplicate) setConfirmDuplicate(false);
     };
 
-  const toggleRole = (role: string) => () => {
-    setValues((v) => ({
-      ...v,
-      roles: v.roles.includes(role)
-        ? v.roles.filter((r) => r !== role)
-        : [...v.roles, role],
-    }));
-    if (confirmDuplicate) setConfirmDuplicate(false);
-  };
+  // One selection per category: picking a role clears any other role from the
+  // same group; clicking the selected role again deselects it.
+  const toggleRoleInGroup =
+    (groupRoles: readonly string[], role: string) => () => {
+      setValues((v) => {
+        const already = v.roles.includes(role);
+        const withoutGroup = v.roles.filter((r) => !groupRoles.includes(r));
+        return {
+          ...v,
+          roles: already ? withoutGroup : [...withoutGroup, role],
+        };
+      });
+      if (confirmDuplicate) setConfirmDuplicate(false);
+    };
 
   const feeText = new Intl.NumberFormat("en-IN").format(registrationFee);
 
@@ -272,36 +277,47 @@ export function RegistrationForm({ registrationFee }: { registrationFee: number 
         {values.roles.map((r) => (
           <input key={r} type="hidden" name="roles" value={r} />
         ))}
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3">
           <span className={labelClass}>
             Playing Role <span className="text-primary">*</span>
           </span>
           <p className="text-xs text-muted-foreground">
-            Select all that apply.
+            Pick one option per category. You can select across categories (e.g.
+            a batter who also bowls).
           </p>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {PLAYER_ROLES.map((role) => {
-              const checked = values.roles.includes(role);
-              return (
-                <label
-                  key={role}
-                  className={cn(
-                    "flex cursor-pointer items-center gap-2.5 rounded-sm border px-3 py-2.5 text-sm transition-colors",
-                    checked
-                      ? "border-primary bg-primary/10 text-foreground"
-                      : "border-input bg-background text-foreground/80 hover:border-primary/50",
-                  )}
-                >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={toggleRole(role)}
-                    className="size-4 shrink-0 accent-[var(--gold)]"
-                  />
-                  {role}
-                </label>
-              );
-            })}
+          <div className="flex flex-col gap-4">
+            {ROLE_GROUPS.map((group) => (
+              <div key={group.label} className="flex flex-col gap-2">
+                <span className="font-mono text-[10px] tracking-[0.18em] text-muted-foreground/80 uppercase">
+                  {group.label}
+                </span>
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {group.roles.map((role) => {
+                    const checked = values.roles.includes(role);
+                    return (
+                      <label
+                        key={role}
+                        className={cn(
+                          "flex cursor-pointer items-center gap-2.5 rounded-sm border px-3 py-2.5 text-sm transition-colors",
+                          checked
+                            ? "border-primary bg-primary/10 text-foreground"
+                            : "border-input bg-background text-foreground/80 hover:border-primary/50",
+                        )}
+                      >
+                        <input
+                          type="radio"
+                          checked={checked}
+                          onChange={() => {}}
+                          onClick={toggleRoleInGroup(group.roles, role)}
+                          className="size-4 shrink-0 accent-[var(--gold)]"
+                        />
+                        {role}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
           <Err msg={state.errors?.roles} />
         </div>
