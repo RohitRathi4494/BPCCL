@@ -9,6 +9,75 @@ import { approvalEmail, rejectionEmail } from "@/lib/email/templates";
 
 export type ReviewState = { error?: string };
 export type DeleteState = { error?: string };
+export type BulkState = { error?: string; approved?: number };
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Approve several registrations at once from the list. Keeps each player's
+ * existing grade (a grade can still be assigned individually later), marks
+ * them approved, and emails only those that weren't already approved.
+ */
+export async function bulkApprovePlayers(
+  _prev: BulkState,
+  formData: FormData,
+): Promise<BulkState> {
+  const ids = [
+    ...new Set(
+      formData
+        .getAll("player_ids")
+        .map((v) => String(v))
+        .filter((v) => UUID_RE.test(v)),
+    ),
+  ];
+  if (ids.length === 0) return { error: "Select at least one registration." };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Your session expired — please sign in again." };
+
+  // Fetch to decide who is newly approved (for emails) vs already approved.
+  const { data: players, error: fetchErr } = await supabase
+    .from("players")
+    .select("id, full_name, email, assigned_category, status")
+    .in("id", ids);
+  if (fetchErr) {
+    console.error("bulkApprovePlayers fetch:", fetchErr.message);
+    return { error: "Could not load the selected players. Please try again." };
+  }
+
+  const newlyApproved = (players ?? []).filter((p) => p.status !== "approved");
+
+  const { error } = await supabase
+    .from("players")
+    .update({
+      status: "approved",
+      reviewed_at: new Date().toISOString(),
+      reviewed_by: user.id,
+    })
+    .in("id", ids);
+  if (error) {
+    console.error("bulkApprovePlayers update:", error.message);
+    return { error: "Could not approve the selected players. Please try again." };
+  }
+
+  // Notify the newly approved — best effort, never block on email failures.
+  for (const p of newlyApproved) {
+    if (!p.email) continue;
+    try {
+      const mail = approvalEmail(p.full_name, p.assigned_category);
+      await sendEmail({ to: p.email, subject: mail.subject, html: mail.html });
+    } catch (e) {
+      console.error("bulk approval email:", e);
+    }
+  }
+
+  revalidatePath("/admin/registrations");
+  return { approved: newlyApproved.length };
+}
 
 /**
  * Permanently delete a player registration. Admin-only via RLS
@@ -22,8 +91,6 @@ export async function deletePlayer(
   const playerId = String(formData.get("player_id") ?? "");
   // Defence-in-depth: only ever delete by a single, well-formed UUID. This makes
   // it impossible for a blank/garbled value to widen the delete.
-  const UUID_RE =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!UUID_RE.test(playerId)) return { error: "Missing or invalid player." };
 
   const supabase = await createClient();

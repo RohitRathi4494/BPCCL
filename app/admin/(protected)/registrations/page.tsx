@@ -1,14 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   getRegistrations,
   getRegistrationCounts,
   type RegistrationStatus,
 } from "@/lib/queries/players";
 import { RegistrationsSearch } from "@/components/admin/registrations-search";
-import { RegistrationStatus as StatusBadge } from "@/components/admin/registration-status";
-import { DeletePlayerButton } from "@/components/admin/delete-player-button";
+import { RegistrationsTable } from "@/components/admin/registrations-table";
 
 export const metadata: Metadata = {
   title: "Registrations",
@@ -21,14 +20,6 @@ const STATUS_TABS: { key: RegistrationStatus; label: string }[] = [
   { key: "approved", label: "Approved" },
   { key: "rejected", label: "Rejected" },
 ];
-
-function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
 
 export default async function RegistrationsPage({
   searchParams,
@@ -102,81 +93,8 @@ export default async function RegistrationsPage({
         <RegistrationsSearch />
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto rounded-lg border border-border">
-        <table className="w-full min-w-[720px] border-collapse text-sm">
-          <thead>
-            <tr className="border-b border-border bg-card text-left">
-              {["Player", "Contact", "Email", "Age", "Submitted", "Status", "Grade", ""].map(
-                (h) => (
-                  <th
-                    key={h}
-                    className="px-4 py-3 font-mono text-[10px] tracking-[0.16em] text-muted-foreground uppercase"
-                  >
-                    {h}
-                  </th>
-                ),
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            {result.rows.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="px-4 py-16 text-center text-muted-foreground">
-                  No registrations match this view.
-                </td>
-              </tr>
-            ) : (
-              result.rows.map((p) => (
-                <tr
-                  key={p.id}
-                  className="border-b border-border/60 last:border-0 hover:bg-card/60"
-                >
-                  <td className="px-4 py-3">
-                    <span className="font-medium text-foreground">{p.full_name}</span>
-                    {p.cricheroes_url && (
-                      <a
-                        href={p.cricheroes_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="ml-2 inline-flex items-center gap-0.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase hover:text-primary"
-                      >
-                        CH <ExternalLink className="size-3" />
-                      </a>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">{p.phone}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{p.email ?? "—"}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{p.age}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
-                    {fmtDate(p.submitted_at)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <StatusBadge status={p.status} />
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {p.assigned_category ?? "—"}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-2">
-                      <Link
-                        href={`/admin/registrations/${p.id}`}
-                        className="inline-flex items-center rounded-sm border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
-                      >
-                        Review
-                      </Link>
-                      <DeletePlayerButton
-                        playerId={p.id}
-                        playerName={p.full_name}
-                      />
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      {/* Table with multi-select + bulk approve */}
+      <RegistrationsTable rows={result.rows} />
 
       {/* Pagination */}
       <div className="flex items-center justify-between gap-4">
