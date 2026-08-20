@@ -193,9 +193,9 @@ export default async function ReviewPlayerPage({
           </div>
         </div>
 
-        {/* Right: review action */}
-        <div className="flex flex-col gap-4">
-          <div className="sticky top-24 rounded-lg border border-border bg-card p-6">
+        {/* Right: review action + danger zone stick together as one column */}
+        <div className="sticky top-24 flex flex-col gap-4 self-start">
+          <div className="rounded-lg border border-border bg-card p-6">
             <h2 className="font-heading text-lg font-bold tracking-tight text-foreground uppercase">
               Review
             </h2>
