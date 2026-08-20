@@ -34,7 +34,7 @@ export default async function RegisterPage() {
             width={480}
             height={600}
             priority
-            className="mb-6 h-28 w-auto drop-shadow-[0_8px_30px_rgba(0,0,0,0.45)] sm:h-36"
+            className="mx-auto mb-8 h-44 w-auto drop-shadow-[0_8px_30px_rgba(0,0,0,0.45)] sm:h-56"
           />
           <span className="font-mono text-xs tracking-[0.28em] text-primary uppercase">
             Player Registration · {site.season}
@@ -43,9 +43,13 @@ export default async function RegisterPage() {
             Enter the pool
           </h1>
           <p className="mt-5 max-w-2xl text-lg text-foreground/85">
-            Register to be part of {site.name} {site.season} at{" "}
-            {site.venue.full}. No account needed — just fill the form below.
-            Open to players aged{" "}
+            Register to be part of{" "}
+            <span className="font-semibold text-primary">
+              {site.name} {site.season}
+            </span>{" "}
+            at{" "}
+            <span className="font-semibold text-primary">{site.venue.full}</span>.
+            No account needed — just fill the form below. Open to players aged{" "}
             <span className="text-primary">{MIN_AGE} and above</span>.
           </p>
 
