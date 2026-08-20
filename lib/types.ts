@@ -33,3 +33,7 @@ export type Match = Tables<"matches">;
 export type Innings = Tables<"innings">;
 export type Ball = Tables<"balls">;
 export type Sponsor = Tables<"sponsors">;
+export type Wishlist = Tables<"wishlists">;
+
+// View row: an approved player with evaluation columns (stats + cricheroes).
+export type PoolPlayer = Database["public"]["Views"]["players_pool"]["Row"];

@@ -687,8 +687,72 @@ export type Database = {
           },
         ]
       }
+      wishlists: {
+        Row: {
+          created_at: string
+          franchise_id: string
+          id: string
+          player_id: string
+          remarks: string | null
+          target_amount: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          franchise_id: string
+          id?: string
+          player_id: string
+          remarks?: string | null
+          target_amount?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          franchise_id?: string
+          id?: string
+          player_id?: string
+          remarks?: string | null
+          target_amount?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wishlists_franchise_id_fkey"
+            columns: ["franchise_id"]
+            isOneToOne: false
+            referencedRelation: "franchises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wishlists_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
+      players_pool: {
+        Row: {
+          age: number | null
+          assigned_category: string | null
+          batting_average: string | null
+          batting_strike_rate: string | null
+          bowling_strike_rate: string | null
+          cricheroes_url: string | null
+          economy: string | null
+          full_name: string | null
+          id: string | null
+          matches_played: string | null
+          photo_url: string | null
+          roles: string[] | null
+          runs_scored: string | null
+          wickets_taken: string | null
+        }
+        Relationships: []
+      }
       players_public: {
         Row: {
           assigned_category: string | null

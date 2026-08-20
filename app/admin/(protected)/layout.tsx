@@ -6,6 +6,7 @@ import { BrandMark } from "@/components/site/brand-mark";
 
 const adminNav = [
   { label: "Registrations", href: "/admin/registrations" },
+  { label: "Franchises", href: "/admin/franchises" },
   { label: "Auction", href: "/admin/auction" },
   { label: "Fixtures", href: "/admin/fixtures", soon: true },
   { label: "Scoring", href: "/admin/scoring", soon: true },

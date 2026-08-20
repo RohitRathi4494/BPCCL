@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
 import { Check, ExternalLink, Loader2, X } from "lucide-react";
 import {
@@ -26,45 +26,45 @@ export function RegistrationsTable({ rows }: { rows: Player[] }) {
     {},
   );
 
-  // After a successful bulk approve, drop the selection.
-  useEffect(() => {
-    if (state.approved !== undefined) setSelected(new Set());
-  }, [state]);
+  // Clear the selection when a new bulk-approve result arrives — done during
+  // render (React's endorsed reset-on-change pattern), not in an effect.
+  const [seenState, setSeenState] = useState(state);
+  if (state !== seenState) {
+    setSeenState(state);
+    if (state.approved !== undefined && selected.size > 0) setSelected(new Set());
+  }
 
-  // Prune ids that are no longer on the page (e.g. after a refresh).
-  useEffect(() => {
-    const present = new Set(rows.map((r) => r.id));
-    setSelected((prev) => {
-      const next = new Set([...prev].filter((id) => present.has(id)));
-      return next.size === prev.size ? prev : next;
-    });
-  }, [rows]);
+  // Effective selection = only ids still present on the page (derived, so a
+  // refresh that drops rows can't leave stale ids selected).
+  const present = new Set(rows.map((r) => r.id));
+  const effective = new Set([...selected].filter((id) => present.has(id)));
 
-  const allSelected = rows.length > 0 && selected.size === rows.length;
+  const allSelected = rows.length > 0 && effective.size === rows.length;
   const toggle = (id: string) =>
     setSelected((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   const toggleAll = () =>
-    setSelected((prev) =>
-      prev.size === rows.length ? new Set() : new Set(rows.map((r) => r.id)),
+    setSelected(() =>
+      effective.size === rows.length ? new Set() : new Set(rows.map((r) => r.id)),
     );
 
   return (
     <div className="flex flex-col gap-3">
       {/* Bulk action bar — appears once at least one row is selected */}
-      {selected.size > 0 && (
+      {effective.size > 0 && (
         <form
           action={formAction}
           className="flex flex-wrap items-center gap-3 rounded-lg border border-accent/40 bg-accent/10 px-4 py-2.5"
         >
-          {[...selected].map((id) => (
+          {[...effective].map((id) => (
             <input key={id} type="hidden" name="player_ids" value={id} />
           ))}
           <span className="font-mono text-xs tracking-wider text-foreground uppercase">
-            {selected.size} selected
+            {effective.size} selected
           </span>
           <button
             type="submit"
@@ -76,7 +76,7 @@ export function RegistrationsTable({ rows }: { rows: Player[] }) {
             ) : (
               <Check className="size-3.5" />
             )}
-            Approve {selected.size} selected
+            Approve {effective.size} selected
           </button>
           <button
             type="button"
@@ -128,7 +128,7 @@ export function RegistrationsTable({ rows }: { rows: Player[] }) {
               </tr>
             ) : (
               rows.map((p) => {
-                const checked = selected.has(p.id);
+                const checked = effective.has(p.id);
                 return (
                   <tr
                     key={p.id}
