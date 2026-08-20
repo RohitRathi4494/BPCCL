@@ -36,7 +36,7 @@ export default async function HomePage() {
     {
       icon: Trophy,
       value: categories.length ? String(categories.length) : "4",
-      label: "Player Grades",
+      label: "Player Categories",
     },
     {
       icon: Gavel,
@@ -167,7 +167,7 @@ export default async function HomePage() {
           <div className="mt-8 grid gap-8 md:grid-cols-2">
             <p className="text-lg leading-relaxed text-foreground/85">
               Any player can enter the pool. Submit your details and your
-              CricHeroes profile — our reviewers assign you a grade
+              CricHeroes profile — our reviewers assign you a category
               {categories.length ? ` (${categories.join(", ")})` : ""} ahead of
               the live auction, where all {settings?.franchise_count ?? 16}{" "}
               franchises bid to build their squads.

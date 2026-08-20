@@ -61,7 +61,7 @@ export default async function RegistrationsPage({
           Registrations
         </h1>
         <p className="text-sm text-muted-foreground">
-          Review players, open their profiles, and assign a grade before the
+          Review players, open their profiles, and assign a category before the
           auction.
         </p>
       </div>

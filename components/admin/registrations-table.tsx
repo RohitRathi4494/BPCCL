@@ -104,7 +104,7 @@ export function RegistrationsTable({ rows }: { rows: Player[] }) {
                   className="size-4 accent-[var(--gold)] align-middle"
                 />
               </th>
-              {["Player", "Contact", "Email", "Age", "Submitted", "Status", "Grade", ""].map(
+              {["Player", "Contact", "Email", "Age", "Submitted", "Status", "Category", ""].map(
                 (h) => (
                   <th
                     key={h}

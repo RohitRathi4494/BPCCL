@@ -68,7 +68,7 @@ export function confirmationEmail(
       `<p style="margin:0 0 14px;">Hi ${escapeHtml(fullName)},</p>
        <p style="margin:0 0 14px;">Thanks for registering for <strong>${site.name} ${site.season}</strong>.
        Your details are in, and our reviewers will assess your CricHeroes profile and assign you a
-       grade ahead of the player auction.</p>
+       category ahead of the player auction.</p>
        ${
          registrationCode
            ? `<div style="margin:0 0 18px;padding:14px 18px;background:${NAVY_SOFT};border-left:3px solid ${GOLD};border-radius:6px;">
@@ -92,7 +92,7 @@ export function confirmationEmail(
 
 export function approvalEmail(
   fullName: string,
-  grade: string | null,
+  category: string | null,
 ): { subject: string; html: string } {
   return {
     subject: `You're approved for the USCL ${site.season} auction`,
@@ -102,10 +102,10 @@ export function approvalEmail(
        <p style="margin:0 0 14px;">Great news &mdash; you've been
        <strong style="color:${GOLD};">approved</strong> for the ${site.name} ${site.season} auction.</p>
        ${
-         grade
+         category
            ? `<div style="margin:0 0 18px;padding:14px 18px;background:${NAVY_SOFT};border-left:3px solid ${GOLD};border-radius:6px;">
-                <span style="color:${SLATE};font-size:12px;letter-spacing:1px;text-transform:uppercase;">Your assigned grade</span><br/>
-                <strong style="color:${CREAM};font-size:18px;">${escapeHtml(grade)}</strong>
+                <span style="color:${SLATE};font-size:12px;letter-spacing:1px;text-transform:uppercase;">Your assigned category</span><br/>
+                <strong style="color:${CREAM};font-size:18px;">${escapeHtml(category)}</strong>
               </div>`
            : ""
        }
@@ -114,7 +114,7 @@ export function approvalEmail(
        <p style="margin:0;color:${SLATE};">Best of luck &mdash; you've earned your place in the pool.</p>`,
       {
         preview: `You're approved for the ${site.shortName} ${site.season} auction${
-          grade ? ` &mdash; grade ${grade}` : ""
+          category ? ` &mdash; category ${category}` : ""
         }.`,
       },
     ),

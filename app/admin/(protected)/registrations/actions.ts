@@ -16,7 +16,7 @@ const UUID_RE =
 
 /**
  * Approve several registrations at once from the list. Keeps each player's
- * existing grade (a grade can still be assigned individually later), marks
+ * existing category (a category can still be assigned individually later), marks
  * them approved, and emails only those that weren't already approved.
  */
 export async function bulkApprovePlayers(

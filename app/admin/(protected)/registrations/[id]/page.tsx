@@ -200,7 +200,7 @@ export default async function ReviewPlayerPage({
               Review
             </h2>
             <p className="mt-1 mb-4 text-xs text-muted-foreground">
-              Open the CricHeroes profile, then set a grade and decide.
+              Open the CricHeroes profile, then set a category and decide.
             </p>
             <ReviewForm
               playerId={player.id}

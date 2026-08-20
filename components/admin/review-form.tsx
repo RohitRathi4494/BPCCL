@@ -36,7 +36,7 @@ export function ReviewForm({
           htmlFor="assigned_category"
           className="font-mono text-[11px] tracking-[0.18em] text-muted-foreground uppercase"
         >
-          Assign Grade
+          Assign Category
         </label>
         <select
           id="assigned_category"
@@ -44,7 +44,7 @@ export function ReviewForm({
           defaultValue={currentCategory ?? ""}
           className="w-full appearance-none rounded-sm border border-input bg-background px-3.5 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
         >
-          <option value="">— Select grade —</option>
+          <option value="">— Select category —</option>
           {categories.map((c) => (
             <option key={c} value={c}>
               {c}
@@ -52,7 +52,7 @@ export function ReviewForm({
           ))}
         </select>
         <p className="text-xs text-muted-foreground">
-          A grade is required to approve.
+          A category is required to approve.
         </p>
       </div>
 

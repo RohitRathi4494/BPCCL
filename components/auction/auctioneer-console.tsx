@@ -183,7 +183,7 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search name or grade…"
+                  placeholder="Search name or category…"
                   className="w-full rounded-sm border border-input bg-background py-2 pr-3 pl-9 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                 />
               </div>

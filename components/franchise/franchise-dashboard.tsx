@@ -89,11 +89,11 @@ function CricLink({ url }: { url: string | null }) {
   );
 }
 
-function GradeBadge({ grade }: { grade: string | null }) {
-  if (!grade) return null;
+function CategoryBadge({ category }: { category: string | null }) {
+  if (!category) return null;
   return (
     <span className="rounded-sm border border-accent/40 bg-accent/10 px-2 py-0.5 font-mono text-[10px] tracking-wider text-accent uppercase">
-      {grade}
+      {category}
     </span>
   );
 }
@@ -217,7 +217,7 @@ export function FranchiseDashboard({
                           <span className="font-medium text-foreground">
                             {p.full_name}
                           </span>
-                          <GradeBadge grade={p.assigned_category} />
+                          <CategoryBadge category={p.assigned_category} />
                         </div>
                         <Roles roles={p.roles} />
                       </div>
@@ -288,7 +288,7 @@ export function FranchiseDashboard({
               <table className="w-full min-w-[420px] text-sm">
                 <thead>
                   <tr className="border-b border-border bg-card text-left">
-                    {["Player", "Grade", "Price", "Round"].map((h) => (
+                    {["Player", "Category", "Price", "Round"].map((h) => (
                       <th
                         key={h}
                         className="px-4 py-3 font-mono text-[10px] tracking-[0.16em] text-muted-foreground uppercase"
@@ -305,7 +305,7 @@ export function FranchiseDashboard({
                         {s.player?.full_name ?? "—"}
                       </td>
                       <td className="px-4 py-3">
-                        <GradeBadge grade={s.player?.assigned_category ?? null} />
+                        <CategoryBadge category={s.player?.assigned_category ?? null} />
                       </td>
                       <td className="px-4 py-3 font-mono text-foreground">
                         ₹{inr(s.sold_price)}
@@ -383,7 +383,7 @@ function WishlistRow({
             <span className="font-medium text-foreground">
               {entry.player?.full_name ?? "Player"}
             </span>
-            <GradeBadge grade={entry.player?.assigned_category ?? null} />
+            <CategoryBadge category={entry.player?.assigned_category ?? null} />
           </div>
           {entry.player && <StatLine p={entry.player} />}
           <CricLink url={entry.player?.cricheroes_url ?? null} />
