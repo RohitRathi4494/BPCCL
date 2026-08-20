@@ -304,6 +304,7 @@ export type Database = {
       }
       league_settings: {
         Row: {
+          auction_day_at: string | null
           base_price: Json
           bid_increment: number
           categories: Json
@@ -311,12 +312,16 @@ export type Database = {
           franchise_count: number
           id: string
           purse_per_franchise: number
+          registration_closes_at: string | null
           registration_fee: number
           season: string
+          season_starts_at: string | null
+          season_starts_note: string | null
           squad_max_per_franchise: number
           squad_min_per_franchise: number
         }
         Insert: {
+          auction_day_at?: string | null
           base_price?: Json
           bid_increment?: number
           categories?: Json
@@ -324,12 +329,16 @@ export type Database = {
           franchise_count?: number
           id?: string
           purse_per_franchise?: number
+          registration_closes_at?: string | null
           registration_fee?: number
           season?: string
+          season_starts_at?: string | null
+          season_starts_note?: string | null
           squad_max_per_franchise?: number
           squad_min_per_franchise?: number
         }
         Update: {
+          auction_day_at?: string | null
           base_price?: Json
           bid_increment?: number
           categories?: Json
@@ -337,8 +346,11 @@ export type Database = {
           franchise_count?: number
           id?: string
           purse_per_franchise?: number
+          registration_closes_at?: string | null
           registration_fee?: number
           season?: string
+          season_starts_at?: string | null
+          season_starts_note?: string | null
           squad_max_per_franchise?: number
           squad_min_per_franchise?: number
         }

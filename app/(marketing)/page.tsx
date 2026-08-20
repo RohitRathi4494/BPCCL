@@ -120,21 +120,21 @@ export default async function HomePage() {
             </div>
           </div>
 
-          {/* Countdowns — key season dates (IST). Season start is a window, so
-              it shows the month/week rather than a to-the-second countdown. */}
+          {/* Countdowns — key season dates from league_settings (admin-editable).
+              Season start may be a window (a note) rather than an exact date. */}
           <div className="mt-14 grid gap-8 sm:grid-cols-3">
             <Countdown
-              target="2026-09-15T23:59:00+05:30"
+              target={settings?.registration_closes_at ?? null}
               title="Registration Closes"
             />
             <Countdown
-              target="2026-09-26T09:00:00+05:30"
+              target={settings?.auction_day_at ?? null}
               title="Auction Day"
             />
             <Countdown
-              target={null}
+              target={settings?.season_starts_at ?? null}
               title="Season Starts"
-              placeholder="3rd Week of October"
+              placeholder={settings?.season_starts_note ?? "To be announced"}
             />
           </div>
         </div>
