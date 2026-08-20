@@ -34,7 +34,7 @@ export default async function RegisterPage() {
             width={480}
             height={600}
             priority
-            className="mx-auto mb-8 h-44 w-auto drop-shadow-[0_8px_30px_rgba(0,0,0,0.45)] sm:h-56"
+            className="mb-8 h-44 w-auto drop-shadow-[0_8px_30px_rgba(0,0,0,0.45)] sm:h-56"
           />
           <span className="font-mono text-xs tracking-[0.28em] text-primary uppercase">
             Player Registration · {site.season}
@@ -44,11 +44,11 @@ export default async function RegisterPage() {
           </h1>
           <p className="mt-5 text-lg text-foreground/85">
             Register to be part of{" "}
-            <span className="font-semibold text-primary">
+            <span className="font-bold text-foreground">
               {site.name} {site.season}
             </span>{" "}
             at{" "}
-            <span className="font-semibold text-primary">{site.venue.full}</span>.
+            <span className="font-bold text-foreground">{site.venue.full}</span>.
             No account needed — just fill the form below. Open to players aged{" "}
             <span className="text-primary">{MIN_AGE} and above</span>.
           </p>
