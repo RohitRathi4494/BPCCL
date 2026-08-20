@@ -47,10 +47,13 @@ export function Countdown({
   target,
   title,
   className,
+  placeholder = "To be announced",
 }: {
   target: string | null;
   title: string;
   className?: string;
+  /** Shown (instead of a ticking countdown) when there's no exact `target`. */
+  placeholder?: string;
 }) {
   const [units, setUnits] = useState<Unit[] | null>(null);
 
@@ -78,7 +81,7 @@ export function Countdown({
             aria-hidden
           />
           <span className="font-mono text-sm tracking-[0.18em] text-[var(--cream)] uppercase">
-            To be announced
+            {placeholder}
           </span>
         </div>
       ) : (

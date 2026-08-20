@@ -120,11 +120,22 @@ export default async function HomePage() {
             </div>
           </div>
 
-          {/* Countdowns — dates TBA until wired to league_settings */}
+          {/* Countdowns — key season dates (IST). Season start is a window, so
+              it shows the month/week rather than a to-the-second countdown. */}
           <div className="mt-14 grid gap-8 sm:grid-cols-3">
-            <Countdown target={null} title="Registration Closes" />
-            <Countdown target={null} title="Auction Day" />
-            <Countdown target={null} title="Season Starts" />
+            <Countdown
+              target="2026-09-15T23:59:00+05:30"
+              title="Registration Closes"
+            />
+            <Countdown
+              target="2026-09-26T09:00:00+05:30"
+              title="Auction Day"
+            />
+            <Countdown
+              target={null}
+              title="Season Starts"
+              placeholder="3rd Week of October"
+            />
           </div>
         </div>
       </section>
