@@ -3,6 +3,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { SPONSOR_TIERS } from "@/lib/site";
 import type { TablesInsert } from "@/lib/types";
+import { sendEmail } from "@/lib/email/send";
+import { sponsorEnquiryEmail } from "@/lib/email/templates";
+
+/** Where sponsor enquiries are sent for review (env override optional). */
+const ENQUIRY_INBOX =
+  process.env.SPONSOR_ENQUIRY_TO || "Urbansportsstudio@gmail.com";
 
 export type EnquiryState = {
   status: "idle" | "success" | "error";
@@ -63,6 +69,27 @@ export async function submitSponsorEnquiry(
       status: "error",
       message: "Something went wrong. Please try again in a moment.",
     };
+  }
+
+  // Notify the partnerships inbox — never let an email failure break the
+  // submission (the enquiry is already safely stored above).
+  try {
+    const { subject, html } = sponsorEnquiryEmail({
+      contact_name,
+      company,
+      email,
+      phone: phone || null,
+      tier_interest: tier_interest || null,
+      message: message || null,
+    });
+    await sendEmail({
+      to: ENQUIRY_INBOX,
+      subject,
+      html,
+      replyTo: email, // reply goes straight to the sponsor
+    });
+  } catch (e) {
+    console.error("sponsor enquiry email:", e);
   }
 
   return {

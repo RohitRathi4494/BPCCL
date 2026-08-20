@@ -90,6 +90,47 @@ export function confirmationEmail(
   };
 }
 
+/**
+ * Internal notification sent to the partnerships inbox when a sponsor submits
+ * the enquiry form. Reply-to is set to the sponsor's email by the caller, so a
+ * reply goes straight back to them.
+ */
+export function sponsorEnquiryEmail(data: {
+  contact_name: string;
+  company: string;
+  email: string;
+  phone: string | null;
+  tier_interest: string | null;
+  message: string | null;
+}): { subject: string; html: string } {
+  const row = (label: string, value: string) =>
+    `<tr>
+       <td style="padding:8px 0;color:${SLATE};font-size:12px;letter-spacing:1px;text-transform:uppercase;width:130px;vertical-align:top;">${label}</td>
+       <td style="padding:8px 0;color:${CREAM};font-size:15px;">${value}</td>
+     </tr>`;
+  return {
+    subject: `New sponsor enquiry — ${data.company}`,
+    html: shell(
+      "New sponsor enquiry",
+      `<p style="margin:0 0 16px;">A sponsor just submitted the enquiry form. Details below &mdash;
+       reply to this email to reach them directly.</p>
+       <table style="width:100%;border-collapse:collapse;border-top:1px solid rgba(255,255,255,0.08);">
+         ${row("Contact", escapeHtml(data.contact_name))}
+         ${row("Company", escapeHtml(data.company))}
+         ${row("Email", `<a href="mailto:${escapeHtml(data.email)}" style="color:${GOLD};">${escapeHtml(data.email)}</a>`)}
+         ${row("Phone", data.phone ? escapeHtml(data.phone) : "&mdash;")}
+         ${row("Tier", data.tier_interest ? escapeHtml(data.tier_interest) : "&mdash;")}
+         ${row("Message", data.message ? escapeHtml(data.message).replace(/\n/g, "<br/>") : "&mdash;")}
+       </table>`,
+      {
+        preview: `${data.company} is interested${
+          data.tier_interest ? ` in the ${data.tier_interest} tier` : ""
+        }.`,
+      },
+    ),
+  };
+}
+
 export function approvalEmail(
   fullName: string,
   category: string | null,
