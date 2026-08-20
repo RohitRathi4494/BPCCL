@@ -54,7 +54,10 @@ function shell(
   </div>`;
 }
 
-export function confirmationEmail(fullName: string): {
+export function confirmationEmail(
+  fullName: string,
+  registrationCode?: string,
+): {
   subject: string;
   html: string;
 } {
@@ -66,6 +69,17 @@ export function confirmationEmail(fullName: string): {
        <p style="margin:0 0 14px;">Thanks for registering for <strong>${site.name} ${site.season}</strong>.
        Your details are in, and our reviewers will assess your CricHeroes profile and assign you a
        grade ahead of the player auction.</p>
+       ${
+         registrationCode
+           ? `<div style="margin:0 0 18px;padding:14px 18px;background:${NAVY_SOFT};border-left:3px solid ${GOLD};border-radius:6px;">
+                <span style="color:${SLATE};font-size:12px;letter-spacing:1px;text-transform:uppercase;">Your registration ID</span><br/>
+                <strong style="color:${CREAM};font-size:20px;letter-spacing:2px;">${escapeHtml(
+                  registrationCode,
+                )}</strong><br/>
+                <span style="color:${SLATE};font-size:12px;">Keep this handy &mdash; quote it in any correspondence with us.</span>
+              </div>`
+           : ""
+       }
        <p style="margin:0 0 14px;">We'll email you again once a decision is made. If you're selected by a
        franchise during the auction, the registration fee you agreed to on the form will apply.</p>
        <p style="margin:0;color:${SLATE};">See you on the pitch &mdash; ${site.venue.name}, ${site.venue.city}.</p>`,

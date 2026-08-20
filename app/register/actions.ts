@@ -12,6 +12,7 @@ import {
   normalizePhone,
   isValidPhone,
   computeAge,
+  generateRegistrationCode,
 } from "@/lib/registration";
 import type { TablesInsert } from "@/lib/types";
 import { sendEmail } from "@/lib/email/send";
@@ -191,11 +192,26 @@ export async function submitRegistration(
     registration_fee_agreed: true,
   };
 
-  // No .select() — RLS lets the public INSERT but not SELECT the players table.
-  const { error } = await supabase.from("players").insert(payload);
+  // Assign a unique registration code, retrying on the rare code collision
+  // (23505 = unique_violation). No .select() — RLS lets the public INSERT but
+  // not SELECT the players table, so we track the code we generated ourselves.
+  let registrationCode = "";
+  let insertError: { code?: string; message: string } | null = null;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    registrationCode = generateRegistrationCode();
+    const { error } = await supabase
+      .from("players")
+      .insert({ ...payload, registration_code: registrationCode });
+    if (!error) {
+      insertError = null;
+      break;
+    }
+    insertError = error;
+    if (error.code !== "23505") break; // not a code collision — real failure
+  }
 
-  if (error) {
-    console.error("submitRegistration:", error.message);
+  if (insertError) {
+    console.error("submitRegistration:", insertError.message);
     return {
       status: "error",
       message: "Something went wrong saving your registration. Please try again.",
@@ -204,7 +220,7 @@ export async function submitRegistration(
 
   // Fire the confirmation email — never let an email failure break registration.
   try {
-    const { subject, html } = confirmationEmail(full_name);
+    const { subject, html } = confirmationEmail(full_name, registrationCode);
     await sendEmail({ to: email, subject, html });
   } catch (e) {
     console.error("confirmation email:", e);
@@ -213,6 +229,7 @@ export async function submitRegistration(
   return {
     status: "success",
     message:
-      "You're registered! Our reviewers will assess your profile ahead of the auction. If you're selected, you'll be contacted about the registration fee.",
+      `You're registered! Your registration ID is ${registrationCode} — we've emailed it to you too. ` +
+      "Our reviewers will assess your profile ahead of the auction. If you're selected, you'll be contacted about the registration fee.",
   };
 }

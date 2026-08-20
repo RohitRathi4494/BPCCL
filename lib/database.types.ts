@@ -440,6 +440,7 @@ export type Database = {
           photo_url: string | null
           preferred_category: string | null
           previous_team: string | null
+          registration_code: string | null
           registration_fee_agreed: boolean
           rejection_reason: string | null
           reviewed_at: string | null
@@ -480,6 +481,7 @@ export type Database = {
           photo_url?: string | null
           preferred_category?: string | null
           previous_team?: string | null
+          registration_code?: string | null
           registration_fee_agreed?: boolean
           rejection_reason?: string | null
           reviewed_at?: string | null
@@ -520,6 +522,7 @@ export type Database = {
           photo_url?: string | null
           preferred_category?: string | null
           previous_team?: string | null
+          registration_code?: string | null
           registration_fee_agreed?: boolean
           rejection_reason?: string | null
           reviewed_at?: string | null

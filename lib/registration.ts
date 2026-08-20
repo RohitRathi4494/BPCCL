@@ -120,6 +120,21 @@ export function isWorkEmail(email: string): boolean {
   return !PERSONAL_EMAIL_DOMAINS.has(domain);
 }
 
+/**
+ * Human-readable, collision-resistant registration code, e.g. "USCL2-7Q3K9M".
+ * Crockford base32 alphabet (no I/L/O/U) so codes are unambiguous when read
+ * aloud or typed. 6 chars → ~1 billion combinations; the action retries on the
+ * rare collision against the UNIQUE index.
+ */
+const CODE_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+export function generateRegistrationCode(): string {
+  const bytes = new Uint8Array(6);
+  crypto.getRandomValues(bytes);
+  let s = "";
+  for (const b of bytes) s += CODE_ALPHABET[b % 32];
+  return `USCL2-${s}`;
+}
+
 /** Whole-year age from an ISO date string (YYYY-MM-DD) as of `ref`. */
 export function computeAge(dobISO: string, ref: Date = new Date()): number {
   const dob = new Date(dobISO);

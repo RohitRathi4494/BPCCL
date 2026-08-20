@@ -6,7 +6,6 @@ import { Countdown } from "@/components/site/countdown";
 import { SectionHeading } from "@/components/site/section-heading";
 import { SponsorCard } from "@/components/site/sponsor-card";
 import { Reveal } from "@/components/site/reveal";
-import { RegistrationPopup } from "@/components/site/registration-popup";
 import { getLeagueSettings, settingsCategories } from "@/lib/queries/settings";
 import { getSponsors } from "@/lib/queries/sponsors";
 import { site } from "@/lib/site";
@@ -43,15 +42,13 @@ export default async function HomePage() {
       icon: Gavel,
       value: settings
         ? `${settings.squad_min_per_franchise}–${settings.squad_max_per_franchise}`
-        : "15–18",
+        : "17–22",
       label: "Squad Size",
     },
   ];
 
   return (
     <>
-      <RegistrationPopup />
-
       {/* ================= HERO ================= */}
       <section className="relative overflow-hidden">
         {/* Desktop: full-bleed champions background + overlay for legibility */}
@@ -164,7 +161,7 @@ export default async function HomePage() {
               the live auction, where all {settings?.franchise_count ?? 16}{" "}
               franchises bid to build their squads.
             </p>
-            <div className="flex flex-col justify-center gap-4 rounded-lg border border-border bg-card p-8">
+            <div className="card-glow flex flex-col justify-center gap-4 rounded-lg border border-primary/50 bg-card p-8">
               <p className="font-mono text-xs tracking-[0.2em] text-primary uppercase">
                 Registration is open
               </p>
@@ -195,13 +192,21 @@ export default async function HomePage() {
               {site.venue.city} — the home of the league. Floodlit T20
               cricket, sixteen franchises, one ground.
             </p>
-            <div className="flex items-start gap-3 rounded-lg border border-border bg-card p-8">
-              <MapPin className="mt-1 size-5 shrink-0 text-primary" />
-              <div>
-                <p className="font-heading text-xl font-bold tracking-tight text-foreground uppercase">
+            <div className="relative overflow-hidden rounded-lg border border-border">
+              <Image
+                src="/ground.png"
+                alt={`${site.venue.name} — ${site.venue.area}, ${site.venue.city}`}
+                width={1448}
+                height={1086}
+                sizes="(min-width: 768px) 50vw, 100vw"
+                className="h-full min-h-56 w-full object-cover"
+              />
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[var(--navy)] via-[var(--navy)]/70 to-transparent p-5 pt-12">
+                <p className="flex items-center gap-2 font-heading text-xl font-bold tracking-tight text-foreground uppercase">
+                  <MapPin className="size-5 shrink-0 text-primary" />
                   {site.venue.name}
                 </p>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="mt-1 pl-7 text-sm text-muted-foreground">
                   {site.venue.area}, {site.venue.city}
                 </p>
               </div>
