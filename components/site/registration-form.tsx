@@ -232,9 +232,9 @@ export function RegistrationForm({ registrationFee }: { registrationFee: number 
             htmlFor="work_email"
             required
             error={state.errors?.work_email}
-            hint="Company email only — not a personal Gmail/Yahoo address."
+            hint="Prefer your company email. If you don't have one, a personal email is fine."
           >
-            <input id="work_email" name="work_email" type="email" value={values.work_email} onChange={set("work_email")} className={fieldClass} placeholder="you@company.com" />
+            <input id="work_email" name="work_email" type="email" value={values.work_email} onChange={set("work_email")} className={fieldClass} placeholder="you@company.com (or personal)" />
           </Field>
           <Field
             label="CricHeroes Profile Link"

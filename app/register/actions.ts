@@ -11,7 +11,6 @@ import {
   STAT_FIELDS,
   normalizePhone,
   isValidPhone,
-  isWorkEmail,
   computeAge,
 } from "@/lib/registration";
 import type { TablesInsert } from "@/lib/types";
@@ -102,12 +101,10 @@ export async function submitRegistration(
 
   if (!company) errors.company = "Please enter your company.";
 
-  if (!work_email) errors.work_email = "Please enter your work email.";
+  // Work email preferred, but a personal email is accepted as a fallback.
+  if (!work_email) errors.work_email = "Please enter a work or personal email.";
   else if (!EMAIL_RE.test(work_email))
-    errors.work_email = "Enter a valid work email address.";
-  else if (!isWorkEmail(work_email))
-    errors.work_email =
-      "Use your company work email — personal addresses (Gmail, Yahoo, etc.) aren't allowed here.";
+    errors.work_email = "Enter a valid email address.";
 
   if (!photo_url) errors.photo_url = "Please upload a player photo.";
 
