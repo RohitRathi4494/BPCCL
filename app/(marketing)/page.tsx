@@ -6,6 +6,7 @@ import { Countdown } from "@/components/site/countdown";
 import { SectionHeading } from "@/components/site/section-heading";
 import { SponsorCard } from "@/components/site/sponsor-card";
 import { Reveal } from "@/components/site/reveal";
+import { RegistrationPopup } from "@/components/site/registration-popup";
 import { getLeagueSettings, settingsCategories } from "@/lib/queries/settings";
 import { getSponsors } from "@/lib/queries/sponsors";
 import { site } from "@/lib/site";
@@ -49,6 +50,8 @@ export default async function HomePage() {
 
   return (
     <>
+      <RegistrationPopup />
+
       {/* ================= HERO ================= */}
       <section className="relative overflow-hidden">
         {/* Desktop: full-bleed champions background + overlay for legibility */}
