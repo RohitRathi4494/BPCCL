@@ -8,6 +8,35 @@ import { sendEmail } from "@/lib/email/send";
 import { approvalEmail, rejectionEmail } from "@/lib/email/templates";
 
 export type ReviewState = { error?: string };
+export type DeleteState = { error?: string };
+
+/**
+ * Permanently delete a player registration. Admin-only via RLS
+ * ("players admin delete"). Cascades to any bids/squad rows and nulls the
+ * player out of auction/match references (per the schema's FK rules).
+ */
+export async function deletePlayer(
+  _prev: DeleteState,
+  formData: FormData,
+): Promise<DeleteState> {
+  const playerId = String(formData.get("player_id") ?? "");
+  if (!playerId) return { error: "Missing player." };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Your session expired — please sign in again." };
+
+  const { error } = await supabase.from("players").delete().eq("id", playerId);
+  if (error) {
+    console.error("deletePlayer:", error.message);
+    return { error: "Could not delete this registration. Please try again." };
+  }
+
+  revalidatePath("/admin/registrations");
+  return {};
+}
 
 export async function reviewPlayer(
   _prev: ReviewState,

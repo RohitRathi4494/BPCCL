@@ -8,6 +8,7 @@ import {
 } from "@/lib/queries/players";
 import { RegistrationsSearch } from "@/components/admin/registrations-search";
 import { RegistrationStatus as StatusBadge } from "@/components/admin/registration-status";
+import { DeletePlayerButton } from "@/components/admin/delete-player-button";
 
 export const metadata: Metadata = {
   title: "Registrations",
@@ -156,13 +157,19 @@ export default async function RegistrationsPage({
                   <td className="px-4 py-3 text-muted-foreground">
                     {p.assigned_category ?? "—"}
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <Link
-                      href={`/admin/registrations/${p.id}`}
-                      className="inline-flex items-center rounded-sm border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
-                    >
-                      Review
-                    </Link>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-end gap-2">
+                      <Link
+                        href={`/admin/registrations/${p.id}`}
+                        className="inline-flex items-center rounded-sm border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+                      >
+                        Review
+                      </Link>
+                      <DeletePlayerButton
+                        playerId={p.id}
+                        playerName={p.full_name}
+                      />
+                    </div>
                   </td>
                 </tr>
               ))
