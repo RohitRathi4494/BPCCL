@@ -16,9 +16,15 @@ import {
 export function DeletePlayerButton({
   playerId,
   playerName,
+  redirectTo,
+  label,
 }: {
   playerId: string;
   playerName: string;
+  /** Where to send the admin after a successful delete (e.g. the list). */
+  redirectTo?: string;
+  /** When set, render a full labelled button instead of an icon-only one. */
+  label?: string;
 }) {
   const [state, formAction, pending] = useActionState<DeleteState, FormData>(
     deletePlayer,
@@ -26,6 +32,61 @@ export function DeletePlayerButton({
   );
   const [confirming, setConfirming] = useState(false);
 
+  const hidden = (
+    <>
+      <input type="hidden" name="player_id" value={playerId} />
+      {redirectTo && (
+        <input type="hidden" name="redirect_to" value={redirectTo} />
+      )}
+    </>
+  );
+
+  // ---- Labelled variant (review page) ----
+  if (label) {
+    if (!confirming) {
+      return (
+        <button
+          type="button"
+          onClick={() => setConfirming(true)}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-sm border border-[var(--closed)]/60 px-5 py-2.5 font-heading text-sm font-bold tracking-wide text-[var(--closed)] uppercase transition-colors hover:bg-[var(--closed)] hover:text-white"
+        >
+          <Trash2 className="size-4" /> {label}
+        </button>
+      );
+    }
+    return (
+      <form action={formAction} className="flex flex-col gap-2">
+        {hidden}
+        <p className="text-xs text-muted-foreground">
+          {state.error ?? "This permanently removes the registration. Continue?"}
+        </p>
+        <div className="flex gap-2">
+          <button
+            type="submit"
+            disabled={pending}
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-sm bg-[var(--closed)] px-4 py-2.5 font-heading text-sm font-bold tracking-wide text-white uppercase transition-opacity hover:opacity-90 disabled:opacity-60"
+          >
+            {pending ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Trash2 className="size-4" />
+            )}
+            Delete
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirming(false)}
+            disabled={pending}
+            className="inline-flex items-center justify-center rounded-sm border border-border px-4 py-2.5 font-heading text-sm font-bold tracking-wide text-foreground uppercase transition-colors hover:border-primary hover:text-primary disabled:opacity-60"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    );
+  }
+
+  // ---- Icon-only variant (list rows) ----
   if (!confirming) {
     return (
       <button
@@ -42,7 +103,7 @@ export function DeletePlayerButton({
 
   return (
     <form action={formAction} className="inline-flex items-center gap-1.5">
-      <input type="hidden" name="player_id" value={playerId} />
+      {hidden}
       <span className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
         {state.error ?? "Delete?"}
       </span>

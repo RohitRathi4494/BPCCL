@@ -8,6 +8,7 @@ import { STAT_FIELDS } from "@/lib/registration";
 import { getLeagueSettings, settingsCategories } from "@/lib/queries/settings";
 import { RegistrationStatus as StatusBadge } from "@/components/admin/registration-status";
 import { ReviewForm } from "@/components/admin/review-form";
+import { DeletePlayerButton } from "@/components/admin/delete-player-button";
 
 export const metadata: Metadata = {
   title: "Review Registration",
@@ -211,6 +212,23 @@ export default async function ReviewPlayerPage({
                 Last reviewed {fmtDate(player.reviewed_at)}
               </p>
             )}
+          </div>
+
+          {/* Danger zone — permanently remove this registration. */}
+          <div className="rounded-lg border border-[var(--closed)]/30 bg-[var(--closed)]/5 p-6">
+            <h2 className="font-heading text-sm font-bold tracking-wide text-[var(--closed)] uppercase">
+              Delete Registration
+            </h2>
+            <p className="mt-1 mb-4 text-xs text-muted-foreground">
+              Permanently removes this player from the pool. This can&apos;t be
+              undone.
+            </p>
+            <DeletePlayerButton
+              playerId={player.id}
+              playerName={player.full_name}
+              label="Delete Registration"
+              redirectTo="/admin/registrations"
+            />
           </div>
         </div>
       </div>

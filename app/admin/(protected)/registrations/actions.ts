@@ -20,7 +20,11 @@ export async function deletePlayer(
   formData: FormData,
 ): Promise<DeleteState> {
   const playerId = String(formData.get("player_id") ?? "");
-  if (!playerId) return { error: "Missing player." };
+  // Defence-in-depth: only ever delete by a single, well-formed UUID. This makes
+  // it impossible for a blank/garbled value to widen the delete.
+  const UUID_RE =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!UUID_RE.test(playerId)) return { error: "Missing or invalid player." };
 
   const supabase = await createClient();
   const {
@@ -28,13 +32,25 @@ export async function deletePlayer(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Your session expired — please sign in again." };
 
-  const { error } = await supabase.from("players").delete().eq("id", playerId);
+  const { data: deleted, error } = await supabase
+    .from("players")
+    .delete()
+    .eq("id", playerId)
+    .select("id");
   if (error) {
     console.error("deletePlayer:", error.message);
     return { error: "Could not delete this registration. Please try again." };
   }
+  // A PK match can only ever hit one row; log if that assumption is violated.
+  if ((deleted?.length ?? 0) !== 1) {
+    console.warn(`deletePlayer: expected 1 row, deleted ${deleted?.length ?? 0}`);
+  }
 
   revalidatePath("/admin/registrations");
+  // From the review page there's nowhere to stay (the player is gone) — send
+  // the admin back to the list. The list uses no redirect and just refreshes.
+  const redirectTo = String(formData.get("redirect_to") ?? "");
+  if (redirectTo.startsWith("/admin/")) redirect(redirectTo);
   return {};
 }
 
