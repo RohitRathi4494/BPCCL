@@ -126,15 +126,70 @@ separate auth systems per role.
 - [x] Project scaffolded (Next.js + Supabase wired up)
 - [x] Database schema created (see DATA_MODEL.md) — applied to Supabase via `supabase db push` (migration `supabase/migrations/20260814041142_initial_schema.sql`); RLS + Realtime + seeded `league_settings` in place
 - [x] **Design system: "VELYXO" dark "royal" theme.** Background = deep green `#0E2A2E`, cards/surfaces `#14352F`, text = near-white `#EDF4EE`, accent + CTAs = **neon green `#31D678`** (dark text on it), muted sage `#9CB7AC`, border `#274B42`. Fonts: **Barlow Condensed** (headings) + **Barlow** (body). Clean/minimal but dark & premium; footers/ticker/stats are raised deep-green bands. (Earlier iterations: light VELYXO, then dark — see git.) Tokens in `app/globals.css` (brand var names like `--gold` repointed to lime for back-compat; motif classes `grass-stripes`/`lamp-glow`/`crease-rule`/`segment-cell` redefined minimal). **Interactivity via GSAP** (`gsap`+`@gsap/react`) using the vendored **UI-UX-Pro-Max** skill (`ui-ux-pro-max-skill-main/`, excluded from tsconfig/eslint): `components/site/reveal.tsx` = scroll-reveal (reduced-motion aware). Superseded the old dark "Turf & Sodium" theme.
-- [x] Public marketing site (home, sponsors, venue) — originally "Turf & Sodium", now VELYXO light theme; home (hero, ticker, DB-driven stats, TBA countdowns, venue, sponsors) + sponsors page (tiers + enquiry form). Countdown dates + sponsor enquiry storage pending (see below)
+- [x] Public marketing site (home, sponsors, venue) — originally "Turf & Sodium", now VELYXO light theme; home (hero, ticker, DB-driven stats, DB-driven countdowns, venue photo, sponsors) + sponsors page (tiers + enquiry form). Countdown dates + sponsor enquiry now wired — see Recent updates.
 - [x] Player registration form — **standalone shareable landing page at `/register`** (own layout, decoupled from marketing chrome). **v2 (public rollout) fields, ALL required except where noted:** Full Name, DOB (age 30+ enforced → `age`), Contact Number, Email, CricHeroes link, LinkedIn link, T-Shirt size (36–46 even + Other), Lower size (30–38 even + Other), Jersey Number, Jersey Name, and a **mandatory registration-fee agreement** checkbox (₹`registration_fee` from `league_settings`, default 3000 — player can't submit unchecked; `registration_fee_agreed` stored). Role/photo/medical/achievement removed from form (columns kept; `role` now nullable). Soft duplicate-phone warning via `check_phone_registered` RPC. Migrations through `20260816145956_registration_form_v2.sql` — **push required**, then regen types.
-- [x] Admin registration review dashboard — Supabase Auth email/password login (`/admin/login`), admin-role guard in `app/admin/(protected)/layout.tsx`. `/admin/registrations`: status tabs + counts, debounced search, server-side pagination (25/page); detail page `/admin/registrations/[id]` with photo/links/notes + approve/reject + assign-grade (categories from `league_settings`). Admin account must be created manually (see setup note below / README).
+- [x] Admin registration review dashboard — Supabase Auth email/password login (`/admin/login`), admin-role guard in `app/admin/(protected)/layout.tsx`. `/admin/registrations`: status tabs + counts, debounced search, server-side pagination (25/page); detail page `/admin/registrations/[id]` with photo/links/notes + approve/reject + assign-category (categories from `league_settings`; see Recent updates for the Grade→Category rename). Admin account must be created manually (see setup note below / README).
 - [x] Auction room — auctioneer console (`/admin/auction`), franchise bidding console (`/auction/[franchiseId]`, role-gated), spectator display (`/auction/display`, public). Supabase Realtime on auction_state/bids/franchises/squads → all consoles refetch a shared snapshot on any change. Atomic race-safe `place_bid()` + `sell_current_player()` RPCs; `players_public` view for safe public reads. Migration `20260814054816_auction_engine.sql` (seeds auction_state row + 16 placeholder franchises) — **push required**, then regen types. Franchise-owner accounts must be created + linked to a franchise to bid (see below).
 - [ ] Franchise & squad public pages
 - [ ] Fixtures & scheduling + points table
 - [ ] Live match scoring console + public live scorecard
 - [ ] Social/content hub (auto-generated shareable graphics)
 - [ ] Deployed to production
+
+### Recent updates (as of 2026-08-21)
+
+All items below are **committed, pushed to `origin/main`, and their migrations
+pushed to the remote Supabase DB** (via `npx supabase db push`, which connects
+non-interactively here). `lib/database.types.ts` is hand-edited to match new
+columns (Docker isn't available, so `supabase gen types` isn't run locally).
+
+- **Terminology: "Grade" → "Category" everywhere.** UI labels + copy + emails,
+  and the category **values** themselves renamed `Grade X` → `Category X`
+  (migration `20260820180000`). Category values come from `league_settings`
+  (no hardcoded values in code). The live categories are customised to
+  **`Category A+ / Category A / Category B / Legend`** (not the seed defaults);
+  `base_price` keys renamed to match. `GradeBadge` component → `CategoryBadge`.
+- **Player registration IDs.** Each registrant gets a unique readable code
+  `USCL2-XXXXXX` (Crockford base32, `generateRegistrationCode()` in
+  `lib/registration.ts`). Stored in `players.registration_code` (UNIQUE,
+  retry-on-collision in `app/register/actions.ts`), shown on the success screen
+  and in the confirmation email. Migration `20260820160000`.
+- **Squad size → 17–22** (migration `20260820160000`, in `league_settings`;
+  still admin-configurable). Home-page fallback updated too.
+- **Season dates in `league_settings`** (migration `20260820170000`): columns
+  `registration_closes_at`, `auction_day_at`, `season_starts_at`,
+  `season_starts_note`. Seeded: reg closes **15 Sep 2026**, auction **26 Sep
+  2026** (IST), season start note **"3rd Week of October"**. Home page reads
+  these; `Countdown` has a `placeholder` prop for the no-exact-date case.
+- **Emails use the real USCL crest.** `lib/email/send.ts` auto-attaches
+  `public/uscl-logo.png` as an inline CID (`uscl-logo`) on every send; the
+  `templates.ts` shell `<img src="cid:uscl-logo">` replaced the old "US" box
+  (degrades to alt text). `next.config.ts` `outputFileTracingIncludes` ships the
+  PNG with serverless funcs. SMTP env (`SMTP_USER`/`SMTP_PASSWORD` app password)
+  must be set for any email to actually send.
+- **Sponsor enquiries emailed** to `Urbansportsstudio@gmail.com` (override via
+  `SPONSOR_ENQUIRY_TO`), reply-to = the sponsor, in addition to DB storage.
+  `sponsorEnquiryEmail()` template. `app/(marketing)/sponsors/actions.ts`.
+- **Navbar login links.** `components/site/site-header.tsx` now has
+  **Franchise Login** (`/franchise/login`) + **Admin Login** (`/admin/login`);
+  full top bar shows at `xl`, collapses to the hamburger menu below that. Both
+  login pages already existed.
+- **Registration form playing roles are grouped, single-select per category**
+  (`ROLE_GROUPS` in `lib/registration.ts`): Batting / Bowling / All Rounder /
+  Wicket Keeper — one pick per group, multiple across groups. Storage unchanged
+  (`players.roles` text[]).
+- **Home page:** venue box replaced with the ground photo (`public/ground.png`),
+  registration pop-up removed in favour of a glowing CTA card (`.card-glow`).
+- **`/register` page:** larger left-aligned logo, full-width intro; league +
+  venue names bold white.
+
+**Known blocker — demo franchise-owner login:** creating one needs a valid
+`SUPABASE_SERVICE_ROLE_KEY`. The key in `.env.local` was rejected by the GoTrue
+admin API (`createUser` → "requires a valid Bearer token") — it authorises
+PostgREST reads but not auth-admin, i.e. likely the anon/publishable key or
+stale. A demo owner (`demo.owner@uscl.test`) could not be created until a real
+service-role key is in `.env.local`. Owner logins are made via
+`/admin/franchises` (`setFranchiseOwnerLogin`, same key) or the SQL/dashboard.
 
 ## 9. Things Not To Do
 
