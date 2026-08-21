@@ -15,11 +15,41 @@
  * { ok:false, skipped:true } instead of throwing — so registration/approval
  * flows never fail just because email isn't configured yet.
  */
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import nodemailer from "nodemailer";
 
 export type SendResult = { ok: boolean; skipped?: boolean; error?: string };
 
+/** CID referenced by the email templates' header (see templates.ts shell). */
+export const BRAND_LOGO_CID = "uscl-logo";
+
 let transporter: nodemailer.Transporter | null = null;
+let logoAttachment: { filename: string; content: Buffer; cid: string } | null =
+  null;
+let logoLoaded = false;
+
+/**
+ * Load the brand logo once and cache it as an inline attachment. Returns null
+ * if the file can't be read, so a missing logo never blocks an email — the
+ * template's <img alt="USCL"> just falls back to its alt text.
+ */
+async function getLogoAttachment() {
+  if (logoLoaded) return logoAttachment;
+  logoLoaded = true;
+  try {
+    const file = path.join(process.cwd(), "public", "uscl-logo.png");
+    logoAttachment = {
+      filename: "uscl-logo.png",
+      content: await readFile(file),
+      cid: BRAND_LOGO_CID,
+    };
+  } catch (err) {
+    console.warn("[email] brand logo not found — sending without it.", err);
+    logoAttachment = null;
+  }
+  return logoAttachment;
+}
 
 function getTransporter(): nodemailer.Transporter | null {
   const user = process.env.SMTP_USER;
@@ -54,6 +84,7 @@ export async function sendEmail(opts: {
   if (!opts.to) return { ok: false, error: "No recipient" };
 
   const from = process.env.EMAIL_FROM || process.env.SMTP_USER!;
+  const logo = await getLogoAttachment();
 
   try {
     await tx.sendMail({
@@ -62,6 +93,7 @@ export async function sendEmail(opts: {
       subject: opts.subject,
       html: opts.html,
       ...(opts.replyTo ? { replyTo: opts.replyTo } : {}),
+      ...(logo ? { attachments: [logo] } : {}),
     });
     return { ok: true };
   } catch (err) {

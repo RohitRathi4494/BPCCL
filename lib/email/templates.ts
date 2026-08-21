@@ -31,8 +31,8 @@ function shell(
     <div style="max-width:560px;margin:0 auto;background:${NAVY};border-radius:14px;overflow:hidden;border:1px solid #d7dee8;">
       <!-- Header / brand lockup -->
       <div style="padding:26px 32px;border-bottom:1px solid rgba(255,255,255,0.08);">
-        <span style="display:inline-block;background:${GOLD};color:${NAVY};font-weight:bold;font-size:15px;width:36px;height:36px;line-height:36px;text-align:center;border-radius:7px;vertical-align:middle;">US</span>
-        <span style="color:${CREAM};font-weight:bold;letter-spacing:2px;font-size:16px;margin-left:11px;vertical-align:middle;">USCL</span>
+        <img src="cid:uscl-logo" alt="USCL" height="40" style="height:40px;width:auto;vertical-align:middle;display:inline-block;" />
+        <span style="color:${CREAM};font-weight:bold;letter-spacing:2px;font-size:16px;margin-left:12px;vertical-align:middle;">USCL</span>
         <span style="color:${SLATE};font-size:11px;letter-spacing:2px;margin-left:8px;vertical-align:middle;">${site.season.toUpperCase()}</span>
       </div>
       <!-- Gold rule -->
