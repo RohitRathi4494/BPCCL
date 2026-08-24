@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { getCurrentProfile } from "@/lib/auth";
 import { BrandMark } from "@/components/site/brand-mark";
 import { LoginForm } from "@/components/admin/login-form";
 
@@ -10,6 +12,14 @@ export const metadata: Metadata = {
 export default async function AdminLoginPage({
   searchParams,
 }: PageProps<"/admin/login">) {
+  // Already signed in as admin? Skip the form and go straight to the console.
+  // Without this, pressing the browser back button from inside the panel lands
+  // here and looks like a logout even though the session is still valid.
+  const existing = await getCurrentProfile();
+  if (existing?.role === "admin") {
+    redirect("/admin/registrations");
+  }
+
   const params = await searchParams;
   const notice =
     params.error === "forbidden"
