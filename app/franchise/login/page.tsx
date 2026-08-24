@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { getCurrentProfile } from "@/lib/auth";
 import { BrandMark } from "@/components/site/brand-mark";
 import { FranchiseLoginForm } from "@/components/franchise/franchise-login-form";
 
@@ -10,6 +12,14 @@ export const metadata: Metadata = {
 export default async function FranchiseLoginPage({
   searchParams,
 }: PageProps<"/franchise/login">) {
+  // Already signed in as a franchise owner? Skip the form and go to the
+  // dashboard. Without this, pressing the browser back button from inside the
+  // portal lands here and looks like a logout even though the session is valid.
+  const existing = await getCurrentProfile();
+  if (existing?.role === "franchise_owner" && existing.franchise_id) {
+    redirect("/franchise");
+  }
+
   const params = await searchParams;
   const notice =
     params.error === "forbidden"
