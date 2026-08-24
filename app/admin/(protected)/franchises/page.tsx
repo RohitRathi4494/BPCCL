@@ -20,6 +20,13 @@ export type FranchiseRow = {
   hasOwner: boolean;
 };
 
+/** Minimal registered-player record used to pick a franchise owner by name. */
+export type PlayerOption = {
+  id: string;
+  full_name: string;
+  registration_code: string | null;
+};
+
 export default async function AdminFranchisesPage() {
   await requireAdmin();
   const supabase = await createClient();
@@ -33,6 +40,13 @@ export default async function AdminFranchisesPage() {
     .from("profiles")
     .select("id, franchise_id")
     .eq("role", "franchise_owner");
+
+  // Registered players — the owner name must be picked from this list.
+  const { data: players } = await supabase
+    .from("players")
+    .select("id, full_name, registration_code")
+    .order("full_name", { ascending: true });
+  const playerOptions: PlayerOption[] = players ?? [];
 
   const ownerUserByFranchise = new Map<string, string>();
   for (const o of owners ?? []) {
@@ -86,7 +100,7 @@ export default async function AdminFranchisesPage() {
         </p>
       )}
 
-      <FranchiseManager rows={rows} />
+      <FranchiseManager rows={rows} players={playerOptions} />
     </div>
   );
 }
