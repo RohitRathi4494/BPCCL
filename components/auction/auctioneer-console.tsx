@@ -10,6 +10,8 @@ import {
   ChevronUp,
   Undo2,
   Plus,
+  RotateCcw,
+  CornerUpLeft,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuction } from "@/lib/auction/use-auction";
@@ -38,6 +40,7 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
   const [query, setQuery] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmReset, setConfirmReset] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -117,6 +120,10 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
 
   const undo = () =>
     callRpc(() => supabaseRef.current.rpc("undo_last_action"));
+  const resetAuction = async () => {
+    const ok = await callRpc(() => supabaseRef.current.rpc("reset_auction"));
+    if (ok) setConfirmReset(false);
+  };
   const applyTopup = (franchiseId: string, which: 1 | 2) =>
     callRpc(() =>
       supabaseRef.current.rpc("apply_topup", {
@@ -168,6 +175,11 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
               <Pause className="size-4" /> Pause
             </ControlButton>
           )}
+          {status === "completed" && (
+            <ControlButton onClick={() => setStatus("in_progress")} disabled={busy}>
+              <CornerUpLeft className="size-4" /> Reopen
+            </ControlButton>
+          )}
           {status !== "completed" && (
             <ControlButton
               onClick={() => setStatus("completed")}
@@ -177,8 +189,46 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
               <Flag className="size-4" /> Complete
             </ControlButton>
           )}
+          <ControlButton
+            onClick={() => setConfirmReset(true)}
+            disabled={busy}
+            variant="danger"
+          >
+            <RotateCcw className="size-4" /> Reset
+          </ControlButton>
         </div>
       </div>
+
+      {/* Reset confirmation */}
+      {confirmReset && (
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[var(--closed)]/40 bg-[var(--closed)]/10 px-4 py-3">
+          <span className="text-sm text-foreground">
+            <strong>Reset the whole auction?</strong> This clears every squad
+            (owners, retentions and auction picks), restores all purses to the
+            default, clears top-ups, and returns to setup. This can&apos;t be
+            undone.
+          </span>
+          <div className="ml-auto flex gap-2">
+            <button
+              type="button"
+              onClick={resetAuction}
+              disabled={busy}
+              className="inline-flex items-center gap-2 rounded-sm bg-[var(--closed)] px-4 py-2 font-heading text-xs font-bold tracking-wide text-white uppercase transition-opacity hover:opacity-90 disabled:opacity-60"
+            >
+              {busy ? <Loader2 className="size-3.5 animate-spin" /> : <RotateCcw className="size-3.5" />}
+              Yes, reset everything
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmReset(false)}
+              disabled={busy}
+              className="inline-flex items-center rounded-sm border border-border px-4 py-2 font-mono text-[11px] tracking-wider text-muted-foreground uppercase transition-colors hover:text-foreground"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Category selector */}
       <div className="flex flex-wrap items-center gap-2">

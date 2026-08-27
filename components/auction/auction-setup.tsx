@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Loader2, X, Crown, Lock, ArrowLeft } from "lucide-react";
+import { Loader2, X, Crown, Lock, ArrowLeft, Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuction } from "@/lib/auction/use-auction";
 import {
@@ -75,6 +75,16 @@ export function AuctionSetup({ initial }: { initial: AuctionSnapshot }) {
       supabaseRef.current.rpc("unlock_squad_member", { p_player: playerId }),
     );
 
+  const saveRetentionPrices = (prices: Record<string, number>) => {
+    if (!data.settings.id) return;
+    return run("retention-prices", () =>
+      supabaseRef.current
+        .from("league_settings")
+        .update({ retention_base_price: prices })
+        .eq("id", data.settings.id!),
+    );
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -96,28 +106,15 @@ export function AuctionSetup({ initial }: { initial: AuctionSnapshot }) {
         </Link>
       </div>
 
-      {/* Retention base-price legend */}
-      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-card px-4 py-3">
-        <span className="font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
-          Retention base price
-        </span>
-        {data.settings.categories.map((c) => (
-          <span
-            key={c}
-            className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-background px-2 py-1 text-xs"
-          >
-            <span className="font-mono tracking-wider text-muted-foreground uppercase">
-              {c}
-            </span>
-            <span className="font-heading font-bold text-foreground">
-              ₹{formatMoney(retentionPrices[c] ?? 0)}
-            </span>
-          </span>
-        ))}
-        <span className="ml-auto font-mono text-[10px] text-muted-foreground">
-          Set these in league settings if they show ₹0.
-        </span>
-      </div>
+      {/* Retention base-price editor */}
+      <RetentionPricePanel
+        key={JSON.stringify(retentionPrices)}
+        categories={data.settings.categories}
+        prices={retentionPrices}
+        busy={busyId === "retention-prices"}
+        canEdit={!!data.settings.id}
+        onSave={saveRetentionPrices}
+      />
 
       {error && (
         <p className="rounded-sm border border-[var(--closed)]/40 bg-[var(--closed)]/10 px-3.5 py-2.5 text-sm text-[var(--closed)]">
@@ -138,6 +135,92 @@ export function AuctionSetup({ initial }: { initial: AuctionSnapshot }) {
           />
         ))}
       </div>
+    </div>
+  );
+}
+
+/** Admin-editable per-category retention base prices (league_settings). */
+function RetentionPricePanel({
+  categories,
+  prices,
+  busy,
+  canEdit,
+  onSave,
+}: {
+  categories: string[];
+  prices: Record<string, number>;
+  busy: boolean;
+  canEdit: boolean;
+  onSave: (prices: Record<string, number>) => void;
+}) {
+  const [draft, setDraft] = useState<Record<string, string>>(() =>
+    Object.fromEntries(categories.map((c) => [c, String(prices[c] ?? 0)])),
+  );
+
+  const dirty = categories.some(
+    (c) => Number(draft[c] || 0) !== (prices[c] ?? 0),
+  );
+
+  const save = () => {
+    const out: Record<string, number> = {};
+    for (const c of categories) {
+      const n = Number(draft[c]);
+      out[c] = Number.isFinite(n) && n >= 0 ? Math.round(n) : 0;
+    }
+    onSave(out);
+  };
+
+  return (
+    <div className="flex flex-col gap-3 rounded-lg border border-border bg-card px-4 py-3">
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
+          Retention base price (per category)
+        </span>
+        <span className="font-mono text-[10px] text-muted-foreground">
+          Deducted from purse when a player is locked.
+        </span>
+      </div>
+      <div className="flex flex-wrap items-end gap-3">
+        {categories.map((c) => (
+          <label key={c} className="flex flex-col gap-1">
+            <span className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
+              {c}
+            </span>
+            <div className="flex items-center gap-1 rounded-sm border border-input bg-background px-2">
+              <span className="text-sm text-muted-foreground">₹</span>
+              <input
+                type="number"
+                min={0}
+                inputMode="numeric"
+                value={draft[c] ?? ""}
+                disabled={!canEdit || busy}
+                onChange={(e) =>
+                  setDraft((d) => ({ ...d, [c]: e.target.value }))
+                }
+                className="w-24 bg-transparent py-2 text-sm text-foreground outline-none disabled:opacity-50"
+              />
+            </div>
+          </label>
+        ))}
+        <button
+          type="button"
+          onClick={save}
+          disabled={!canEdit || busy || !dirty}
+          className="inline-flex items-center gap-1.5 rounded-sm bg-primary px-4 py-2 font-heading text-xs font-bold tracking-wide text-primary-foreground uppercase transition-opacity hover:opacity-90 disabled:opacity-50"
+        >
+          {busy ? (
+            <Loader2 className="size-3.5 animate-spin" />
+          ) : (
+            <Check className="size-3.5" />
+          )}
+          Save prices
+        </button>
+      </div>
+      {!canEdit && (
+        <span className="text-xs text-[var(--closed)]">
+          League settings row not found — cannot save prices.
+        </span>
+      )}
     </div>
   );
 }

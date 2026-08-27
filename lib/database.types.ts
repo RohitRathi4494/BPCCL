@@ -977,6 +977,7 @@ export type Database = {
         Returns: Json
       }
       mark_player_unsold: { Args: { p_player: string }; Returns: Json }
+      reset_auction: { Args: never; Returns: Json }
       unlock_squad_member: { Args: { p_player: string }; Returns: Json }
       sell_player: {
         Args: { p_player: string; p_franchise: string; p_amount: number }

@@ -59,6 +59,7 @@ export type AuctionSnapshot = {
     price: number;
   }[];
   settings: {
+    id: string | null;
     categories: string[];
     retentionBasePrice: Record<string, number>;
     defaultPurse: number;
@@ -235,6 +236,7 @@ export async function fetchAuctionSnapshot(
     franchises,
     recentSales,
     settings: {
+      id: settingsRow?.id ?? null,
       categories,
       retentionBasePrice,
       defaultPurse: settingsRow?.default_purse ?? 175000,
