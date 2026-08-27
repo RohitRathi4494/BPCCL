@@ -9,6 +9,7 @@ import { STAT_FIELDS } from "@/lib/registration";
 import { getLeagueSettings, settingsCategories } from "@/lib/queries/settings";
 import { RegistrationStatus as StatusBadge } from "@/components/admin/registration-status";
 import { ReviewForm } from "@/components/admin/review-form";
+import { ResetStatusButton } from "@/components/admin/reset-status-button";
 import { DeletePlayerButton } from "@/components/admin/delete-player-button";
 
 export const metadata: Metadata = {
@@ -214,6 +215,16 @@ export default async function ReviewPlayerPage({
               <p className="mt-4 font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
                 Last reviewed {fmtDate(player.reviewed_at)}
               </p>
+            )}
+
+            {player.status !== "pending" && (
+              <div className="mt-5 border-t border-border pt-5">
+                <p className="mb-3 text-xs text-muted-foreground">
+                  Approved or rejected by mistake? Reset this player to pending
+                  (neither approved nor rejected).
+                </p>
+                <ResetStatusButton playerId={player.id} />
+              </div>
             )}
           </div>
 

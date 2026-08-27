@@ -9,6 +9,7 @@ import { sendEmail } from "@/lib/email/send";
 import { approvalEmail, rejectionEmail } from "@/lib/email/templates";
 
 export type ReviewState = { error?: string };
+export type ResetState = { error?: string };
 export type DeleteState = { error?: string };
 export type BulkState = { error?: string; approved?: number };
 export type AutoAssignState = { error?: string; assigned?: number };
@@ -152,6 +153,44 @@ export async function deletePlayer(
   // the admin back to the list. The list uses no redirect and just refreshes.
   const redirectTo = String(formData.get("redirect_to") ?? "");
   if (redirectTo.startsWith("/admin/")) redirect(redirectTo);
+  return {};
+}
+
+/**
+ * Undo a review decision: move an approved/rejected player back to "pending"
+ * (neither approved nor rejected). Clears the rejection reason and the reviewed
+ * stamp; keeps any assigned category. For fixing a mistaken approve/reject.
+ */
+export async function resetToPending(
+  _prev: ResetState,
+  formData: FormData,
+): Promise<ResetState> {
+  const playerId = String(formData.get("player_id") ?? "");
+  if (!UUID_RE.test(playerId)) return { error: "Missing or invalid player." };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Your session expired — please sign in again." };
+
+  const { error } = await supabase
+    .from("players")
+    .update({
+      status: "pending",
+      rejection_reason: null,
+      reviewed_at: null,
+      reviewed_by: null,
+    })
+    .eq("id", playerId);
+
+  if (error) {
+    console.error("resetToPending:", error.message);
+    return { error: "Could not reset this registration. Please try again." };
+  }
+
+  revalidatePath("/admin/registrations");
+  revalidatePath(`/admin/registrations/${playerId}`);
   return {};
 }
 
