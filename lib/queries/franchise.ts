@@ -5,7 +5,7 @@ export type WishlistEntry = Wishlist & { player: PoolPlayer | null };
 export type SquadEntry = {
   player_id: string;
   sold_price: number;
-  round: number;
+  acquisition_type: string;
   player: PoolPlayer | null;
 };
 
@@ -43,15 +43,15 @@ export async function getWishlist(pool: PoolPlayer[]): Promise<WishlistEntry[]> 
   return (data ?? []).map((w) => ({ ...w, player: byId.get(w.player_id) ?? null }));
 }
 
-/** The franchise's bought squad (public-readable squads joined to pool names). */
+/** The franchise's squad (owner / retention / auction) joined to pool names. */
 export async function getSquad(
   franchiseId: string,
   pool: PoolPlayer[],
 ): Promise<SquadEntry[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from("squads")
-    .select("player_id, sold_price, round")
+    .from("squad_members")
+    .select("player_id, price, acquisition_type")
     .eq("franchise_id", franchiseId)
     .order("created_at", { ascending: false });
   if (error) {
@@ -61,8 +61,8 @@ export async function getSquad(
   const byId = indexPool(pool);
   return (data ?? []).map((s) => ({
     player_id: s.player_id,
-    sold_price: s.sold_price,
-    round: s.round,
+    sold_price: s.price,
+    acquisition_type: s.acquisition_type,
     player: byId.get(s.player_id) ?? null,
   }));
 }

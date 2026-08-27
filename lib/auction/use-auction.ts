@@ -6,7 +6,7 @@ import { fetchAuctionSnapshot, type AuctionSnapshot } from "@/lib/auction/snapsh
 
 /**
  * Subscribes to the auction tables and keeps a fresh snapshot in state. Any
- * change to auction_state / bids / franchises / squads triggers a debounced
+ * change to auction_state / franchises / squad_members triggers a debounced
  * refetch, so every console updates within ~1s (the realtime requirement).
  */
 export function useAuction(initial: AuctionSnapshot) {
@@ -31,9 +31,8 @@ export function useAuction(initial: AuctionSnapshot) {
     const channel = supabase
       .channel("auction-room")
       .on("postgres_changes", { event: "*", schema: "public", table: "auction_state" }, schedule)
-      .on("postgres_changes", { event: "*", schema: "public", table: "bids" }, schedule)
       .on("postgres_changes", { event: "*", schema: "public", table: "franchises" }, schedule)
-      .on("postgres_changes", { event: "*", schema: "public", table: "squads" }, schedule)
+      .on("postgres_changes", { event: "*", schema: "public", table: "squad_members" }, schedule)
       .subscribe((status) => setLive(status === "SUBSCRIBED"));
 
     return () => {

@@ -19,6 +19,7 @@ export function LiveBadge({ live }: { live: boolean }) {
 }
 
 const STATUS_LABEL: Record<string, string> = {
+  setup: "Setup",
   not_started: "Not started",
   in_progress: "In progress",
   paused: "Paused",

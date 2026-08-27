@@ -1,10 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
 
-export type SquadMember = {
+/** One acquired player on a franchise (owner / retention / auction). */
+export type SquadEntry = {
   player_id: string;
   full_name: string;
-  sold_price: number;
+  price: number;
+  acquisition_type: "owner" | "retention" | "auction";
+  category: string | null;
 };
 
 export type FranchiseView = {
@@ -13,40 +16,56 @@ export type FranchiseView = {
   short_code: string | null;
   purse_total: number;
   purse_remaining: number;
-  squad: SquadMember[];
+  topup_1_used: boolean;
+  topup_2_used: boolean;
+  squad: SquadEntry[];
+  squadCount: number;
 };
 
+/** The player currently "on the block" — rich fields for the big screen. */
 export type CurrentPlayer = {
   id: string;
   full_name: string;
   photo_url: string | null;
-  role: string | null;
   assigned_category: string | null;
-  base_price: number;
+  role: string | null;
+  roles: string[];
+  batting_style: string | null;
+  bowling_style: string | null;
+  stats: { label: string; value: string }[];
+};
+
+/** The result overlay for the on-block player. */
+export type SaleResult = {
+  status: "sold" | "unsold" | null;
+  franchise_id: string | null;
+  franchise_name: string | null;
+  amount: number | null;
 };
 
 export type AuctionSnapshot = {
   state: {
     id: string | null;
-    status: string;
-    round: number;
+    status: string; // setup | in_progress | paused | completed
     current_player_id: string | null;
-    current_bid: number | null;
-    current_bid_franchise_id: string | null;
+    current_category: string | null;
   };
   currentPlayer: CurrentPlayer | null;
-  nextBid: number | null;
+  result: SaleResult;
   franchises: FranchiseView[];
   recentSales: {
     player_name: string;
     franchise_name: string;
-    sold_price: number;
+    price: number;
   }[];
   settings: {
-    bidIncrement: number;
+    categories: string[];
+    retentionBasePrice: Record<string, number>;
+    defaultPurse: number;
     squadMin: number;
     squadMax: number;
-    purse: number;
+    topup1: number;
+    topup2: number;
   };
 };
 
@@ -58,12 +77,41 @@ export function formatMoney(n: number | null | undefined): string {
 
 const EMPTY_STATE = {
   id: null,
-  status: "not_started",
-  round: 1,
+  status: "setup",
   current_player_id: null,
-  current_bid: null,
-  current_bid_franchise_id: null,
+  current_category: null,
 };
+
+// The self-reported career stats we surface on the big screen, in order.
+const STAT_LABELS: { key: keyof StatsRow; label: string }[] = [
+  { key: "matches_played", label: "Matches" },
+  { key: "runs_scored", label: "Runs" },
+  { key: "batting_average", label: "Bat Avg" },
+  { key: "batting_strike_rate", label: "Bat SR" },
+  { key: "wickets_taken", label: "Wickets" },
+  { key: "economy", label: "Econ" },
+];
+
+type StatsRow = {
+  matches_played: string | null;
+  runs_scored: string | null;
+  batting_average: string | null;
+  batting_strike_rate: string | null;
+  wickets_taken: string | null;
+  bowling_strike_rate: string | null;
+  economy: string | null;
+};
+
+type PublicPlayer = {
+  id: string | null;
+  full_name: string | null;
+  photo_url: string | null;
+  role: string | null;
+  roles: string[] | null;
+  assigned_category: string | null;
+  batting_style: string | null;
+  bowling_style: string | null;
+} & StatsRow;
 
 /**
  * Assemble the full read model for the auction room from public tables +
@@ -72,7 +120,7 @@ const EMPTY_STATE = {
 export async function fetchAuctionSnapshot(
   supabase: SupabaseClient<Database>,
 ): Promise<AuctionSnapshot> {
-  const [stateR, settingsR, franchisesR, squadsR, playersR] = await Promise.all([
+  const [stateR, settingsR, franchisesR, membersR, playersR] = await Promise.all([
     supabase
       .from("auction_state")
       .select("*")
@@ -87,7 +135,7 @@ export async function fetchAuctionSnapshot(
       .maybeSingle(),
     supabase.from("franchises").select("*").order("name", { ascending: true }),
     supabase
-      .from("squads")
+      .from("squad_members")
       .select("*")
       .order("created_at", { ascending: false }),
     supabase.from("players_public").select("*"),
@@ -98,87 +146,102 @@ export async function fetchAuctionSnapshot(
     ? {
         id: stateRow.id,
         status: stateRow.status,
-        round: stateRow.round,
         current_player_id: stateRow.current_player_id,
-        current_bid: stateRow.current_bid,
-        current_bid_franchise_id: stateRow.current_bid_franchise_id,
+        current_category: stateRow.current_category,
       }
     : { ...EMPTY_STATE };
 
   const settingsRow = settingsR.data;
-  const basePrices = (settingsRow?.base_price ?? {}) as Record<string, number>;
-  const increment = settingsRow?.bid_increment ?? 1;
+  const categories = Array.isArray(settingsRow?.categories)
+    ? (settingsRow!.categories as string[])
+    : [];
+  const retentionBasePrice = (settingsRow?.retention_base_price ?? {}) as Record<
+    string,
+    number
+  >;
 
-  const players = playersR.data ?? [];
-  const nameById = new Map<string, { full_name: string; photo_url: string | null; role: string | null; assigned_category: string | null }>();
-  for (const p of players) {
-    if (p.id) {
-      nameById.set(p.id, {
-        full_name: p.full_name ?? "",
+  const players = (playersR.data ?? []) as PublicPlayer[];
+  const byId = new Map<string, PublicPlayer>();
+  for (const p of players) if (p.id) byId.set(p.id, p);
+
+  const members = membersR.data ?? [];
+  const franchises: FranchiseView[] = (franchisesR.data ?? []).map((f) => {
+    const squad: SquadEntry[] = members
+      .filter((m) => m.franchise_id === f.id)
+      .map((m) => ({
+        player_id: m.player_id,
+        full_name: byId.get(m.player_id)?.full_name ?? "Player",
+        price: m.price,
+        acquisition_type: m.acquisition_type as SquadEntry["acquisition_type"],
+        category: m.category_at_acquisition,
+      }));
+    return {
+      id: f.id,
+      name: f.name,
+      short_code: f.short_code,
+      purse_total: f.purse_total,
+      purse_remaining: f.purse_remaining,
+      topup_1_used: f.topup_1_used,
+      topup_2_used: f.topup_2_used,
+      squad,
+      squadCount: squad.length,
+    };
+  });
+
+  const franchiseNameById = new Map(franchises.map((f) => [f.id, f.name]));
+  const recentSales = members
+    .filter((m) => m.acquisition_type === "auction")
+    .slice(0, 8)
+    .map((m) => ({
+      player_name: byId.get(m.player_id)?.full_name ?? "Player",
+      franchise_name: franchiseNameById.get(m.franchise_id) ?? "—",
+      price: m.price,
+    }));
+
+  let currentPlayer: CurrentPlayer | null = null;
+  if (state.current_player_id) {
+    const p = byId.get(state.current_player_id);
+    if (p) {
+      currentPlayer = {
+        id: state.current_player_id,
+        full_name: p.full_name ?? "Player",
         photo_url: p.photo_url,
-        role: p.role,
         assigned_category: p.assigned_category,
-      });
+        role: p.role,
+        roles: p.roles ?? [],
+        batting_style: p.batting_style,
+        bowling_style: p.bowling_style,
+        stats: STAT_LABELS.map(({ key, label }) => ({
+          label,
+          value: (p[key] ?? "").toString().trim() || "—",
+        })).filter((s) => s.value !== "—"),
+      };
     }
   }
 
-  const squads = squadsR.data ?? [];
-  const franchises: FranchiseView[] = (franchisesR.data ?? []).map((f) => ({
-    id: f.id,
-    name: f.name,
-    short_code: f.short_code,
-    purse_total: f.purse_total,
-    purse_remaining: f.purse_remaining,
-    squad: squads
-      .filter((s) => s.franchise_id === f.id)
-      .map((s) => ({
-        player_id: s.player_id,
-        full_name: nameById.get(s.player_id)?.full_name ?? "Player",
-        sold_price: s.sold_price,
-      })),
-  }));
-
-  const franchiseNameById = new Map(franchises.map((f) => [f.id, f.name]));
-  const recentSales = squads.slice(0, 8).map((s) => ({
-    player_name: nameById.get(s.player_id)?.full_name ?? "Player",
-    franchise_name: franchiseNameById.get(s.franchise_id) ?? "—",
-    sold_price: s.sold_price,
-  }));
-
-  let currentPlayer: CurrentPlayer | null = null;
-  let nextBid: number | null = null;
-  if (state.current_player_id) {
-    const p = nameById.get(state.current_player_id);
-    const base = p?.assigned_category
-      ? Number(basePrices[p.assigned_category] ?? 0)
-      : 0;
-    currentPlayer = {
-      id: state.current_player_id,
-      full_name: p?.full_name ?? "Player",
-      photo_url: p?.photo_url ?? null,
-      role: p?.role ?? null,
-      assigned_category: p?.assigned_category ?? null,
-      base_price: base,
-    };
-    nextBid =
-      state.current_bid == null
-        ? base > 0
-          ? base
-          : increment
-        : state.current_bid + increment;
-  }
+  const result: SaleResult = {
+    status: (stateRow?.current_result as SaleResult["status"]) ?? null,
+    franchise_id: stateRow?.current_result_franchise_id ?? null,
+    franchise_name: stateRow?.current_result_franchise_id
+      ? franchiseNameById.get(stateRow.current_result_franchise_id) ?? null
+      : null,
+    amount: stateRow?.current_result_amount ?? null,
+  };
 
   return {
     state,
     currentPlayer,
-    nextBid,
+    result,
     franchises,
     recentSales,
     settings: {
-      bidIncrement: increment,
-      squadMin: settingsRow?.squad_min_per_franchise ?? 15,
-      squadMax: settingsRow?.squad_max_per_franchise ?? 18,
-      purse: settingsRow?.purse_per_franchise ?? 0,
+      categories,
+      retentionBasePrice,
+      defaultPurse: settingsRow?.default_purse ?? 175000,
+      squadMin: settingsRow?.squad_min ?? 18,
+      squadMax: settingsRow?.squad_max ?? 25,
+      topup1: settingsRow?.topup_1 ?? 75000,
+      topup2: settingsRow?.topup_2 ?? 50000,
     },
   };
 }

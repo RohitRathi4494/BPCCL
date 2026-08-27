@@ -288,7 +288,7 @@ export function FranchiseDashboard({
               <table className="w-full min-w-[420px] text-sm">
                 <thead>
                   <tr className="border-b border-border bg-card text-left">
-                    {["Player", "Category", "Price", "Round"].map((h) => (
+                    {["Player", "Category", "Price", "Type"].map((h) => (
                       <th
                         key={h}
                         className="px-4 py-3 font-mono text-[10px] tracking-[0.16em] text-muted-foreground uppercase"
@@ -310,7 +310,9 @@ export function FranchiseDashboard({
                       <td className="px-4 py-3 font-mono text-foreground">
                         ₹{inr(s.sold_price)}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">{s.round}</td>
+                      <td className="px-4 py-3 font-mono text-[11px] tracking-wider text-muted-foreground uppercase">
+                        {s.acquisition_type}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

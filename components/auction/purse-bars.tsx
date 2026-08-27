@@ -1,18 +1,20 @@
 import { formatMoney, type AuctionSnapshot } from "@/lib/auction/snapshot";
 import { cn } from "@/lib/utils";
 
-/** Live purse + squad-count bars for every franchise. */
+/** Live purse + squad-count board for every franchise (read-only). */
 export function PurseBars({
   snapshot,
   highlightId,
-  columns = 2,
+  columns = 1,
+  size = "md",
 }: {
   snapshot: AuctionSnapshot;
   highlightId?: string | null;
   columns?: 1 | 2 | 4;
+  size?: "md" | "lg";
 }) {
-  const { franchises, state, settings } = snapshot;
-  const leaderId = state.current_bid_franchise_id;
+  const { franchises, settings } = snapshot;
+  const big = size === "lg";
 
   const grid =
     columns === 4
@@ -22,46 +24,57 @@ export function PurseBars({
         : "";
 
   return (
-    <div className={cn("grid gap-3", grid)}>
+    <div className={cn("grid gap-2.5", grid)}>
       {franchises.map((f) => {
         const pct =
           f.purse_total > 0
             ? Math.max(0, Math.min(100, (f.purse_remaining / f.purse_total) * 100))
             : 0;
-        const isLeader = f.id === leaderId;
         const isYou = f.id === highlightId;
+        const low = pct < 20;
         return (
           <div
             key={f.id}
             className={cn(
-              "rounded-lg border bg-card p-3.5",
-              isLeader ? "border-primary" : "border-border",
-              isYou && "ring-1 ring-primary/50",
+              "rounded-lg border bg-card px-3.5 py-2.5",
+              isYou ? "border-primary ring-1 ring-primary/50" : "border-border",
             )}
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="truncate font-heading text-sm font-bold tracking-wide text-foreground uppercase">
+              <span
+                className={cn(
+                  "truncate font-heading font-bold tracking-wide text-foreground uppercase",
+                  big ? "text-base" : "text-sm",
+                )}
+              >
                 {f.short_code ? `${f.short_code} · ` : ""}
                 {f.name}
               </span>
               <span className="shrink-0 font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
-                {f.squad.length}/{settings.squadMax}
+                {f.squadCount}/{settings.squadMax}
               </span>
             </div>
             <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-background">
               <div
                 className={cn(
                   "h-full rounded-full",
-                  isLeader ? "bg-accent" : "bg-primary",
+                  low ? "bg-[var(--closed)]" : "bg-primary",
                 )}
                 style={{ width: `${pct}%` }}
               />
             </div>
-            <div className="mt-1.5 flex items-center justify-between font-mono text-[11px]">
-              <span className="text-foreground/90">{formatMoney(f.purse_remaining)}</span>
-              {isLeader && (
-                <span className="text-primary uppercase">Leading</span>
-              )}
+            <div className="mt-1.5 flex items-center justify-between font-mono">
+              <span
+                className={cn(
+                  "text-foreground/90",
+                  big ? "text-sm" : "text-[11px]",
+                )}
+              >
+                ₹{formatMoney(f.purse_remaining)}
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                / ₹{formatMoney(f.purse_total)}
+              </span>
             </div>
           </div>
         );

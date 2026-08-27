@@ -43,7 +43,11 @@ export type Database = {
         Row: {
           current_bid: number | null
           current_bid_franchise_id: string | null
+          current_category: string | null
           current_player_id: string | null
+          current_result: string | null
+          current_result_amount: number | null
+          current_result_franchise_id: string | null
           id: string
           round: number
           status: string
@@ -52,7 +56,11 @@ export type Database = {
         Insert: {
           current_bid?: number | null
           current_bid_franchise_id?: string | null
+          current_category?: string | null
           current_player_id?: string | null
+          current_result?: string | null
+          current_result_amount?: number | null
+          current_result_franchise_id?: string | null
           id?: string
           round?: number
           status?: string
@@ -61,7 +69,11 @@ export type Database = {
         Update: {
           current_bid?: number | null
           current_bid_franchise_id?: string | null
+          current_category?: string | null
           current_player_id?: string | null
+          current_result?: string | null
+          current_result_amount?: number | null
+          current_result_franchise_id?: string | null
           id?: string
           round?: number
           status?: string
@@ -234,6 +246,8 @@ export type Database = {
           purse_remaining: number
           purse_total: number
           short_code: string | null
+          topup_1_used: boolean
+          topup_2_used: boolean
         }
         Insert: {
           created_at?: string
@@ -244,6 +258,8 @@ export type Database = {
           purse_remaining: number
           purse_total: number
           short_code?: string | null
+          topup_1_used?: boolean
+          topup_2_used?: boolean
         }
         Update: {
           created_at?: string
@@ -254,6 +270,8 @@ export type Database = {
           purse_remaining?: number
           purse_total?: number
           short_code?: string | null
+          topup_1_used?: boolean
+          topup_2_used?: boolean
         }
         Relationships: []
       }
@@ -309,16 +327,22 @@ export type Database = {
           bid_increment: number
           categories: Json
           created_at: string
+          default_purse: number
           franchise_count: number
           id: string
           purse_per_franchise: number
           registration_closes_at: string | null
           registration_fee: number
+          retention_base_price: Json
           season: string
           season_starts_at: string | null
           season_starts_note: string | null
+          squad_max: number
           squad_max_per_franchise: number
+          squad_min: number
           squad_min_per_franchise: number
+          topup_1: number
+          topup_2: number
         }
         Insert: {
           auction_day_at?: string | null
@@ -326,16 +350,22 @@ export type Database = {
           bid_increment?: number
           categories?: Json
           created_at?: string
+          default_purse?: number
           franchise_count?: number
           id?: string
           purse_per_franchise?: number
           registration_closes_at?: string | null
           registration_fee?: number
+          retention_base_price?: Json
           season?: string
           season_starts_at?: string | null
           season_starts_note?: string | null
+          squad_max?: number
           squad_max_per_franchise?: number
+          squad_min?: number
           squad_min_per_franchise?: number
+          topup_1?: number
+          topup_2?: number
         }
         Update: {
           auction_day_at?: string | null
@@ -343,16 +373,22 @@ export type Database = {
           bid_increment?: number
           categories?: Json
           created_at?: string
+          default_purse?: number
           franchise_count?: number
           id?: string
           purse_per_franchise?: number
           registration_closes_at?: string | null
           registration_fee?: number
+          retention_base_price?: Json
           season?: string
           season_starts_at?: string | null
           season_starts_note?: string | null
+          squad_max?: number
           squad_max_per_franchise?: number
+          squad_min?: number
           squad_min_per_franchise?: number
+          topup_1?: number
+          topup_2?: number
         }
         Relationships: []
       }
@@ -653,6 +689,113 @@ export type Database = {
         }
         Relationships: []
       }
+      auction_log: {
+        Row: {
+          action: string
+          amount: number | null
+          created_at: string
+          franchise_id: string | null
+          id: string
+          payload: Json
+          player_id: string | null
+          undone_at: string | null
+        }
+        Insert: {
+          action: string
+          amount?: number | null
+          created_at?: string
+          franchise_id?: string | null
+          id?: string
+          payload?: Json
+          player_id?: string | null
+          undone_at?: string | null
+        }
+        Update: {
+          action?: string
+          amount?: number | null
+          created_at?: string
+          franchise_id?: string | null
+          id?: string
+          payload?: Json
+          player_id?: string | null
+          undone_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auction_log_franchise_id_fkey"
+            columns: ["franchise_id"]
+            isOneToOne: false
+            referencedRelation: "franchises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auction_log_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auction_log_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      squad_members: {
+        Row: {
+          acquisition_type: string
+          category_at_acquisition: string | null
+          created_at: string
+          franchise_id: string
+          id: string
+          player_id: string
+          price: number
+        }
+        Insert: {
+          acquisition_type: string
+          category_at_acquisition?: string | null
+          created_at?: string
+          franchise_id: string
+          id?: string
+          player_id: string
+          price?: number
+        }
+        Update: {
+          acquisition_type?: string
+          category_at_acquisition?: string | null
+          created_at?: string
+          franchise_id?: string
+          id?: string
+          player_id?: string
+          price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "squad_members_franchise_id_fkey"
+            columns: ["franchise_id"]
+            isOneToOne: false
+            referencedRelation: "franchises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "squad_members_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: true
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "squad_members_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: true
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       squads: {
         Row: {
           created_at: string
@@ -771,34 +914,75 @@ export type Database = {
       players_public: {
         Row: {
           assigned_category: string | null
+          batting_average: string | null
+          batting_strike_rate: string | null
+          batting_style: string | null
+          bowling_strike_rate: string | null
+          bowling_style: string | null
+          economy: string | null
           full_name: string | null
           id: string | null
+          matches_played: string | null
           photo_url: string | null
           role: string | null
+          roles: string[] | null
+          runs_scored: string | null
+          wickets_taken: string | null
         }
         Insert: {
           assigned_category?: string | null
+          batting_average?: string | null
+          batting_strike_rate?: string | null
+          batting_style?: string | null
+          bowling_strike_rate?: string | null
+          bowling_style?: string | null
+          economy?: string | null
           full_name?: string | null
           id?: string | null
+          matches_played?: string | null
           photo_url?: string | null
           role?: string | null
+          roles?: string[] | null
+          runs_scored?: string | null
+          wickets_taken?: string | null
         }
         Update: {
           assigned_category?: string | null
+          batting_average?: string | null
+          batting_strike_rate?: string | null
+          batting_style?: string | null
+          bowling_strike_rate?: string | null
+          bowling_style?: string | null
+          economy?: string | null
           full_name?: string | null
           id?: string | null
+          matches_played?: string | null
           photo_url?: string | null
           role?: string | null
+          roles?: string[] | null
+          runs_scored?: string | null
+          wickets_taken?: string | null
         }
         Relationships: []
       }
     }
     Functions: {
+      apply_topup: { Args: { p_franchise: string; p_which: number }; Returns: Json }
       check_phone_registered: { Args: { p_phone: string }; Returns: number }
       current_app_role: { Args: never; Returns: string }
       current_franchise_id: { Args: never; Returns: string }
-      place_bid: { Args: never; Returns: Json }
-      sell_current_player: { Args: never; Returns: Json }
+      is_auction_staff: { Args: never; Returns: boolean }
+      lock_squad_member: {
+        Args: { p_franchise: string; p_player: string; p_type: string }
+        Returns: Json
+      }
+      mark_player_unsold: { Args: { p_player: string }; Returns: Json }
+      unlock_squad_member: { Args: { p_player: string }; Returns: Json }
+      sell_player: {
+        Args: { p_player: string; p_franchise: string; p_amount: number }
+        Returns: Json
+      }
+      undo_last_action: { Args: never; Returns: Json }
     }
     Enums: {
       [_ in never]: never
