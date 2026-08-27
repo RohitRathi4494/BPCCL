@@ -62,6 +62,7 @@ export type AuctionSnapshot = {
     id: string | null;
     categories: string[];
     retentionBasePrice: Record<string, number>;
+    ownerBasePrice: Record<string, number>;
     defaultPurse: number;
     squadMin: number;
     squadMax: number;
@@ -160,6 +161,10 @@ export async function fetchAuctionSnapshot(
     string,
     number
   >;
+  const ownerBasePrice = (settingsRow?.owner_base_price ?? {}) as Record<
+    string,
+    number
+  >;
 
   const players = (playersR.data ?? []) as PublicPlayer[];
   const byId = new Map<string, PublicPlayer>();
@@ -239,6 +244,7 @@ export async function fetchAuctionSnapshot(
       id: settingsRow?.id ?? null,
       categories,
       retentionBasePrice,
+      ownerBasePrice,
       defaultPurse: settingsRow?.default_purse ?? 175000,
       squadMin: settingsRow?.squad_min ?? 18,
       squadMax: settingsRow?.squad_max ?? 25,

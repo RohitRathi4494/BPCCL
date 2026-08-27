@@ -43,6 +43,7 @@ export function AuctionSetup({ initial }: { initial: AuctionSnapshot }) {
   );
 
   const retentionPrices = data.settings.retentionBasePrice;
+  const ownerPrices = data.settings.ownerBasePrice;
 
   async function run(
     key: string,
@@ -75,12 +76,15 @@ export function AuctionSetup({ initial }: { initial: AuctionSnapshot }) {
       supabaseRef.current.rpc("unlock_squad_member", { p_player: playerId }),
     );
 
-  const saveRetentionPrices = (prices: Record<string, number>) => {
+  const savePrices = (
+    owner: Record<string, number>,
+    retention: Record<string, number>,
+  ) => {
     if (!data.settings.id) return;
-    return run("retention-prices", () =>
+    return run("base-prices", () =>
       supabaseRef.current
         .from("league_settings")
-        .update({ retention_base_price: prices })
+        .update({ owner_base_price: owner, retention_base_price: retention })
         .eq("id", data.settings.id!),
     );
   };
@@ -106,14 +110,15 @@ export function AuctionSetup({ initial }: { initial: AuctionSnapshot }) {
         </Link>
       </div>
 
-      {/* Retention base-price editor */}
-      <RetentionPricePanel
-        key={JSON.stringify(retentionPrices)}
+      {/* Owner + retention base-price editor */}
+      <BasePricePanel
+        key={JSON.stringify([ownerPrices, retentionPrices])}
         categories={data.settings.categories}
-        prices={retentionPrices}
-        busy={busyId === "retention-prices"}
+        ownerPrices={ownerPrices}
+        retentionPrices={retentionPrices}
+        busy={busyId === "base-prices"}
         canEdit={!!data.settings.id}
-        onSave={saveRetentionPrices}
+        onSave={savePrices}
       />
 
       {error && (
@@ -139,72 +144,75 @@ export function AuctionSetup({ initial }: { initial: AuctionSnapshot }) {
   );
 }
 
-/** Admin-editable per-category retention base prices (league_settings). */
-function RetentionPricePanel({
+/** Admin-editable per-category base prices for owners AND retentions. */
+function BasePricePanel({
   categories,
-  prices,
+  ownerPrices,
+  retentionPrices,
   busy,
   canEdit,
   onSave,
 }: {
   categories: string[];
-  prices: Record<string, number>;
+  ownerPrices: Record<string, number>;
+  retentionPrices: Record<string, number>;
   busy: boolean;
   canEdit: boolean;
-  onSave: (prices: Record<string, number>) => void;
+  onSave: (
+    owner: Record<string, number>,
+    retention: Record<string, number>,
+  ) => void;
 }) {
-  const [draft, setDraft] = useState<Record<string, string>>(() =>
-    Object.fromEntries(categories.map((c) => [c, String(prices[c] ?? 0)])),
-  );
+  const initOwner = () =>
+    Object.fromEntries(categories.map((c) => [c, String(ownerPrices[c] ?? 0)]));
+  const initRet = () =>
+    Object.fromEntries(categories.map((c) => [c, String(retentionPrices[c] ?? 0)]));
+  const [owner, setOwner] = useState<Record<string, string>>(initOwner);
+  const [retention, setRetention] = useState<Record<string, string>>(initRet);
 
-  const dirty = categories.some(
-    (c) => Number(draft[c] || 0) !== (prices[c] ?? 0),
-  );
+  const dirty =
+    categories.some((c) => Number(owner[c] || 0) !== (ownerPrices[c] ?? 0)) ||
+    categories.some((c) => Number(retention[c] || 0) !== (retentionPrices[c] ?? 0));
 
-  const save = () => {
+  const clean = (draft: Record<string, string>) => {
     const out: Record<string, number> = {};
     for (const c of categories) {
       const n = Number(draft[c]);
       out[c] = Number.isFinite(n) && n >= 0 ? Math.round(n) : 0;
     }
-    onSave(out);
+    return out;
   };
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-border bg-card px-4 py-3">
       <div className="flex items-center justify-between gap-2">
         <span className="font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
-          Retention base price (per category)
+          Base price per category
         </span>
         <span className="font-mono text-[10px] text-muted-foreground">
-          Deducted from purse when a player is locked.
+          Owners and retentions are charged separately when locked.
         </span>
       </div>
-      <div className="flex flex-wrap items-end gap-3">
-        {categories.map((c) => (
-          <label key={c} className="flex flex-col gap-1">
-            <span className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
-              {c}
-            </span>
-            <div className="flex items-center gap-1 rounded-sm border border-input bg-background px-2">
-              <span className="text-sm text-muted-foreground">₹</span>
-              <input
-                type="number"
-                min={0}
-                inputMode="numeric"
-                value={draft[c] ?? ""}
-                disabled={!canEdit || busy}
-                onChange={(e) =>
-                  setDraft((d) => ({ ...d, [c]: e.target.value }))
-                }
-                className="w-24 bg-transparent py-2 text-sm text-foreground outline-none disabled:opacity-50"
-              />
-            </div>
-          </label>
-        ))}
+
+      <PriceRow
+        label="Owner"
+        categories={categories}
+        draft={owner}
+        setDraft={setOwner}
+        disabled={!canEdit || busy}
+      />
+      <PriceRow
+        label="Retention"
+        categories={categories}
+        draft={retention}
+        setDraft={setRetention}
+        disabled={!canEdit || busy}
+      />
+
+      <div className="flex items-center gap-3">
         <button
           type="button"
-          onClick={save}
+          onClick={() => onSave(clean(owner), clean(retention))}
           disabled={!canEdit || busy || !dirty}
           className="inline-flex items-center gap-1.5 rounded-sm bg-primary px-4 py-2 font-heading text-xs font-bold tracking-wide text-primary-foreground uppercase transition-opacity hover:opacity-90 disabled:opacity-50"
         >
@@ -215,12 +223,55 @@ function RetentionPricePanel({
           )}
           Save prices
         </button>
+        {!canEdit && (
+          <span className="text-xs text-[var(--closed)]">
+            League settings row not found — cannot save prices.
+          </span>
+        )}
       </div>
-      {!canEdit && (
-        <span className="text-xs text-[var(--closed)]">
-          League settings row not found — cannot save prices.
-        </span>
-      )}
+    </div>
+  );
+}
+
+function PriceRow({
+  label,
+  categories,
+  draft,
+  setDraft,
+  disabled,
+}: {
+  label: string;
+  categories: string[];
+  draft: Record<string, string>;
+  setDraft: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  disabled: boolean;
+}) {
+  return (
+    <div className="flex flex-wrap items-end gap-3">
+      <span className="w-20 shrink-0 pb-2 font-mono text-[11px] tracking-[0.16em] text-primary uppercase">
+        {label}
+      </span>
+      {categories.map((c) => (
+        <label key={c} className="flex flex-col gap-1">
+          <span className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
+            {c}
+          </span>
+          <div className="flex items-center gap-1 rounded-sm border border-input bg-background px-2">
+            <span className="text-sm text-muted-foreground">₹</span>
+            <input
+              type="number"
+              min={0}
+              inputMode="numeric"
+              value={draft[c] ?? ""}
+              disabled={disabled}
+              onChange={(e) =>
+                setDraft((d) => ({ ...d, [c]: e.target.value }))
+              }
+              className="w-24 bg-transparent py-2 text-sm text-foreground outline-none disabled:opacity-50"
+            />
+          </div>
+        </label>
+      ))}
     </div>
   );
 }

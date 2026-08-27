@@ -330,6 +330,7 @@ export type Database = {
           default_purse: number
           franchise_count: number
           id: string
+          owner_base_price: Json
           purse_per_franchise: number
           registration_closes_at: string | null
           registration_fee: number
@@ -353,6 +354,7 @@ export type Database = {
           default_purse?: number
           franchise_count?: number
           id?: string
+          owner_base_price?: Json
           purse_per_franchise?: number
           registration_closes_at?: string | null
           registration_fee?: number
@@ -376,6 +378,7 @@ export type Database = {
           default_purse?: number
           franchise_count?: number
           id?: string
+          owner_base_price?: Json
           purse_per_franchise?: number
           registration_closes_at?: string | null
           registration_fee?: number
