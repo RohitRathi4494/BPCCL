@@ -8,6 +8,7 @@ import {
 } from "@/lib/queries/players";
 import { RegistrationsSearch } from "@/components/admin/registrations-search";
 import { RegistrationsTable } from "@/components/admin/registrations-table";
+import { AutoAssignButton } from "@/components/admin/auto-assign-button";
 
 export const metadata: Metadata = {
   title: "Registrations",
@@ -56,14 +57,17 @@ export default async function RegistrationsPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground uppercase">
-          Registrations
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Review players, open their profiles, and assign a category before the
-          auction.
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-1">
+          <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground uppercase">
+            Registrations
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Review players, open their profiles, and assign a category before the
+            auction.
+          </p>
+        </div>
+        <AutoAssignButton />
       </div>
 
       {/* Status tabs + search */}

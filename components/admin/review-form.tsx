@@ -9,10 +9,12 @@ import { cn } from "@/lib/utils";
 export function ReviewForm({
   playerId,
   currentCategory,
+  suggestedCategory,
   categories,
 }: {
   playerId: string;
   currentCategory: string | null;
+  suggestedCategory?: string | null;
   categories: string[];
 }) {
   const [state, formAction, pending] = useActionState<ReviewState, FormData>(
@@ -20,6 +22,8 @@ export function ReviewForm({
     {},
   );
   const [reason, setReason] = useState("");
+  // Pre-fill with the admin's saved category, else the stats-based suggestion.
+  const defaultCategory = currentCategory ?? suggestedCategory ?? "";
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -41,7 +45,7 @@ export function ReviewForm({
         <select
           id="assigned_category"
           name="assigned_category"
-          defaultValue={currentCategory ?? ""}
+          defaultValue={defaultCategory}
           className="w-full appearance-none rounded-sm border border-input bg-background px-3.5 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
         >
           <option value="">— Select category —</option>
@@ -51,8 +55,17 @@ export function ReviewForm({
             </option>
           ))}
         </select>
+        {suggestedCategory && (
+          <p className="text-xs text-muted-foreground">
+            Suggested from stats:{" "}
+            <span className="font-semibold text-primary">{suggestedCategory}</span>
+            {currentCategory && currentCategory !== suggestedCategory
+              ? " — you can override the saved value."
+              : ". Change it if needed."}
+          </p>
+        )}
         <p className="text-xs text-muted-foreground">
-          A category is required to approve.
+          Approving with none selected auto-assigns from stats.
         </p>
       </div>
 

@@ -4,6 +4,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink, User } from "lucide-react";
 import { getPlayer } from "@/lib/queries/players";
+import { computeCategory } from "@/lib/categorization";
 import { STAT_FIELDS } from "@/lib/registration";
 import { getLeagueSettings, settingsCategories } from "@/lib/queries/settings";
 import { RegistrationStatus as StatusBadge } from "@/components/admin/registration-status";
@@ -46,6 +47,7 @@ export default async function ReviewPlayerPage({
   if (!player) notFound();
 
   const categories = settingsCategories(settings);
+  const suggestedCategory = computeCategory(player);
 
   return (
     <div className="flex flex-col gap-6">
@@ -205,6 +207,7 @@ export default async function ReviewPlayerPage({
             <ReviewForm
               playerId={player.id}
               currentCategory={player.assigned_category}
+              suggestedCategory={suggestedCategory}
               categories={categories}
             />
             {player.reviewed_at && (

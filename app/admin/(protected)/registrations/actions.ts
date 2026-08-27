@@ -4,12 +4,18 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getLeagueSettings, settingsCategories } from "@/lib/queries/settings";
+import { computeCategory } from "@/lib/categorization";
 import { sendEmail } from "@/lib/email/send";
 import { approvalEmail, rejectionEmail } from "@/lib/email/templates";
 
 export type ReviewState = { error?: string };
 export type DeleteState = { error?: string };
 export type BulkState = { error?: string; approved?: number };
+export type AutoAssignState = { error?: string; assigned?: number };
+
+// Columns the auto-categoriser needs.
+const STAT_COLS =
+  "matches_played, runs_scored, batting_average, batting_strike_rate, wickets_taken, economy";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -39,10 +45,11 @@ export async function bulkApprovePlayers(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Your session expired — please sign in again." };
 
-  // Fetch to decide who is newly approved (for emails) vs already approved.
+  // Fetch to decide who is newly approved (for emails) vs already approved,
+  // and to auto-assign a category to anyone who doesn't have one yet.
   const { data: players, error: fetchErr } = await supabase
     .from("players")
-    .select("id, full_name, email, assigned_category, status")
+    .select(`id, full_name, email, assigned_category, status, ${STAT_COLS}`)
     .in("id", ids);
   if (fetchErr) {
     console.error("bulkApprovePlayers fetch:", fetchErr.message);
@@ -62,6 +69,33 @@ export async function bulkApprovePlayers(
   if (error) {
     console.error("bulkApprovePlayers update:", error.message);
     return { error: "Could not approve the selected players. Please try again." };
+  }
+
+  // Auto-assign categories to approved players that don't have one — grouped by
+  // computed category so it's a handful of updates, not one per player. Existing
+  // (admin-set) categories are left untouched.
+  const missing = (players ?? []).filter(
+    (p) => !p.assigned_category || String(p.assigned_category).trim() === "",
+  );
+  const byCategory = new Map<string, string[]>();
+  for (const p of missing) {
+    const cat = computeCategory(p);
+    const list = byCategory.get(cat) ?? [];
+    list.push(p.id);
+    byCategory.set(cat, list);
+  }
+  for (const [cat, catIds] of byCategory) {
+    const { error: catErr } = await supabase
+      .from("players")
+      .update({ assigned_category: cat })
+      .in("id", catIds);
+    if (catErr) console.error("bulkApprove auto-category:", catErr.message);
+  }
+  // Re-read categories so approval emails carry the freshly assigned one.
+  for (const p of newlyApproved) {
+    if (!p.assigned_category || String(p.assigned_category).trim() === "") {
+      p.assigned_category = computeCategory(p);
+    }
   }
 
   // Notify the newly approved — best effort, never block on email failures.
@@ -127,7 +161,7 @@ export async function reviewPlayer(
 ): Promise<ReviewState> {
   const playerId = String(formData.get("player_id") ?? "");
   const decision = String(formData.get("decision") ?? "");
-  const category = String(formData.get("assigned_category") ?? "").trim();
+  let category = String(formData.get("assigned_category") ?? "").trim();
   const rejectionReason = String(formData.get("rejection_reason") ?? "").trim();
 
   if (!playerId) return { error: "Missing player." };
@@ -135,25 +169,34 @@ export async function reviewPlayer(
     return { error: "Invalid action." };
   }
 
-  // Approving requires a category assignment.
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // Approving needs a category. If the admin didn't pick one, auto-assign it
+  // from the player's stats (the admin can still change it afterwards).
   if (decision === "approve") {
-    if (!category) return { error: "Assign a category before approving." };
+    if (!category) {
+      const { data: sp } = await supabase
+        .from("players")
+        .select(STAT_COLS)
+        .eq("id", playerId)
+        .maybeSingle();
+      if (sp) category = computeCategory(sp);
+    }
     const settings = await getLeagueSettings();
     const categories = settingsCategories(settings);
-    if (categories.length && !categories.includes(category)) {
+    if (categories.length && category && !categories.includes(category)) {
       return { error: "Pick a valid category." };
     }
+    if (!category) return { error: "Assign a category before approving." };
   }
 
   // Rejecting requires a reason (it's emailed to the player).
   if (decision === "reject" && !rejectionReason) {
     return { error: "Enter a reason for rejection (the player is emailed this)." };
   }
-
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
   const { error } = await supabase
     .from("players")
@@ -194,4 +237,54 @@ export async function reviewPlayer(
   revalidatePath("/admin/registrations");
   revalidatePath(`/admin/registrations/${playerId}`);
   redirect(`/admin/registrations?reviewed=1`);
+}
+
+/**
+ * Auto-assign a category to every player that doesn't already have one, using
+ * the stats-based rules in `lib/categorization.ts`. Players whose category was
+ * set manually are left untouched. Grouped by computed category → a handful of
+ * updates rather than one per player.
+ */
+export async function autoAssignCategories(): Promise<AutoAssignState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Your session expired — please sign in again." };
+
+  const { data: players, error } = await supabase
+    .from("players")
+    .select(`id, assigned_category, ${STAT_COLS}`);
+  if (error) {
+    console.error("autoAssignCategories fetch:", error.message);
+    return { error: "Could not load players. Please try again." };
+  }
+
+  const targets = (players ?? []).filter(
+    (p) => !p.assigned_category || String(p.assigned_category).trim() === "",
+  );
+
+  const byCategory = new Map<string, string[]>();
+  for (const p of targets) {
+    const cat = computeCategory(p);
+    const list = byCategory.get(cat) ?? [];
+    list.push(p.id);
+    byCategory.set(cat, list);
+  }
+
+  let assigned = 0;
+  for (const [cat, ids] of byCategory) {
+    const { error: uErr } = await supabase
+      .from("players")
+      .update({ assigned_category: cat })
+      .in("id", ids);
+    if (uErr) {
+      console.error("autoAssignCategories update:", uErr.message);
+      return { error: "Could not save some categories. Please try again." };
+    }
+    assigned += ids.length;
+  }
+
+  revalidatePath("/admin/registrations");
+  return { assigned };
 }
