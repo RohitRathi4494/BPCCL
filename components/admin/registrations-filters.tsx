@@ -1,0 +1,63 @@
+"use client";
+
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+
+const selectClass =
+  "rounded-sm border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary";
+
+/**
+ * Category + role dropdown filters for the registrations list. Each updates its
+ * URL param (resetting to page 1) while preserving the status tab + search, so
+ * the server component re-queries.
+ */
+export function RegistrationsFilters({
+  categories,
+  roles,
+}: {
+  categories: string[];
+  roles: string[];
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useSearchParams();
+
+  const setParam = (key: string, value: string) => {
+    const next = new URLSearchParams(params.toString());
+    if (value) next.set(key, value);
+    else next.delete(key);
+    next.delete("page");
+    router.replace(`${pathname}?${next.toString()}`);
+  };
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      <select
+        aria-label="Filter by category"
+        value={params.get("category") ?? ""}
+        onChange={(e) => setParam("category", e.target.value)}
+        className={selectClass}
+      >
+        <option value="">All categories</option>
+        {categories.map((c) => (
+          <option key={c} value={c}>
+            {c}
+          </option>
+        ))}
+      </select>
+
+      <select
+        aria-label="Filter by role"
+        value={params.get("role") ?? ""}
+        onChange={(e) => setParam("role", e.target.value)}
+        className={selectClass}
+      >
+        <option value="">All roles</option>
+        {roles.map((r) => (
+          <option key={r} value={r}>
+            {r}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}

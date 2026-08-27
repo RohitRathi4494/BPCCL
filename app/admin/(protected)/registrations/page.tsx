@@ -6,7 +6,10 @@ import {
   getRegistrationCounts,
   type RegistrationStatus,
 } from "@/lib/queries/players";
+import { getLeagueSettings, settingsCategories } from "@/lib/queries/settings";
+import { ROLE_GROUPS } from "@/lib/registration";
 import { RegistrationsSearch } from "@/components/admin/registrations-search";
+import { RegistrationsFilters } from "@/components/admin/registrations-filters";
 import { RegistrationsTable } from "@/components/admin/registrations-table";
 import { AutoAssignButton } from "@/components/admin/auto-assign-button";
 
@@ -32,18 +35,25 @@ export default async function RegistrationsPage({
       : "all"
   ) as RegistrationStatus;
   const q = typeof sp.q === "string" ? sp.q : "";
+  const category = typeof sp.category === "string" ? sp.category : "";
+  const role = typeof sp.role === "string" ? sp.role : "";
   const page = Math.max(1, Number(sp.page) || 1);
 
-  const [counts, result] = await Promise.all([
+  const [counts, result, settings] = await Promise.all([
     getRegistrationCounts(),
-    getRegistrations({ status, q, page }),
+    getRegistrations({ status, q, category, role, page }),
+    getLeagueSettings(),
   ]);
+  const categories = settingsCategories(settings);
+  const roleLabels = ROLE_GROUPS.map((g) => g.label);
 
   const buildHref = (overrides: Record<string, string | number | undefined>) => {
     const params = new URLSearchParams();
-    const merged = { status, q, page, ...overrides };
+    const merged = { status, q, category, role, page, ...overrides };
     if (merged.status && merged.status !== "all") params.set("status", String(merged.status));
     if (merged.q) params.set("q", String(merged.q));
+    if (merged.category) params.set("category", String(merged.category));
+    if (merged.role) params.set("role", String(merged.role));
     if (merged.page && Number(merged.page) > 1) params.set("page", String(merged.page));
     const s = params.toString();
     return `/admin/registrations${s ? `?${s}` : ""}`;
@@ -95,6 +105,14 @@ export default async function RegistrationsPage({
           })}
         </div>
         <RegistrationsSearch />
+      </div>
+
+      {/* Category + role filters */}
+      <div className="flex flex-wrap items-center gap-3">
+        <RegistrationsFilters categories={categories} roles={roleLabels} />
+        <span className="font-mono text-xs text-muted-foreground">
+          {result.total} match{result.total === 1 ? "" : "es"}
+        </span>
       </div>
 
       {/* Table with multi-select + bulk approve */}

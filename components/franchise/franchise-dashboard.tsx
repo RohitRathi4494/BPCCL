@@ -18,11 +18,15 @@ import {
   updateWishlist,
 } from "@/app/franchise/actions";
 import { createClient } from "@/lib/supabase/client";
+import { ROLE_GROUPS } from "@/lib/registration";
 import { cn } from "@/lib/utils";
 import type { PoolPlayer } from "@/lib/types";
 import type { WishlistEntry, SquadEntry } from "@/lib/queries/franchise";
 
 const inr = (n: number) => new Intl.NumberFormat("en-IN").format(n);
+
+// Preferred display order for category filter options.
+const CATEGORY_ORDER = ["Legend", "Category A+", "Category A", "Category B"];
 
 type Franchise = {
   id: string;
@@ -111,6 +115,8 @@ export function FranchiseDashboard({
 }) {
   const [tab, setTab] = useState<Tab>("pool");
   const [query, setQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
@@ -140,11 +146,30 @@ export function FranchiseDashboard({
     };
   }, [franchise.id, router]);
 
+  // Categories present in the pool, in the preferred order.
+  const categoryOptions = useMemo(() => {
+    const present = new Set(
+      pool.map((p) => p.assigned_category).filter(Boolean) as string[],
+    );
+    const ordered = CATEGORY_ORDER.filter((c) => present.has(c));
+    const extras = [...present].filter((c) => !CATEGORY_ORDER.includes(c));
+    return [...ordered, ...extras];
+  }, [pool]);
+
   const filteredPool = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return pool;
-    return pool.filter((p) => (p.full_name ?? "").toLowerCase().includes(q));
-  }, [pool, query]);
+    const group = roleFilter
+      ? ROLE_GROUPS.find((g) => g.label === roleFilter)
+      : null;
+    const groupRoles = group ? new Set<string>(group.roles) : null;
+    return pool.filter((p) => {
+      if (q && !(p.full_name ?? "").toLowerCase().includes(q)) return false;
+      if (categoryFilter && p.assigned_category !== categoryFilter) return false;
+      if (groupRoles && !(p.roles ?? []).some((r) => groupRoles.has(r)))
+        return false;
+      return true;
+    });
+  }, [pool, query, categoryFilter, roleFilter]);
 
   const spent = squad.reduce((sum, s) => sum + s.sold_price, 0);
 
@@ -191,17 +216,48 @@ export function FranchiseDashboard({
       {/* ---- Player Pool ---- */}
       {tab === "pool" && (
         <div className="flex flex-col gap-4">
-          <div className="relative max-w-sm">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search approved players…"
-              className="w-full rounded-sm border border-input bg-background py-2.5 pr-3.5 pl-9 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-            />
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative w-full sm:max-w-xs">
+              <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search approved players…"
+                className="w-full rounded-sm border border-input bg-background py-2.5 pr-3.5 pl-9 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+              />
+            </div>
+            <select
+              aria-label="Filter by category"
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="rounded-sm border border-input bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+            >
+              <option value="">All categories</option>
+              {categoryOptions.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+            <select
+              aria-label="Filter by role"
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="rounded-sm border border-input bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+            >
+              <option value="">All roles</option>
+              {ROLE_GROUPS.map((g) => (
+                <option key={g.label} value={g.label}>
+                  {g.label}
+                </option>
+              ))}
+            </select>
+            <span className="font-mono text-xs text-muted-foreground">
+              {filteredPool.length} shown
+            </span>
           </div>
           {filteredPool.length === 0 ? (
-            <Empty>No approved players match your search.</Empty>
+            <Empty>No approved players match these filters.</Empty>
           ) : (
             <div className="grid gap-3 md:grid-cols-2">
               {filteredPool.map((p) => {

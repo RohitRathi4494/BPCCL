@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { ROLE_GROUPS } from "@/lib/registration";
 import type { Player } from "@/lib/types";
 
 export type RegistrationStatus = "all" | "pending" | "approved" | "rejected";
@@ -7,6 +8,8 @@ export type RegistrationQuery = {
   page?: number;
   q?: string;
   status?: RegistrationStatus;
+  category?: string;
+  role?: string; // a ROLE_GROUPS label (Batting / Bowling / All Rounder / Wicket Keeper)
   pageSize?: number;
 };
 
@@ -36,6 +39,16 @@ export async function getRegistrations(
 
   if (query.status && query.status !== "all") {
     q = q.eq("status", query.status);
+  }
+
+  if (query.category) {
+    q = q.eq("assigned_category", query.category);
+  }
+
+  if (query.role) {
+    // Match players whose roles array overlaps any role in the chosen group.
+    const group = ROLE_GROUPS.find((g) => g.label === query.role);
+    if (group) q = q.overlaps("roles", group.roles as unknown as string[]);
   }
 
   if (query.q) {
