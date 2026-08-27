@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Barlow, Barlow_Condensed } from "next/font/google";
+import { getSiteUrl } from "@/lib/site";
 import "./globals.css";
 
 // Body / UI — Barlow (athletic, clean grotesque). Sports/fitness pairing.
@@ -19,6 +20,7 @@ const barlowCondensed = Barlow_Condensed({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getSiteUrl()),
   title: {
     default: "Urban Sports Champions League — Season 2",
     template: "%s · USCL Season 2",

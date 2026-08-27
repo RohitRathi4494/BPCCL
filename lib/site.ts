@@ -25,6 +25,25 @@ export const navLinks = [
   { label: "Fixtures", href: "/fixtures", soon: true },
 ] as const;
 
+/**
+ * Canonical, absolute base URL of the public site (no trailing slash). Used for
+ * the sitemap, robots.txt, and metadataBase (canonical / OG URLs).
+ *
+ * Resolution order:
+ *   1. NEXT_PUBLIC_SITE_URL — set this to your production domain
+ *      (e.g. https://uscl.in) in Vercel → Project → Settings → Environment.
+ *   2. VERCEL_PROJECT_PRODUCTION_URL — the project's .vercel.app domain,
+ *      provided automatically on Vercel builds (fallback if 1 isn't set).
+ *   3. http://localhost:3000 — local dev fallback.
+ */
+export function getSiteUrl(): string {
+  const explicit = process.env.NEXT_PUBLIC_SITE_URL;
+  if (explicit) return explicit.replace(/\/+$/, "");
+  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  if (vercel) return `https://${vercel.replace(/\/+$/, "")}`;
+  return "http://localhost:3000";
+}
+
 export const SPONSOR_TIERS = [
   "Title",
   "Co-title",
