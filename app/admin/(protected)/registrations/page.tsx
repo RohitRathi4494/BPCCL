@@ -37,11 +37,12 @@ export default async function RegistrationsPage({
   const q = typeof sp.q === "string" ? sp.q : "";
   const category = typeof sp.category === "string" ? sp.category : "";
   const role = typeof sp.role === "string" ? sp.role : "";
+  const stats = typeof sp.stats === "string" ? sp.stats : "";
   const page = Math.max(1, Number(sp.page) || 1);
 
   const [counts, result, settings] = await Promise.all([
     getRegistrationCounts(),
-    getRegistrations({ status, q, category, role, page }),
+    getRegistrations({ status, q, category, role, stats, page }),
     getLeagueSettings(),
   ]);
   const categories = settingsCategories(settings);
@@ -49,11 +50,12 @@ export default async function RegistrationsPage({
 
   const buildHref = (overrides: Record<string, string | number | undefined>) => {
     const params = new URLSearchParams();
-    const merged = { status, q, category, role, page, ...overrides };
+    const merged = { status, q, category, role, stats, page, ...overrides };
     if (merged.status && merged.status !== "all") params.set("status", String(merged.status));
     if (merged.q) params.set("q", String(merged.q));
     if (merged.category) params.set("category", String(merged.category));
     if (merged.role) params.set("role", String(merged.role));
+    if (merged.stats) params.set("stats", String(merged.stats));
     if (merged.page && Number(merged.page) > 1) params.set("page", String(merged.page));
     const s = params.toString();
     return `/admin/registrations${s ? `?${s}` : ""}`;

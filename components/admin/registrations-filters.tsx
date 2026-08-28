@@ -58,6 +58,17 @@ export function RegistrationsFilters({
           </option>
         ))}
       </select>
+
+      <select
+        aria-label="Filter by stats"
+        value={params.get("stats") ?? ""}
+        onChange={(e) => setParam("stats", e.target.value)}
+        className={selectClass}
+      >
+        <option value="">All stats</option>
+        <option value="na">Has NA stats</option>
+        <option value="complete">All stats filled</option>
+      </select>
     </div>
   );
 }
