@@ -5,14 +5,25 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getLeagueSettings, settingsCategories } from "@/lib/queries/settings";
 import { computeCategory } from "@/lib/categorization";
+import { getSiteUrl } from "@/lib/site";
 import { sendEmail } from "@/lib/email/send";
-import { approvalEmail, rejectionEmail } from "@/lib/email/templates";
+import {
+  approvalEmail,
+  rejectionEmail,
+  aadhaarReminderEmail,
+} from "@/lib/email/templates";
 
 export type ReviewState = { error?: string };
 export type ResetState = { error?: string };
 export type DeleteState = { error?: string };
 export type BulkState = { error?: string; approved?: number };
 export type AutoAssignState = { error?: string; assigned?: number };
+export type ReminderState = {
+  error?: string;
+  sent?: number;
+  skipped?: number;
+  failed?: number;
+};
 
 // Columns the auto-categoriser needs.
 const STAT_COLS =
@@ -326,4 +337,68 @@ export async function autoAssignCategories(): Promise<AutoAssignState> {
 
   revalidatePath("/admin/registrations");
   return { assigned };
+}
+
+/**
+ * Email every non-rejected player who hasn't uploaded an Aadhaar yet, with their
+ * registration ID and the self-service link. Best-effort per email; sent in
+ * small concurrent batches. Re-runnable (will re-email anyone still missing it).
+ */
+export async function emailAadhaarReminders(): Promise<ReminderState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Your session expired — please sign in again." };
+
+  const { data: players, error } = await supabase
+    .from("players")
+    .select("full_name, email, registration_code")
+    .is("aadhaar_path", null)
+    .neq("status", "rejected")
+    .not("email", "is", null);
+  if (error) {
+    console.error("emailAadhaarReminders fetch:", error.message);
+    return { error: "Could not load players. Please try again." };
+  }
+
+  const targets = (players ?? []).filter((p) => p.email);
+  if (targets.length === 0) return { sent: 0, skipped: 0, failed: 0 };
+
+  const url = `${getSiteUrl()}/register/aadhaar`;
+  let sent = 0;
+  let skipped = 0;
+  let failed = 0;
+
+  const BATCH = 8;
+  for (let i = 0; i < targets.length; i += BATCH) {
+    const batch = targets.slice(i, i + BATCH);
+    const results = await Promise.all(
+      batch.map(async (p) => {
+        try {
+          const mail = aadhaarReminderEmail(
+            p.full_name,
+            p.registration_code,
+            url,
+          );
+          const r = await sendEmail({
+            to: p.email!,
+            subject: mail.subject,
+            html: mail.html,
+          });
+          return r.skipped ? "skipped" : r.ok ? "sent" : "failed";
+        } catch (e) {
+          console.error("aadhaar reminder email:", e);
+          return "failed";
+        }
+      }),
+    );
+    for (const r of results) {
+      if (r === "sent") sent++;
+      else if (r === "skipped") skipped++;
+      else failed++;
+    }
+  }
+
+  return { sent, skipped, failed };
 }

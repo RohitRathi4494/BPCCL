@@ -69,6 +69,17 @@ export function RegistrationsFilters({
         <option value="na">Has NA stats</option>
         <option value="complete">All stats filled</option>
       </select>
+
+      <select
+        aria-label="Filter by Aadhaar"
+        value={params.get("aadhaar") ?? ""}
+        onChange={(e) => setParam("aadhaar", e.target.value)}
+        className={selectClass}
+      >
+        <option value="">Aadhaar: any</option>
+        <option value="missing">Aadhaar missing</option>
+        <option value="uploaded">Aadhaar uploaded</option>
+      </select>
     </div>
   );
 }

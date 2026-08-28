@@ -18,6 +18,7 @@ export type RegistrationQuery = {
   category?: string;
   role?: string; // a ROLE_GROUPS label (Batting / Bowling / All Rounder / Wicket Keeper)
   stats?: string; // "na" = has NA/blank in any stat, "complete" = all filled
+  aadhaar?: string; // "missing" | "uploaded"
   pageSize?: number;
 };
 
@@ -71,6 +72,12 @@ export async function getRegistrations(
     for (const c of STAT_KEYS) {
       q = q.not(c, "is", null).not(c, "ilike", NA_PCT);
     }
+  }
+
+  if (query.aadhaar === "missing") {
+    q = q.is("aadhaar_path", null);
+  } else if (query.aadhaar === "uploaded") {
+    q = q.not("aadhaar_path", "is", null);
   }
 
   if (query.q) {
