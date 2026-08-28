@@ -351,10 +351,12 @@ export async function emailAadhaarReminders(): Promise<ReminderState> {
   } = await supabase.auth.getUser();
   if (!user) return { error: "Your session expired — please sign in again." };
 
+  // Only players who still have no Aadhaar AND haven't been reminded yet.
   const { data: players, error } = await supabase
     .from("players")
-    .select("full_name, email, registration_code")
+    .select("id, full_name, email, registration_code")
     .is("aadhaar_path", null)
+    .is("aadhaar_reminded_at", null)
     .neq("status", "rejected")
     .not("email", "is", null);
   if (error) {
@@ -366,6 +368,7 @@ export async function emailAadhaarReminders(): Promise<ReminderState> {
   if (targets.length === 0) return { sent: 0, skipped: 0, failed: 0 };
 
   const url = `${getSiteUrl()}/register/aadhaar`;
+  const sentIds: string[] = [];
   let sent = 0;
   let skipped = 0;
   let failed = 0;
@@ -386,19 +389,32 @@ export async function emailAadhaarReminders(): Promise<ReminderState> {
             subject: mail.subject,
             html: mail.html,
           });
-          return r.skipped ? "skipped" : r.ok ? "sent" : "failed";
+          return { id: p.id, outcome: r.skipped ? "skipped" : r.ok ? "sent" : "failed" };
         } catch (e) {
           console.error("aadhaar reminder email:", e);
-          return "failed";
+          return { id: p.id, outcome: "failed" as const };
         }
       }),
     );
-    for (const r of results) {
-      if (r === "sent") sent++;
-      else if (r === "skipped") skipped++;
+    for (const { id, outcome } of results) {
+      if (outcome === "sent") {
+        sent++;
+        sentIds.push(id);
+      } else if (outcome === "skipped") skipped++;
       else failed++;
     }
   }
 
+  // Stamp only the players we actually emailed, so a re-run skips them but still
+  // picks up anyone that was skipped (e.g. SMTP not configured) or failed.
+  if (sentIds.length > 0) {
+    const { error: stampErr } = await supabase
+      .from("players")
+      .update({ aadhaar_reminded_at: new Date().toISOString() })
+      .in("id", sentIds);
+    if (stampErr) console.error("aadhaar reminder stamp:", stampErr.message);
+  }
+
+  revalidatePath("/admin/registrations");
   return { sent, skipped, failed };
 }

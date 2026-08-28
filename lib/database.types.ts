@@ -466,6 +466,7 @@ export type Database = {
       players: {
         Row: {
           aadhaar_path: string | null
+          aadhaar_reminded_at: string | null
           achievements: string | null
           age: number
           assigned_category: string | null
@@ -508,6 +509,7 @@ export type Database = {
         }
         Insert: {
           aadhaar_path?: string | null
+          aadhaar_reminded_at?: string | null
           achievements?: string | null
           age: number
           assigned_category?: string | null
@@ -550,6 +552,7 @@ export type Database = {
         }
         Update: {
           aadhaar_path?: string | null
+          aadhaar_reminded_at?: string | null
           achievements?: string | null
           age?: number
           assigned_category?: string | null
