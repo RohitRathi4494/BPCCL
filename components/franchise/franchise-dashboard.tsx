@@ -105,11 +105,13 @@ function CategoryBadge({ category }: { category: string | null }) {
 export function FranchiseDashboard({
   franchise,
   pool,
+  soldIds,
   wishlist,
   squad,
 }: {
   franchise: Franchise;
   pool: PoolPlayer[];
+  soldIds: string[];
   wishlist: WishlistEntry[];
   squad: SquadEntry[];
 }) {
@@ -124,37 +126,41 @@ export function FranchiseDashboard({
     () => new Set(wishlist.map((w) => w.player_id)),
     [wishlist],
   );
+  const soldSet = useMemo(() => new Set(soldIds), [soldIds]);
 
-  // Live squad: refresh the server data when this franchise's squads change.
+  // Live: refresh server data whenever ANY player is sold/locked (squad_members
+  // changes), so sold players drop out of the pool and this franchise's squad
+  // updates in real time.
   useEffect(() => {
     const supabase = createClient();
     const channel = supabase
-      .channel(`franchise-squad-${franchise.id}`)
+      .channel("franchise-squad-members")
       .on(
         "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "squads",
-          filter: `franchise_id=eq.${franchise.id}`,
-        },
+        { event: "*", schema: "public", table: "squad_members" },
         () => router.refresh(),
       )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [franchise.id, router]);
+  }, [router]);
 
-  // Categories present in the pool, in the preferred order.
+  // Available (unsold) players — sold players drop out of the biddable pool.
+  const availablePool = useMemo(
+    () => pool.filter((p) => !soldSet.has(p.id ?? "")),
+    [pool, soldSet],
+  );
+
+  // Categories present in the available pool, in the preferred order.
   const categoryOptions = useMemo(() => {
     const present = new Set(
-      pool.map((p) => p.assigned_category).filter(Boolean) as string[],
+      availablePool.map((p) => p.assigned_category).filter(Boolean) as string[],
     );
     const ordered = CATEGORY_ORDER.filter((c) => present.has(c));
     const extras = [...present].filter((c) => !CATEGORY_ORDER.includes(c));
     return [...ordered, ...extras];
-  }, [pool]);
+  }, [availablePool]);
 
   const filteredPool = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -162,14 +168,14 @@ export function FranchiseDashboard({
       ? ROLE_GROUPS.find((g) => g.label === roleFilter)
       : null;
     const groupRoles = group ? new Set<string>(group.roles) : null;
-    return pool.filter((p) => {
+    return availablePool.filter((p) => {
       if (q && !(p.full_name ?? "").toLowerCase().includes(q)) return false;
       if (categoryFilter && p.assigned_category !== categoryFilter) return false;
       if (groupRoles && !(p.roles ?? []).some((r) => groupRoles.has(r)))
         return false;
       return true;
     });
-  }, [pool, query, categoryFilter, roleFilter]);
+  }, [availablePool, query, categoryFilter, roleFilter]);
 
   const spent = squad.reduce((sum, s) => sum + s.sold_price, 0);
 
@@ -180,7 +186,7 @@ export function FranchiseDashboard({
     });
 
   const tabs: { key: Tab; label: string; count: number }[] = [
-    { key: "pool", label: "Player Pool", count: pool.length },
+    { key: "pool", label: "Player Pool", count: availablePool.length },
     { key: "wishlist", label: "Wishlist", count: wishlist.length },
     { key: "squad", label: "My Squad", count: squad.length },
   ];

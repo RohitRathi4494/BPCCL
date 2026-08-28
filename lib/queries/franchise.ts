@@ -28,6 +28,20 @@ function indexPool(pool: PoolPlayer[]): Map<string, PoolPlayer> {
   return new Map(pool.filter((p) => p.id).map((p) => [p.id as string, p]));
 }
 
+/**
+ * IDs of every player already on a squad (owner / retention / auction), across
+ * ALL franchises. Used to drop sold players from the biddable pool.
+ */
+export async function getSoldPlayerIds(): Promise<string[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("squad_members").select("player_id");
+  if (error) {
+    console.error("getSoldPlayerIds:", error.message);
+    return [];
+  }
+  return (data ?? []).map((s) => s.player_id);
+}
+
 /** The calling franchise owner's wishlist (RLS scopes it to their franchise). */
 export async function getWishlist(pool: PoolPlayer[]): Promise<WishlistEntry[]> {
   const supabase = await createClient();
