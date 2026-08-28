@@ -16,6 +16,7 @@ import {
   type StatKey,
 } from "@/lib/registration";
 import { PhotoUpload } from "@/components/site/photo-upload";
+import { AadhaarUpload } from "@/components/site/aadhaar-upload";
 import { cn } from "@/lib/utils";
 
 const fieldClass =
@@ -35,6 +36,7 @@ type FormValues = {
   company: string;
   work_email: string;
   photo_url: string;
+  aadhaar_path: string;
   cricheroes_url: string;
   linkedin_url: string;
   roles: string[];
@@ -59,6 +61,7 @@ const EMPTY_VALUES: FormValues = {
   company: "",
   work_email: "",
   photo_url: "",
+  aadhaar_path: "",
   cricheroes_url: "",
   linkedin_url: "",
   roles: [],
@@ -262,6 +265,17 @@ export function RegistrationForm({ registrationFee }: { registrationFee: number 
           error={state.errors?.photo_url}
           onUploaded={(url) => {
             setValues((v) => ({ ...v, photo_url: url }));
+            if (confirmDuplicate) setConfirmDuplicate(false);
+          }}
+        />
+
+        {/* Aadhaar upload writes its (private) storage path into a hidden field. */}
+        <input type="hidden" name="aadhaar_path" value={values.aadhaar_path} />
+        <AadhaarUpload
+          value={values.aadhaar_path}
+          error={state.errors?.aadhaar_path}
+          onUploaded={(path) => {
+            setValues((v) => ({ ...v, aadhaar_path: path }));
             if (confirmDuplicate) setConfirmDuplicate(false);
           }}
         />

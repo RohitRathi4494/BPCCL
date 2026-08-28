@@ -5,7 +5,8 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink, User } from "lucide-react";
 import { getPlayer } from "@/lib/queries/players";
 import { computeCategory } from "@/lib/categorization";
-import { STAT_FIELDS } from "@/lib/registration";
+import { STAT_FIELDS, AADHAAR_BUCKET } from "@/lib/registration";
+import { createClient } from "@/lib/supabase/server";
 import { getLeagueSettings, settingsCategories } from "@/lib/queries/settings";
 import { RegistrationStatus as StatusBadge } from "@/components/admin/registration-status";
 import { ReviewForm } from "@/components/admin/review-form";
@@ -49,6 +50,17 @@ export default async function ReviewPlayerPage({
 
   const categories = settingsCategories(settings);
   const suggestedCategory = computeCategory(player);
+
+  // Aadhaar lives in a private bucket — mint a short-lived signed URL (admin
+  // session is allowed to read it via the storage RLS policy).
+  let aadhaarUrl: string | null = null;
+  if (player.aadhaar_path) {
+    const supabase = await createClient();
+    const { data } = await supabase.storage
+      .from(AADHAAR_BUCKET)
+      .createSignedUrl(player.aadhaar_path, 300);
+    aadhaarUrl = data?.signedUrl ?? null;
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -134,6 +146,29 @@ export default async function ReviewPlayerPage({
                       Open profile <ExternalLink className="size-3.5" />
                     </a>
                   ) : null
+                }
+              />
+              <Detail
+                label="Aadhaar Card"
+                value={
+                  player.aadhaar_path ? (
+                    aadhaarUrl ? (
+                      <a
+                        href={aadhaarUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-primary hover:underline"
+                      >
+                        View Aadhaar <ExternalLink className="size-3.5" />
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground">
+                        Uploaded (link unavailable)
+                      </span>
+                    )
+                  ) : (
+                    <span className="text-muted-foreground">Not uploaded</span>
+                  )
                 }
               />
             </div>

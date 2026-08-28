@@ -62,7 +62,9 @@ export function CurrentPlayerCard({
               alt={currentPlayer.full_name}
               fill
               sizes={big ? "256px" : "112px"}
-              className="object-cover"
+              // Contain (not cover) so the whole photo is visible on the big
+              // screen — no cropping of heads/edges.
+              className="object-contain"
             />
           ) : (
             <div className="grid size-full place-items-center">

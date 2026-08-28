@@ -66,6 +66,19 @@ export const PHOTO_BUCKET = "player-photos";
 export const PHOTO_MAX_BYTES = 5 * 1024 * 1024; // 5 MB
 export const PHOTO_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
+/**
+ * Aadhaar card upload (Supabase Storage). PRIVATE bucket — sensitive ID, only
+ * admins can read it (via signed URLs). Accepts an image or a PDF scan.
+ */
+export const AADHAAR_BUCKET = "player-aadhaar";
+export const AADHAAR_MAX_BYTES = 5 * 1024 * 1024; // 5 MB
+export const AADHAAR_MIME_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "application/pdf",
+];
+
 /** Normalise a phone number for storage + duplicate comparison. */
 export function normalizePhone(raw: string): string {
   return raw.replace(/[\s()\-.]/g, "");
