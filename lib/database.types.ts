@@ -922,6 +922,7 @@ export type Database = {
           batting_style: string | null
           bowling_strike_rate: string | null
           bowling_style: string | null
+          cricheroes_url: string | null
           economy: string | null
           full_name: string | null
           id: string | null
@@ -939,6 +940,7 @@ export type Database = {
           batting_style?: string | null
           bowling_strike_rate?: string | null
           bowling_style?: string | null
+          cricheroes_url?: string | null
           economy?: string | null
           full_name?: string | null
           id?: string | null
@@ -956,6 +958,7 @@ export type Database = {
           batting_style?: string | null
           bowling_strike_rate?: string | null
           bowling_style?: string | null
+          cricheroes_url?: string | null
           economy?: string | null
           full_name?: string | null
           id?: string | null

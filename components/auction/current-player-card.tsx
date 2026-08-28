@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { User } from "lucide-react";
+import { User, ExternalLink } from "lucide-react";
 import { formatMoney, type AuctionSnapshot } from "@/lib/auction/snapshot";
 import { cn } from "@/lib/utils";
 
@@ -111,6 +111,21 @@ export function CurrentPlayerCard({
             >
               {styles}
             </p>
+          )}
+
+          {currentPlayer.cricheroes_url && (
+            <a
+              href={currentPlayer.cricheroes_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                "inline-flex w-fit items-center gap-1.5 rounded-sm border border-primary/50 bg-primary/10 font-heading font-bold tracking-wide text-primary uppercase transition-colors hover:bg-primary hover:text-primary-foreground",
+                big ? "px-4 py-2 text-sm" : "px-3 py-1.5 text-xs",
+              )}
+            >
+              CricHeroes Profile{" "}
+              <ExternalLink className={big ? "size-4" : "size-3.5"} />
+            </a>
           )}
 
           {currentPlayer.stats.length > 0 && (

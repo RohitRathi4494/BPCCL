@@ -32,6 +32,7 @@ export type CurrentPlayer = {
   roles: string[];
   batting_style: string | null;
   bowling_style: string | null;
+  cricheroes_url: string | null;
   stats: { label: string; value: string }[];
 };
 
@@ -113,6 +114,7 @@ type PublicPlayer = {
   assigned_category: string | null;
   batting_style: string | null;
   bowling_style: string | null;
+  cricheroes_url: string | null;
 } & StatsRow;
 
 /**
@@ -217,6 +219,7 @@ export async function fetchAuctionSnapshot(
         roles: p.roles ?? [],
         batting_style: p.batting_style,
         bowling_style: p.bowling_style,
+        cricheroes_url: p.cricheroes_url,
         stats: STAT_LABELS.map(({ key, label }) => ({
           label,
           value: (p[key] ?? "").toString().trim() || "—",

@@ -12,6 +12,7 @@ import {
   Plus,
   RotateCcw,
   CornerUpLeft,
+  ExternalLink,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuction } from "@/lib/auction/use-auction";
@@ -30,6 +31,7 @@ type PoolPlayer = {
   full_name: string;
   role: string | null;
   assigned_category: string | null;
+  cricheroes_url: string | null;
 };
 type RpcResult = { ok: boolean; error?: string } | null;
 
@@ -46,7 +48,7 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
     (async () => {
       const { data: rows } = await supabaseRef.current
         .from("players")
-        .select("id, full_name, role, assigned_category")
+        .select("id, full_name, role, assigned_category, cricheroes_url")
         .eq("status", "approved")
         .order("full_name", { ascending: true });
       setPool(rows ?? []);
@@ -331,14 +333,27 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
                           {p.assigned_category ?? "—"} · {p.role ?? "—"}
                         </p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => putUp(p.id)}
-                        disabled={busy || status === "completed"}
-                        className="inline-flex shrink-0 items-center gap-1 rounded-sm border border-primary px-3 py-1.5 text-xs font-bold text-primary uppercase transition-colors hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
-                      >
-                        <ChevronUp className="size-3.5" /> Put up
-                      </button>
+                      <div className="flex shrink-0 items-center gap-2">
+                        {p.cricheroes_url && (
+                          <a
+                            href={p.cricheroes_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Open CricHeroes profile"
+                            className="inline-flex items-center gap-1 rounded-sm border border-border px-2.5 py-1.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase transition-colors hover:border-primary hover:text-primary"
+                          >
+                            CH <ExternalLink className="size-3" />
+                          </a>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => putUp(p.id)}
+                          disabled={busy || status === "completed"}
+                          className="inline-flex items-center gap-1 rounded-sm border border-primary px-3 py-1.5 text-xs font-bold text-primary uppercase transition-colors hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
+                        >
+                          <ChevronUp className="size-3.5" /> Put up
+                        </button>
+                      </div>
                     </li>
                   ))}
                 </ul>

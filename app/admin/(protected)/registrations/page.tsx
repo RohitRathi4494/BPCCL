@@ -12,6 +12,9 @@ import { RegistrationsSearch } from "@/components/admin/registrations-search";
 import { RegistrationsFilters } from "@/components/admin/registrations-filters";
 import { RegistrationsTable } from "@/components/admin/registrations-table";
 import { AutoAssignButton } from "@/components/admin/auto-assign-button";
+import { PageSizeSelect } from "@/components/admin/page-size-select";
+
+const PAGE_SIZES = [25, 50, 100];
 
 export const metadata: Metadata = {
   title: "Registrations",
@@ -38,11 +41,12 @@ export default async function RegistrationsPage({
   const category = typeof sp.category === "string" ? sp.category : "";
   const role = typeof sp.role === "string" ? sp.role : "";
   const stats = typeof sp.stats === "string" ? sp.stats : "";
+  const pageSize = PAGE_SIZES.includes(Number(sp.size)) ? Number(sp.size) : 25;
   const page = Math.max(1, Number(sp.page) || 1);
 
   const [counts, result, settings] = await Promise.all([
     getRegistrationCounts(),
-    getRegistrations({ status, q, category, role, stats, page }),
+    getRegistrations({ status, q, category, role, stats, page, pageSize }),
     getLeagueSettings(),
   ]);
   const categories = settingsCategories(settings);
@@ -50,12 +54,13 @@ export default async function RegistrationsPage({
 
   const buildHref = (overrides: Record<string, string | number | undefined>) => {
     const params = new URLSearchParams();
-    const merged = { status, q, category, role, stats, page, ...overrides };
+    const merged = { status, q, category, role, stats, size: pageSize, page, ...overrides };
     if (merged.status && merged.status !== "all") params.set("status", String(merged.status));
     if (merged.q) params.set("q", String(merged.q));
     if (merged.category) params.set("category", String(merged.category));
     if (merged.role) params.set("role", String(merged.role));
     if (merged.stats) params.set("stats", String(merged.stats));
+    if (merged.size && Number(merged.size) !== 25) params.set("size", String(merged.size));
     if (merged.page && Number(merged.page) > 1) params.set("page", String(merged.page));
     const s = params.toString();
     return `/admin/registrations${s ? `?${s}` : ""}`;
@@ -121,10 +126,13 @@ export default async function RegistrationsPage({
       <RegistrationsTable rows={result.rows} />
 
       {/* Pagination */}
-      <div className="flex items-center justify-between gap-4">
-        <p className="font-mono text-xs text-muted-foreground">
-          {rangeStart}–{rangeEnd} of {result.total}
-        </p>
+      <div className="flex flex-col-reverse items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
+          <p className="font-mono text-xs text-muted-foreground">
+            {rangeStart}–{rangeEnd} of {result.total}
+          </p>
+          <PageSizeSelect options={PAGE_SIZES} />
+        </div>
         <div className="flex items-center gap-2">
           <PagerLink
             href={buildHref({ page: result.page - 1 })}
