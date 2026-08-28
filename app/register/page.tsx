@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { ClipboardList, Gavel, Search } from "lucide-react";
+import Link from "next/link";
+import { ClipboardList, Gavel, Search, ShieldCheck } from "lucide-react";
 import { SectionHeading } from "@/components/site/section-heading";
 import { RegistrationForm } from "@/components/site/registration-form";
 import { getLeagueSettings } from "@/lib/queries/settings";
@@ -52,6 +53,14 @@ export default async function RegisterPage() {
             No account needed — just fill the form below. Open to players aged{" "}
             <span className="text-primary">{MIN_AGE} and above</span>.
           </p>
+
+          <Link
+            href="/register/aadhaar"
+            className="mt-5 inline-flex items-center gap-2 rounded-sm border border-border bg-card px-4 py-2.5 text-sm text-foreground/85 transition-colors hover:border-primary hover:text-primary"
+          >
+            <ShieldCheck className="size-4 text-primary" />
+            Already registered? Add your Aadhaar card
+          </Link>
 
           <div className="mt-10 grid gap-4 sm:grid-cols-3">
             {steps.map((s, i) => (

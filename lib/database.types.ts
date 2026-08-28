@@ -977,6 +977,10 @@ export type Database = {
     }
     Functions: {
       apply_topup: { Args: { p_franchise: string; p_which: number }; Returns: Json }
+      attach_aadhaar: {
+        Args: { p_code: string; p_phone: string; p_path: string }
+        Returns: Json
+      }
       check_phone_registered: { Args: { p_phone: string }; Returns: number }
       current_app_role: { Args: never; Returns: string }
       current_franchise_id: { Args: never; Returns: string }
