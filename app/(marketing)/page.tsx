@@ -51,8 +51,10 @@ export default async function HomePage() {
     <>
       {/* ================= HERO ================= */}
       <section className="relative overflow-hidden">
-        {/* Desktop: full-bleed champions background + overlay for legibility */}
-        <div className="absolute inset-0 hidden lg:block">
+        {/* Desktop: full-bleed champions background + overlay for legibility.
+            Decorative duplicate of the hero photo — hidden from assistive tech
+            and AI crawlers (the real, described hero renders below). */}
+        <div className="absolute inset-0 hidden lg:block" aria-hidden="true">
           <Image
             src="/hero-champions.jpg"
             alt=""
