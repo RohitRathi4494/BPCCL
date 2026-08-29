@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "name": "Urban Sports Champions League (USCL)",
+  "description": "Official site of the Urban Sports Champions League Season 2 — Gurugram's T20 cricket league at Champions Den, Bandhwari. Sponsor showcase, public player registration, franchise squads, fixtures, and live scoring.",
+  "url": "https://www.urbansportsstudio.in",
+  "provider": {
+    "name": "Urban Sports Studio",
+    "url": "https://www.urbansportsstudio.in"
+  },
+  "capabilities": [
+    "player-registration",
+    "sponsorship-enquiry",
+    "view-fixtures",
+    "view-franchises",
+    "view-live-scores"
+  ],
+  "contact": "Urbansportsstudio@gmail.com",
+  "endpoints": [
+    {
+      "name": "Player registration",
+      "description": "Public form for players to register for USCL Season 2 (age 30+).",
+      "url": "https://www.urbansportsstudio.in/register"
+    },
+    {
+      "name": "Sponsors",
+      "description": "Sponsorship tiers and enquiry form.",
+      "url": "https://www.urbansportsstudio.in/sponsors"
+    }
+  ]
+}
