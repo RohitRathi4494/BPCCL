@@ -6,6 +6,7 @@ import { Countdown } from "@/components/site/countdown";
 import { SectionHeading } from "@/components/site/section-heading";
 import { SponsorCard } from "@/components/site/sponsor-card";
 import { Reveal } from "@/components/site/reveal";
+import { SeasonEventsJsonLd } from "@/components/site/structured-data";
 import { getLeagueSettings, settingsCategories } from "@/lib/queries/settings";
 import { getSponsors } from "@/lib/queries/sponsors";
 import { site } from "@/lib/site";
@@ -49,6 +50,9 @@ export default async function HomePage() {
 
   return (
     <>
+      {/* Machine-readable season / auction / registration dates for AI + search */}
+      <SeasonEventsJsonLd settings={settings} />
+
       {/* ================= HERO ================= */}
       <section className="relative overflow-hidden">
         {/* Desktop: full-bleed champions background + overlay for legibility.
