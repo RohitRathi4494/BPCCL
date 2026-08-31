@@ -7,11 +7,14 @@ import {
   ChevronDown,
   ExternalLink,
   Loader2,
+  Mail,
   X,
 } from "lucide-react";
 import {
   bulkApprovePlayers,
+  emailAadhaarRemindersToSelected,
   type BulkState,
+  type ReminderState,
 } from "@/app/admin/(protected)/registrations/actions";
 import { RegistrationStatus as StatusBadge } from "@/components/admin/registration-status";
 import { DeletePlayerButton } from "@/components/admin/delete-player-button";
@@ -140,6 +143,10 @@ export function RegistrationsTable({ rows }: { rows: Player[] }) {
     bulkApprovePlayers,
     {},
   );
+  const [remindState, remindAction, reminding] = useActionState<
+    ReminderState,
+    FormData
+  >(emailAadhaarRemindersToSelected, {});
 
   // Clear the selection when a new bulk-approve result arrives — done during
   // render (React's endorsed reset-on-change pattern), not in an effect.
@@ -148,6 +155,21 @@ export function RegistrationsTable({ rows }: { rows: Player[] }) {
     setSeenState(state);
     if (state.approved !== undefined && selected.size > 0) setSelected(new Set());
   }
+  // Note: unlike approve, a reminder-send does NOT clear the selection — the
+  // players stay in the list (they still haven't uploaded), and keeping the
+  // selection keeps the "Sent N." result visible in the bar until Clear.
+
+  const busy = pending || reminding;
+  const remindResult =
+    remindState.sent !== undefined
+      ? `Sent ${remindState.sent}` +
+        (remindState.skipped ? `, ${remindState.skipped} skipped (no SMTP)` : "") +
+        (remindState.failed ? `, ${remindState.failed} failed` : "") +
+        (remindState.ineligible
+          ? `, ${remindState.ineligible} ineligible (already uploaded / rejected / no email)`
+          : "") +
+        "."
+      : null;
 
   // Effective selection = only ids still present on the page (derived, so a
   // refresh that drops rows can't leave stale ids selected).
@@ -183,7 +205,8 @@ export function RegistrationsTable({ rows }: { rows: Player[] }) {
           </span>
           <button
             type="submit"
-            disabled={pending}
+            formAction={formAction}
+            disabled={busy}
             className="inline-flex items-center gap-2 rounded-sm bg-accent px-4 py-2 font-heading text-xs font-bold tracking-wide text-accent-foreground uppercase transition-opacity hover:opacity-90 disabled:opacity-60"
           >
             {pending ? (
@@ -194,6 +217,19 @@ export function RegistrationsTable({ rows }: { rows: Player[] }) {
             Approve {effective.size} selected
           </button>
           <button
+            type="submit"
+            formAction={remindAction}
+            disabled={busy}
+            className="inline-flex items-center gap-2 rounded-sm border border-primary px-4 py-2 font-heading text-xs font-bold tracking-wide text-primary uppercase transition-colors hover:bg-primary hover:text-primary-foreground disabled:opacity-60"
+          >
+            {reminding ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Mail className="size-3.5" />
+            )}
+            Email Aadhaar reminder
+          </button>
+          <button
             type="button"
             onClick={() => setSelected(new Set())}
             className="inline-flex items-center gap-1 font-mono text-[11px] tracking-wider text-muted-foreground uppercase transition-colors hover:text-foreground"
@@ -202,6 +238,14 @@ export function RegistrationsTable({ rows }: { rows: Player[] }) {
           </button>
           {state.error && (
             <span className="text-xs text-[var(--closed)]">{state.error}</span>
+          )}
+          {remindState.error && (
+            <span className="text-xs text-[var(--closed)]">
+              {remindState.error}
+            </span>
+          )}
+          {remindResult && (
+            <span className="text-xs text-accent">{remindResult}</span>
           )}
         </form>
       )}

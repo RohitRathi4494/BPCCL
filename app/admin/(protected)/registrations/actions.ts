@@ -23,7 +23,82 @@ export type ReminderState = {
   sent?: number;
   skipped?: number;
   failed?: number;
+  /** Selected players that couldn't be emailed (already uploaded / rejected / no email). */
+  ineligible?: number;
 };
+
+type DbClient = Awaited<ReturnType<typeof createClient>>;
+
+type ReminderTarget = {
+  id: string;
+  full_name: string;
+  email: string | null;
+  registration_code: string | null;
+};
+
+/**
+ * Shared Aadhaar-reminder sender. Emails each target the self-service link in
+ * small concurrent batches (best-effort per email), then stamps
+ * `aadhaar_reminded_at` on the ones that actually went out so re-runs behave.
+ * Callers are responsible for deciding *who* the targets are.
+ */
+async function sendAadhaarReminders(
+  supabase: DbClient,
+  targets: ReminderTarget[],
+): Promise<{ sent: number; skipped: number; failed: number }> {
+  const url = `${getSiteUrl()}/register/aadhaar`;
+  const sentIds: string[] = [];
+  let sent = 0;
+  let skipped = 0;
+  let failed = 0;
+
+  const BATCH = 8;
+  for (let i = 0; i < targets.length; i += BATCH) {
+    const batch = targets.slice(i, i + BATCH);
+    const results = await Promise.all(
+      batch.map(async (p) => {
+        try {
+          const mail = aadhaarReminderEmail(
+            p.full_name,
+            p.registration_code,
+            url,
+          );
+          const r = await sendEmail({
+            to: p.email!,
+            subject: mail.subject,
+            html: mail.html,
+          });
+          return {
+            id: p.id,
+            outcome: r.skipped ? "skipped" : r.ok ? "sent" : "failed",
+          };
+        } catch (e) {
+          console.error("aadhaar reminder email:", e);
+          return { id: p.id, outcome: "failed" as const };
+        }
+      }),
+    );
+    for (const { id, outcome } of results) {
+      if (outcome === "sent") {
+        sent++;
+        sentIds.push(id);
+      } else if (outcome === "skipped") skipped++;
+      else failed++;
+    }
+  }
+
+  // Stamp only the players we actually emailed, so a re-run skips them but still
+  // picks up anyone that was skipped (e.g. SMTP not configured) or failed.
+  if (sentIds.length > 0) {
+    const { error: stampErr } = await supabase
+      .from("players")
+      .update({ aadhaar_reminded_at: new Date().toISOString() })
+      .in("id", sentIds);
+    if (stampErr) console.error("aadhaar reminder stamp:", stampErr.message);
+  }
+
+  return { sent, skipped, failed };
+}
 
 // Columns the auto-categoriser needs.
 const STAT_COLS =
@@ -367,54 +442,60 @@ export async function emailAadhaarReminders(): Promise<ReminderState> {
   const targets = (players ?? []).filter((p) => p.email);
   if (targets.length === 0) return { sent: 0, skipped: 0, failed: 0 };
 
-  const url = `${getSiteUrl()}/register/aadhaar`;
-  const sentIds: string[] = [];
-  let sent = 0;
-  let skipped = 0;
-  let failed = 0;
-
-  const BATCH = 8;
-  for (let i = 0; i < targets.length; i += BATCH) {
-    const batch = targets.slice(i, i + BATCH);
-    const results = await Promise.all(
-      batch.map(async (p) => {
-        try {
-          const mail = aadhaarReminderEmail(
-            p.full_name,
-            p.registration_code,
-            url,
-          );
-          const r = await sendEmail({
-            to: p.email!,
-            subject: mail.subject,
-            html: mail.html,
-          });
-          return { id: p.id, outcome: r.skipped ? "skipped" : r.ok ? "sent" : "failed" };
-        } catch (e) {
-          console.error("aadhaar reminder email:", e);
-          return { id: p.id, outcome: "failed" as const };
-        }
-      }),
-    );
-    for (const { id, outcome } of results) {
-      if (outcome === "sent") {
-        sent++;
-        sentIds.push(id);
-      } else if (outcome === "skipped") skipped++;
-      else failed++;
-    }
-  }
-
-  // Stamp only the players we actually emailed, so a re-run skips them but still
-  // picks up anyone that was skipped (e.g. SMTP not configured) or failed.
-  if (sentIds.length > 0) {
-    const { error: stampErr } = await supabase
-      .from("players")
-      .update({ aadhaar_reminded_at: new Date().toISOString() })
-      .in("id", sentIds);
-    if (stampErr) console.error("aadhaar reminder stamp:", stampErr.message);
-  }
+  const { sent, skipped, failed } = await sendAadhaarReminders(supabase, targets);
 
   revalidatePath("/admin/registrations");
   return { sent, skipped, failed };
+}
+
+/**
+ * Email Aadhaar reminders to a *specific selection* of players (chosen via the
+ * checkboxes on the registrations list). Unlike the bulk-all sender, this
+ * re-sends even to players already reminded — the admin picked them on purpose.
+ * Players in the selection who already uploaded an Aadhaar, are rejected, or
+ * have no email on file are counted as `ineligible` and silently skipped.
+ */
+export async function emailAadhaarRemindersToSelected(
+  _prev: ReminderState,
+  formData: FormData,
+): Promise<ReminderState> {
+  const ids = [
+    ...new Set(
+      formData
+        .getAll("player_ids")
+        .map((v) => String(v))
+        .filter((v) => UUID_RE.test(v)),
+    ),
+  ];
+  if (ids.length === 0) return { error: "Select at least one registration." };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Your session expired — please sign in again." };
+
+  // Of the selected ids, keep only those still eligible for an Aadhaar reminder.
+  const { data: players, error } = await supabase
+    .from("players")
+    .select("id, full_name, email, registration_code")
+    .in("id", ids)
+    .is("aadhaar_path", null)
+    .neq("status", "rejected")
+    .not("email", "is", null);
+  if (error) {
+    console.error("emailAadhaarRemindersToSelected fetch:", error.message);
+    return { error: "Could not load the selected players. Please try again." };
+  }
+
+  const targets = (players ?? []).filter((p) => p.email);
+  const ineligible = ids.length - targets.length;
+  if (targets.length === 0) {
+    return { sent: 0, skipped: 0, failed: 0, ineligible };
+  }
+
+  const { sent, skipped, failed } = await sendAadhaarReminders(supabase, targets);
+
+  revalidatePath("/admin/registrations");
+  return { sent, skipped, failed, ineligible };
 }
