@@ -2,6 +2,7 @@
 
 import { Fragment, useActionState, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   Check,
   ChevronDown,
@@ -130,6 +131,12 @@ function PlayerDetails({ p }: { p: Player }) {
 }
 
 export function RegistrationsTable({ rows }: { rows: Player[] }) {
+  const searchParams = useSearchParams();
+  // Carry the current filters/search/page onto each Review link so the detail
+  // page's "Back" returns to the exact same filtered view.
+  const listQs = searchParams.toString();
+  const reviewHref = (id: string) =>
+    `/admin/registrations/${id}${listQs ? `?${listQs}` : ""}`;
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const toggleExpand = (id: string) =>
@@ -353,7 +360,7 @@ export function RegistrationsTable({ rows }: { rows: Player[] }) {
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-2">
                           <Link
-                            href={`/admin/registrations/${p.id}`}
+                            href={reviewHref(p.id)}
                             className="inline-flex items-center rounded-sm border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
                           >
                             Review

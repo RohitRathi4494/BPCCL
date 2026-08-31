@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Loader2,
   Play,
@@ -38,6 +39,9 @@ type RpcResult = { ok: boolean; error?: string } | null;
 export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
   const { data, live, refetch } = useAuction(initial);
   const supabaseRef = useRef(createClient());
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [pool, setPool] = useState<PoolPlayer[]>([]);
   const [query, setQuery] = useState("");
   const [busy, setBusy] = useState(false);
@@ -64,16 +68,41 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
   const category = data.state.current_category;
   const stateId = data.state.id;
 
+  // Sticky pool filter, kept in the URL so it survives reloads and the browser
+  // back button and stays until the auctioneer changes it. When no explicit
+  // filter is set it falls back to the live auction category (preserving the
+  // "pool follows the category being auctioned" behaviour). A sentinel value of
+  // "all" means the auctioneer has explicitly chosen to see every category.
+  const catParam = searchParams.get("cat");
+  const poolCat = catParam ?? category ?? "all";
+  const showAllCategories = poolCat === "all";
+
+  // Write an explicit sticky filter into the URL (replace → no new history entry,
+  // so a single back press still leaves the console).
+  const setPoolCat = (value: string) => {
+    const next = new URLSearchParams(searchParams.toString());
+    next.set("cat", value);
+    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+  };
+
+  // Clear the explicit filter so the pool falls back to the auction category.
+  const clearPoolCat = () => {
+    const next = new URLSearchParams(searchParams.toString());
+    next.delete("cat");
+    const qs = next.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  };
+
   const available = useMemo(() => {
     const q = query.trim().toLowerCase();
     return pool.filter(
       (p) =>
         !soldIds.has(p.id) &&
         p.id !== data.state.current_player_id &&
-        (!category || p.assigned_category === category) &&
+        (showAllCategories || p.assigned_category === poolCat) &&
         (!q || p.full_name.toLowerCase().includes(q)),
     );
-  }, [pool, soldIds, data.state.current_player_id, category, query]);
+  }, [pool, soldIds, data.state.current_player_id, showAllCategories, poolCat, query]);
 
   async function updateState(patch: TablesUpdate<"auction_state">) {
     if (!stateId) return;
@@ -109,8 +138,11 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
   }
 
   const setStatus = (s: string) => updateState({ status: s });
-  const setCategory = (c: string) =>
+  const setCategory = (c: string) => {
     updateState({ current_category: c === category ? null : c });
+    // Selecting the category to auction re-syncs the pool view to it.
+    clearPoolCat();
+  };
   const putUp = (playerId: string) =>
     updateState({
       current_player_id: playerId,
@@ -296,7 +328,7 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
           <div className="rounded-xl border border-border bg-card p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h3 className="font-mono text-[11px] tracking-[0.24em] text-primary uppercase">
-                {category ? `${category} · ` : "Pool · "}
+                {showAllCategories ? "Pool · " : `${poolCat} · `}
                 {available.length}
               </h3>
               <div className="relative w-full sm:max-w-xs">
@@ -309,14 +341,49 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
                 />
               </div>
             </div>
+
+            {/* Sticky pool filter — narrows the list by category without touching
+                the live auction category. Persists in the URL until changed. */}
+            <div className="mt-3 flex flex-wrap items-center gap-1.5">
+              <span className="mr-1 font-mono text-[10px] tracking-[0.18em] text-muted-foreground uppercase">
+                Filter
+              </span>
+              <button
+                type="button"
+                onClick={() => setPoolCat("all")}
+                className={cn(
+                  "rounded-sm border px-2.5 py-1 font-mono text-[11px] tracking-wider uppercase transition-colors",
+                  showAllCategories
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border text-foreground/70 hover:border-primary/40",
+                )}
+              >
+                All
+              </button>
+              {data.settings.categories.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setPoolCat(c)}
+                  className={cn(
+                    "rounded-sm border px-2.5 py-1 font-mono text-[11px] tracking-wider uppercase transition-colors",
+                    !showAllCategories && poolCat === c
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-foreground/70 hover:border-primary/40",
+                  )}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
             <div className="mt-3 max-h-96 overflow-y-auto">
               {available.length === 0 ? (
                 <p className="py-8 text-center text-sm text-muted-foreground">
                   {pool.length === 0
                     ? "No approved players yet — approve players in the registrations dashboard first."
-                    : category
-                      ? "No available players in this category."
-                      : "Select a category to begin, or search by name."}
+                    : !showAllCategories
+                      ? `No available players in ${poolCat}.`
+                      : "All players in this view have been picked, or none match your search."}
                 </p>
               ) : (
                 <ul className="flex flex-col divide-y divide-border/60">

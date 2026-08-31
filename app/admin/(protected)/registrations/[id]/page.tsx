@@ -40,13 +40,23 @@ function Detail({ label, value }: { label: string; value: React.ReactNode }) {
 
 export default async function ReviewPlayerPage({
   params,
+  searchParams,
 }: PageProps<"/admin/registrations/[id]">) {
   const { id } = await params;
+  const sp = await searchParams;
   const [player, settings] = await Promise.all([
     getPlayer(id),
     getLeagueSettings(),
   ]);
   if (!player) notFound();
+
+  // Preserve the list's filters/search/page so "Back" returns to the same view.
+  const backQuery = new URLSearchParams();
+  for (const key of ["status", "q", "category", "role", "stats", "aadhaar", "size", "page"]) {
+    const v = sp[key];
+    if (typeof v === "string" && v) backQuery.set(key, v);
+  }
+  const backHref = `/admin/registrations${backQuery.toString() ? `?${backQuery}` : ""}`;
 
   const categories = settingsCategories(settings);
   const suggestedCategory = computeCategory(player);
@@ -65,7 +75,7 @@ export default async function ReviewPlayerPage({
   return (
     <div className="flex flex-col gap-6">
       <Link
-        href="/admin/registrations"
+        href={backHref}
         className="inline-flex w-fit items-center gap-1.5 font-mono text-xs tracking-wider text-muted-foreground uppercase transition-colors hover:text-primary"
       >
         <ArrowLeft className="size-3.5" /> Back to registrations
