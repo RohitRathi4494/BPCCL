@@ -48,12 +48,26 @@ export function CurrentPlayerCard({
     .join(" · ");
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card">
-      <div className={cn("flex gap-6 p-6", big && "sm:gap-10 sm:p-10")}>
+    <div
+      className={cn(
+        "overflow-hidden rounded-xl border border-border bg-card",
+        // On the big screen the card fills its column and lays out as a flex
+        // column so the result band (bid / SOLD status) is pinned to the bottom
+        // and always visible — the top area shrinks to fit instead.
+        big && "flex h-full flex-col",
+      )}
+    >
+      <div
+        className={cn(
+          "flex gap-6 p-6",
+          big && "min-h-0 flex-1 items-start gap-6 overflow-hidden sm:gap-8 sm:p-8",
+        )}
+      >
         <div
           className={cn(
             "relative shrink-0 overflow-hidden rounded-lg border border-border bg-background",
-            big ? "size-48 sm:size-64" : "size-28",
+            // Height-relative so the photo scales down on shorter screens / zoom.
+            big ? "size-[clamp(6rem,20vh,15rem)]" : "size-28",
           )}
         >
           {currentPlayer.photo_url ? (
@@ -73,7 +87,7 @@ export function CurrentPlayerCard({
           )}
         </div>
 
-        <div className="flex min-w-0 flex-1 flex-col gap-3">
+        <div className={cn("flex min-w-0 flex-1 flex-col", big ? "gap-2" : "gap-3")}>
           <div className="flex flex-wrap items-center gap-2">
             {currentPlayer.assigned_category && (
               <span className="rounded-sm border border-primary/40 px-2 py-0.5 font-mono text-[10px] tracking-[0.18em] text-primary uppercase">
@@ -98,7 +112,11 @@ export function CurrentPlayerCard({
           <h2
             className={cn(
               "font-heading font-extrabold tracking-tight text-foreground uppercase",
-              big ? "text-5xl sm:text-7xl" : "text-2xl sm:text-3xl",
+              // Fluid size: scales with viewport width AND is capped, so the
+              // name never crowds out the stats or the result band below.
+              big
+                ? "text-[clamp(1.75rem,4.2vw,4.25rem)] leading-[0.95]"
+                : "text-2xl sm:text-3xl",
             )}
           >
             {currentPlayer.full_name}
@@ -131,13 +149,13 @@ export function CurrentPlayerCard({
           )}
 
           {currentPlayer.stats.length > 0 && (
-            <div className={cn("mt-1 flex flex-wrap", big ? "gap-x-8 gap-y-3" : "gap-x-5 gap-y-2")}>
+            <div className={cn("mt-1 flex flex-wrap", big ? "gap-x-6 gap-y-1.5" : "gap-x-5 gap-y-2")}>
               {currentPlayer.stats.map((s) => (
                 <div key={s.label} className="flex flex-col">
                   <span
                     className={cn(
                       "font-mono tracking-[0.16em] text-muted-foreground uppercase",
-                      big ? "text-[11px]" : "text-[9px]",
+                      big ? "text-[10px]" : "text-[9px]",
                     )}
                   >
                     {s.label}
@@ -145,7 +163,7 @@ export function CurrentPlayerCard({
                   <span
                     className={cn(
                       "font-heading font-bold text-foreground",
-                      big ? "text-2xl" : "text-lg",
+                      big ? "text-[clamp(1.1rem,1.9vw,1.9rem)] leading-tight" : "text-lg",
                     )}
                   >
                     {s.value}
@@ -157,8 +175,10 @@ export function CurrentPlayerCard({
         </div>
       </div>
 
-      {/* Result / on-the-block band */}
-      <ResultBand snapshot={snapshot} big={big} />
+      {/* Result / on-the-block band — pinned to the bottom, always visible. */}
+      <div className={cn(big && "shrink-0")}>
+        <ResultBand snapshot={snapshot} big={big} />
+      </div>
     </div>
   );
 }
