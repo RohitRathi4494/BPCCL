@@ -92,7 +92,7 @@ export function AuctionDisplay({
       </header>
 
       {/* 70 / 30 body — flex-1, never scrolls */}
-      <div className="grid min-h-0 flex-1 gap-5 py-4 lg:grid-cols-[7fr_3fr]">
+      <div className="grid min-h-0 flex-1 gap-5 py-4 lg:grid-cols-[6fr_4fr]">
         <div className="flex min-h-0 flex-col">
           <CurrentPlayerCard snapshot={data} size="lg" />
         </div>
