@@ -7,11 +7,14 @@ export function PurseBars({
   highlightId,
   columns = 1,
   size = "md",
+  fill = false,
 }: {
   snapshot: AuctionSnapshot;
   highlightId?: string | null;
   columns?: 1 | 2 | 4;
   size?: "sm" | "md" | "lg";
+  /** Fill the parent's height and divide it evenly across rows (no scroll). */
+  fill?: boolean;
 }) {
   const { franchises, settings } = snapshot;
   const big = size === "lg";
@@ -25,7 +28,16 @@ export function PurseBars({
         : "";
 
   return (
-    <div className={cn("grid", small ? "gap-1.5" : "gap-2.5", grid)}>
+    <div
+      className={cn(
+        "grid",
+        small ? "gap-1.5" : "gap-2.5",
+        grid,
+        // Fill the container height and share it evenly, so every team fits
+        // on screen regardless of how short the viewport is.
+        fill && "h-full auto-rows-fr",
+      )}
+    >
       {franchises.map((f) => {
         const pct =
           f.purse_total > 0
@@ -39,6 +51,9 @@ export function PurseBars({
             className={cn(
               "rounded-lg border bg-card",
               small ? "px-2.5 py-1.5" : "px-3.5 py-2.5",
+              // In fill mode each cell centres its content within the shared
+              // row height instead of relying on fixed vertical padding.
+              fill && "flex min-h-0 flex-col justify-center overflow-hidden",
               isYou
                 ? "border-primary ring-2 ring-primary"
                 : "border-border",

@@ -91,13 +91,16 @@ export function AuctionDisplay({
         </div>
       </header>
 
-      {/* 70 / 30 body — flex-1, never scrolls */}
-      <div className="grid min-h-0 flex-1 gap-5 py-4 lg:grid-cols-[6fr_4fr]">
-        <div className="flex min-h-0 flex-col">
+      {/* 60 / 40 body — bounded to the viewport height, never scrolls. Each
+          column is min-h-0 + overflow-hidden so neither can grow the row past
+          the screen; the purse board divides its height evenly (auto-rows-fr)
+          so all 16 teams always fit. */}
+      <div className="flex min-h-0 flex-1 flex-col gap-5 py-4 lg:flex-row">
+        <div className="min-h-0 overflow-hidden lg:basis-3/5">
           <CurrentPlayerCard snapshot={data} size="lg" />
         </div>
 
-        <div className="flex min-h-0 flex-col">
+        <div className="flex min-h-0 flex-col lg:basis-2/5">
           <div className="mb-2 flex shrink-0 items-center justify-between">
             <h3 className="font-mono text-[11px] tracking-[0.24em] text-primary uppercase">
               Purse Board
@@ -106,13 +109,14 @@ export function AuctionDisplay({
               {data.franchises.length} teams
             </span>
           </div>
-          {/* All teams fit — 2 compact columns, no scroll. */}
-          <div className="min-h-0 flex-1">
+          {/* All teams fit — 2 compact columns, rows share the height. */}
+          <div className="min-h-0 flex-1 overflow-hidden">
             <PurseBars
               snapshot={data}
               columns={2}
               highlightId={data.currentBid.franchise_id}
               size="sm"
+              fill
             />
           </div>
         </div>
