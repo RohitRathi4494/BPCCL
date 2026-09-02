@@ -224,15 +224,15 @@ function ResultBand({
   const { currentBid } = snapshot;
   if (currentBid.amount != null) {
     return (
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-primary/40 bg-primary/10 px-6 py-4 sm:px-10">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-accent/40 bg-accent/10 px-6 py-4 sm:px-10">
         <div className="flex flex-col">
-          <span className="font-mono text-[10px] tracking-[0.24em] text-primary uppercase">
+          <span className="font-mono text-[10px] tracking-[0.24em] text-accent uppercase">
             Current bid
           </span>
           <span
             className={cn(
-              "font-heading font-extrabold text-primary",
-              big ? "text-5xl" : "text-2xl",
+              "font-heading font-extrabold text-accent",
+              big ? "text-6xl" : "text-3xl",
             )}
           >
             ₹{formatMoney(currentBid.amount)}

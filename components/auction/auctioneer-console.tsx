@@ -562,7 +562,7 @@ function LiveBidPanel({
               <span className="font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
                 Current bid
               </span>
-              <span className="font-heading text-4xl font-extrabold tracking-tight text-primary">
+              <span className="font-heading text-4xl font-extrabold tracking-tight text-accent">
                 ₹{formatMoney(currentBid.amount)}
               </span>
             </div>
