@@ -11,10 +11,11 @@ export function PurseBars({
   snapshot: AuctionSnapshot;
   highlightId?: string | null;
   columns?: 1 | 2 | 4;
-  size?: "md" | "lg";
+  size?: "sm" | "md" | "lg";
 }) {
   const { franchises, settings } = snapshot;
   const big = size === "lg";
+  const small = size === "sm";
 
   const grid =
     columns === 4
@@ -24,7 +25,7 @@ export function PurseBars({
         : "";
 
   return (
-    <div className={cn("grid gap-2.5", grid)}>
+    <div className={cn("grid", small ? "gap-1.5" : "gap-2.5", grid)}>
       {franchises.map((f) => {
         const pct =
           f.purse_total > 0
@@ -36,25 +37,34 @@ export function PurseBars({
           <div
             key={f.id}
             className={cn(
-              "rounded-lg border bg-card px-3.5 py-2.5",
-              isYou ? "border-primary ring-1 ring-primary/50" : "border-border",
+              "rounded-lg border bg-card",
+              small ? "px-2.5 py-1.5" : "px-3.5 py-2.5",
+              isYou
+                ? "border-primary ring-2 ring-primary"
+                : "border-border",
             )}
           >
             <div className="flex items-center justify-between gap-2">
               <span
                 className={cn(
                   "truncate font-heading font-bold tracking-wide text-foreground uppercase",
-                  big ? "text-base" : "text-sm",
+                  big ? "text-base" : small ? "text-[13px]" : "text-sm",
                 )}
               >
-                {f.short_code ? `${f.short_code} · ` : ""}
-                {f.name}
+                {small
+                  ? f.short_code ?? f.name
+                  : `${f.short_code ? `${f.short_code} · ` : ""}${f.name}`}
               </span>
               <span className="shrink-0 font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
                 {f.squadCount}/{settings.squadMax}
               </span>
             </div>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-background">
+            <div
+              className={cn(
+                "overflow-hidden rounded-full bg-background",
+                small ? "mt-1 h-1" : "mt-2 h-1.5",
+              )}
+            >
               <div
                 className={cn(
                   "h-full rounded-full",
@@ -63,18 +73,25 @@ export function PurseBars({
                 style={{ width: `${pct}%` }}
               />
             </div>
-            <div className="mt-1.5 flex items-center justify-between font-mono">
+            <div
+              className={cn(
+                "flex items-center justify-between font-mono",
+                small ? "mt-1" : "mt-1.5",
+              )}
+            >
               <span
                 className={cn(
                   "text-foreground/90",
-                  big ? "text-sm" : "text-[11px]",
+                  big ? "text-sm" : small ? "text-[11px] font-semibold" : "text-[11px]",
                 )}
               >
                 ₹{formatMoney(f.purse_remaining)}
               </span>
-              <span className="text-[10px] text-muted-foreground">
-                / ₹{formatMoney(f.purse_total)}
-              </span>
+              {!small && (
+                <span className="text-[10px] text-muted-foreground">
+                  / ₹{formatMoney(f.purse_total)}
+                </span>
+              )}
             </div>
           </div>
         );

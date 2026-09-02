@@ -136,6 +136,42 @@ separate auth systems per role.
 - [ ] Social/content hub (auto-generated shareable graphics)
 - [ ] Deployed to production
 
+### Recent updates (as of 2026-09-03)
+
+- **Auction: live bidding tracker on the auctioneer console + big-screen redesign.**
+  Bidding is still verbal in the room, but the auctioneer now taps a running
+  bid live so the projector shows who's leading in real time. **No migration** —
+  reused the dormant `auction_state.current_bid` / `current_bid_franchise_id`
+  columns (left over from the pre-v2 schema).
+  - **`LiveBidPanel`** in `components/auction/auctioneer-console.tsx`: 16 team
+    buttons; first tap opens at the on-block player's **category base price**
+    (`league_settings.base_price[category]`), each subsequent tap raises the bid
+    by a **configurable step** (defaults to `bid_increment`, or ₹1000 when that's
+    below 100 for the old-scale seed) and reassigns the highest bidder. Team tiles
+    show remaining purse + squad count, disable when squad is full, and flag
+    can't-afford. Corrections: −step, Clear, and a "Set exact ₹" override. Writes
+    straight to `auction_state` via RLS (no new RPC).
+  - **Sell flow** (`SellPanel`) now **auto-follows the live bid** (amount +
+    winning franchise prefilled and kept in sync via a derive-from-prop pattern,
+    no effect) but stays **fully editable** — the auctioneer can correct the final
+    sold amount / team before Confirm Sale, with a "Reset to live bid" button.
+    `putUp` clears the live bid when a new player comes on the block.
+  - **Big screen** (`components/auction/auction-display.tsx`) rebuilt to fit a
+    1080p projector with **no scroll** (`h-dvh overflow-hidden`): league crest
+    (`/uscl-logo.png`) top-left, ground crest (`/ground.png`) top-right, a
+    **sponsor logo strip** along the bottom (fetched from the `sponsors` table in
+    `app/auction/display/page.tsx`, hidden when none have logos). Purse board is
+    a compact **2-column** board (new `size="sm"` in `PurseBars`) so all 16 teams
+    show at once; the current highest bidder gets a ring highlight.
+  - The on-block band in `CurrentPlayerCard` now shows the **live "Current bid ₹X
+    · Bid by TEAM"** while a player is up (replacing the plain "on the block"
+    line), falling back to the on-the-block state when there are no bids yet.
+  - `AuctionSnapshot` gained `currentBid` + `settings.basePrice` /
+    `settings.bidIncrement` (`lib/auction/snapshot.ts`). No `database.types.ts`
+    change needed (columns already typed). Verified: `tsc` + `eslint` clean,
+    `/auction/display` renders with 0 console errors / 0 failed requests and no
+    page scroll.
+
 ### Recent updates (as of 2026-08-21)
 
 All items below are **committed, pushed to `origin/main`, and their migrations

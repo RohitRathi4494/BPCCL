@@ -220,6 +220,41 @@ function ResultBand({
     );
   }
 
+  // No sale yet — show the live running bid if one is in, else "on the block".
+  const { currentBid } = snapshot;
+  if (currentBid.amount != null) {
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-primary/40 bg-primary/10 px-6 py-4 sm:px-10">
+        <div className="flex flex-col">
+          <span className="font-mono text-[10px] tracking-[0.24em] text-primary uppercase">
+            Current bid
+          </span>
+          <span
+            className={cn(
+              "font-heading font-extrabold text-primary",
+              big ? "text-5xl" : "text-2xl",
+            )}
+          >
+            ₹{formatMoney(currentBid.amount)}
+          </span>
+        </div>
+        <div className="flex flex-col items-end">
+          <span className="font-mono text-[10px] tracking-[0.24em] text-primary uppercase">
+            Bid by
+          </span>
+          <span
+            className={cn(
+              "font-heading font-extrabold tracking-tight text-foreground uppercase",
+              big ? "text-4xl" : "text-xl",
+            )}
+          >
+            {currentBid.franchise_name ?? "—"}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="border-t border-border bg-background/40 px-6 py-4 text-center sm:px-10">
       <span

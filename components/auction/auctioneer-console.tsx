@@ -11,6 +11,9 @@ import {
   ChevronUp,
   Undo2,
   Plus,
+  Minus,
+  Gavel,
+  X,
   RotateCcw,
   CornerUpLeft,
   ExternalLink,
@@ -20,6 +23,7 @@ import { useAuction } from "@/lib/auction/use-auction";
 import {
   formatMoney,
   type AuctionSnapshot,
+  type CurrentBid,
   type FranchiseView,
 } from "@/lib/auction/snapshot";
 import type { TablesUpdate } from "@/lib/types";
@@ -149,7 +153,16 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
       current_result: null,
       current_result_franchise_id: null,
       current_result_amount: null,
+      current_bid: null,
+      current_bid_franchise_id: null,
       status: "in_progress",
+    });
+
+  // Live bidding: set the running highest bid + which franchise holds it.
+  const setBid = (amount: number | null, franchiseId: string | null) =>
+    updateState({
+      current_bid: amount,
+      current_bid_franchise_id: franchiseId,
     });
 
   const undo = () =>
@@ -300,15 +313,30 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
 
           {onBlock && status === "in_progress" && (
             resultPending ? (
-              <SellPanel
-                key={onBlock.id}
-                franchises={data.franchises}
-                squadMax={data.settings.squadMax}
-                squadMin={data.settings.squadMin}
-                busy={busy}
-                onSell={(fid, amt) => sell(onBlock.id, fid, amt)}
-                onUnsold={() => markUnsold(onBlock.id)}
-              />
+              <>
+                <LiveBidPanel
+                  key={`bid-${onBlock.id}`}
+                  franchises={data.franchises}
+                  currentBid={data.currentBid}
+                  openingBid={
+                    data.settings.basePrice[onBlock.assigned_category ?? ""] ?? 0
+                  }
+                  bidIncrement={data.settings.bidIncrement}
+                  squadMax={data.settings.squadMax}
+                  busy={busy}
+                  onSetBid={setBid}
+                />
+                <SellPanel
+                  key={onBlock.id}
+                  franchises={data.franchises}
+                  squadMax={data.settings.squadMax}
+                  squadMin={data.settings.squadMin}
+                  currentBid={data.currentBid}
+                  busy={busy}
+                  onSell={(fid, amt) => sell(onBlock.id, fid, amt)}
+                  onUnsold={() => markUnsold(onBlock.id)}
+                />
+              </>
             ) : (
               <p className="rounded-sm border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
                 {data.result.status === "sold"
@@ -455,11 +483,204 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
   );
 }
 
+/**
+ * Live bidding panel. Bidding is verbal in the room; the auctioneer taps the
+ * franchise that just bid and the running highest bid climbs by one step. The
+ * first tap opens at the player's category base price. Everything writes to
+ * auction_state so the big screen updates live.
+ */
+function LiveBidPanel({
+  franchises,
+  currentBid,
+  openingBid,
+  bidIncrement,
+  squadMax,
+  busy,
+  onSetBid,
+}: {
+  franchises: FranchiseView[];
+  currentBid: CurrentBid;
+  openingBid: number;
+  bidIncrement: number;
+  squadMax: number;
+  busy: boolean;
+  onSetBid: (amount: number | null, franchiseId: string | null) => void;
+}) {
+  // bid_increment default (20) predates the current purse scale — fall back to
+  // a sensible ₹1000 step when it's clearly too small. Editable live either way.
+  const [step, setStep] = useState(bidIncrement >= 100 ? bidIncrement : 1000);
+  const [overrideStr, setOverrideStr] = useState("");
+
+  const hasBid = currentBid.amount != null;
+  const nextAmount = hasBid ? (currentBid.amount ?? 0) + step : openingBid;
+
+  const tapTeam = (fid: string) => onSetBid(nextAmount, fid);
+  const minusStep = () =>
+    hasBid &&
+    onSetBid(Math.max(0, (currentBid.amount ?? 0) - step), currentBid.franchise_id);
+  const clear = () => onSetBid(null, null);
+  const applyOverride = () => {
+    const v = Number(overrideStr);
+    if (overrideStr.trim() !== "" && Number.isFinite(v) && v >= 0) {
+      onSetBid(v, currentBid.franchise_id);
+      setOverrideStr("");
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-4 rounded-xl border border-primary/40 bg-primary/5 p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h3 className="inline-flex items-center gap-2 font-mono text-[11px] tracking-[0.24em] text-primary uppercase">
+          <Gavel className="size-4" /> Live Bidding
+        </h3>
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-[10px] tracking-[0.16em] text-muted-foreground uppercase">
+            Step
+          </span>
+          <input
+            type="number"
+            min={1}
+            inputMode="numeric"
+            value={step}
+            onChange={(e) => setStep(Math.max(1, Number(e.target.value) || 1))}
+            className="w-24 rounded-sm border border-input bg-background px-2.5 py-1.5 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+          />
+        </div>
+      </div>
+
+      {/* Current bid readout */}
+      <div className="flex flex-wrap items-end justify-between gap-3 rounded-lg border border-border bg-background/60 px-4 py-3">
+        {hasBid ? (
+          <>
+            <div className="flex flex-col">
+              <span className="font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
+                Current bid
+              </span>
+              <span className="font-heading text-4xl font-extrabold tracking-tight text-primary">
+                ₹{formatMoney(currentBid.amount)}
+              </span>
+            </div>
+            <div className="flex flex-col items-end">
+              <span className="font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
+                Highest bidder
+              </span>
+              <span className="font-heading text-2xl font-bold tracking-tight text-foreground uppercase">
+                {currentBid.franchise_name ?? "—"}
+              </span>
+            </div>
+          </>
+        ) : (
+          <div className="flex flex-col">
+            <span className="font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
+              No bids yet
+            </span>
+            <span className="text-sm text-muted-foreground">
+              First tap opens at{" "}
+              <strong className="text-foreground">₹{formatMoney(openingBid)}</strong>{" "}
+              (category base price).
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* 16 team buttons */}
+      <div>
+        <p className="mb-2 font-mono text-[10px] tracking-[0.16em] text-muted-foreground uppercase">
+          Tap the team that just bid → ₹{formatMoney(nextAmount)}
+        </p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+          {franchises.map((f) => {
+            const leading = f.id === currentBid.franchise_id;
+            const full = f.squadCount >= squadMax;
+            const cantAfford = f.purse_remaining < nextAmount;
+            return (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => tapTeam(f.id)}
+                disabled={busy || full}
+                title={
+                  full
+                    ? "Squad full"
+                    : cantAfford
+                      ? `Short on purse for ₹${formatMoney(nextAmount)}`
+                      : undefined
+                }
+                className={cn(
+                  "flex flex-col items-start gap-0.5 rounded-lg border px-3 py-2 text-left transition-colors disabled:opacity-40",
+                  leading
+                    ? "border-primary bg-primary/15 ring-1 ring-primary"
+                    : cantAfford
+                      ? "border-[var(--closed)]/40 hover:border-[var(--closed)]"
+                      : "border-border hover:border-primary hover:bg-primary/5",
+                )}
+              >
+                <span className="w-full truncate font-heading text-sm font-bold tracking-wide text-foreground uppercase">
+                  {f.short_code ?? f.name}
+                </span>
+                <span
+                  className={cn(
+                    "font-mono text-[10px] tracking-wider",
+                    cantAfford ? "text-[var(--closed)]" : "text-muted-foreground",
+                  )}
+                >
+                  ₹{formatMoney(f.purse_remaining)} · {f.squadCount}/{squadMax}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Corrections: −step, clear, manual override */}
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={minusStep}
+          disabled={busy || !hasBid}
+          className="inline-flex items-center gap-1 rounded-sm border border-border px-3 py-1.5 font-mono text-[11px] tracking-wider text-foreground/80 uppercase transition-colors hover:border-primary hover:text-primary disabled:opacity-40"
+        >
+          <Minus className="size-3.5" /> {formatMoney(step)}
+        </button>
+        <button
+          type="button"
+          onClick={clear}
+          disabled={busy || !hasBid}
+          className="inline-flex items-center gap-1 rounded-sm border border-border px-3 py-1.5 font-mono text-[11px] tracking-wider text-foreground/80 uppercase transition-colors hover:border-[var(--closed)] hover:text-[var(--closed)] disabled:opacity-40"
+        >
+          <X className="size-3.5" /> Clear
+        </button>
+        <div className="ml-auto flex items-center gap-1.5">
+          <input
+            type="number"
+            min={0}
+            inputMode="numeric"
+            value={overrideStr}
+            onChange={(e) => setOverrideStr(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && applyOverride()}
+            placeholder="Set exact ₹"
+            className="w-28 rounded-sm border border-input bg-background px-2.5 py-1.5 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+          />
+          <button
+            type="button"
+            onClick={applyOverride}
+            disabled={busy || overrideStr.trim() === ""}
+            className="inline-flex items-center rounded-sm border border-primary px-3 py-1.5 font-mono text-[11px] tracking-wider text-primary uppercase transition-colors hover:bg-primary hover:text-primary-foreground disabled:opacity-40"
+          >
+            Set
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** Sale entry: amount + franchise select + guardrails. */
 function SellPanel({
   franchises,
   squadMax,
   squadMin,
+  currentBid,
   busy,
   onSell,
   onUnsold,
@@ -467,12 +688,35 @@ function SellPanel({
   franchises: FranchiseView[];
   squadMax: number;
   squadMin: number;
+  currentBid: CurrentBid;
   busy: boolean;
   onSell: (franchiseId: string, amount: number) => void;
   onUnsold: () => void;
 }) {
-  const [amountStr, setAmountStr] = useState("");
-  const [franchiseId, setFranchiseId] = useState("");
+  // The sale fields follow the live bid automatically until the auctioneer
+  // starts editing (dirty), which lets them correct the final amount / winning
+  // team before confirming. "Reset to live bid" drops back to auto-follow.
+  // Derived-from-prop (no effect) so live bids flow straight through.
+  const liveAmountStr = currentBid.amount != null ? String(currentBid.amount) : "";
+  const liveFranchiseId = currentBid.franchise_id ?? "";
+  const [dirty, setDirty] = useState(false);
+  const [amountOverride, setAmountOverride] = useState("");
+  const [franchiseOverride, setFranchiseOverride] = useState("");
+
+  const amountStr = dirty ? amountOverride : liveAmountStr;
+  const franchiseId = dirty ? franchiseOverride : liveFranchiseId;
+
+  const editAmount = (v: string) => {
+    // Seed the other field from the live bid on the first edit.
+    setFranchiseOverride((prev) => (dirty ? prev : liveFranchiseId));
+    setAmountOverride(v);
+    setDirty(true);
+  };
+  const editFranchise = (v: string) => {
+    setAmountOverride((prev) => (dirty ? prev : liveAmountStr));
+    setFranchiseOverride(v);
+    setDirty(true);
+  };
 
   const amount = Number(amountStr);
   const validAmount = amountStr.trim() !== "" && Number.isFinite(amount) && amount >= 0;
@@ -490,20 +734,31 @@ function SellPanel({
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-accent/40 bg-accent/5 p-5">
-      <h3 className="font-mono text-[11px] tracking-[0.24em] text-accent uppercase">
-        Record Sale
-      </h3>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="font-mono text-[11px] tracking-[0.24em] text-accent uppercase">
+          Record Sale
+        </h3>
+        {dirty && (currentBid.amount != null || currentBid.franchise_id) && (
+          <button
+            type="button"
+            onClick={() => setDirty(false)}
+            className="inline-flex items-center gap-1 font-mono text-[10px] tracking-wider text-muted-foreground uppercase transition-colors hover:text-accent"
+          >
+            <RotateCcw className="size-3" /> Reset to live bid
+          </button>
+        )}
+      </div>
       <div className="grid gap-3 sm:grid-cols-[1fr_1.2fr]">
         <label className="flex flex-col gap-1">
           <span className="font-mono text-[10px] tracking-[0.16em] text-muted-foreground uppercase">
-            Final amount (₹)
+            Final amount (₹) — editable
           </span>
           <input
             type="number"
             min={0}
             inputMode="numeric"
             value={amountStr}
-            onChange={(e) => setAmountStr(e.target.value)}
+            onChange={(e) => editAmount(e.target.value)}
             placeholder="e.g. 12000"
             className="w-full rounded-sm border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary"
           />
@@ -514,7 +769,7 @@ function SellPanel({
           </span>
           <select
             value={franchiseId}
-            onChange={(e) => setFranchiseId(e.target.value)}
+            onChange={(e) => editFranchise(e.target.value)}
             className="w-full rounded-sm border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary"
           >
             <option value="">Select franchise…</option>

@@ -10,6 +10,13 @@ export const metadata: Metadata = {
 
 export default async function AuctionDisplayPage() {
   const supabase = await createClient();
-  const initial = await fetchAuctionSnapshot(supabase);
-  return <AuctionDisplay initial={initial} />;
+  const [initial, sponsorsR] = await Promise.all([
+    fetchAuctionSnapshot(supabase),
+    supabase
+      .from("sponsors")
+      .select("id, name, logo_url")
+      .order("display_order", { ascending: true })
+      .order("name", { ascending: true }),
+  ]);
+  return <AuctionDisplay initial={initial} sponsors={sponsorsR.data ?? []} />;
 }

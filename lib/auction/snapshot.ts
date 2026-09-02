@@ -44,6 +44,13 @@ export type SaleResult = {
   amount: number | null;
 };
 
+/** The live "current highest bid" while a player is on the block. */
+export type CurrentBid = {
+  amount: number | null;
+  franchise_id: string | null;
+  franchise_name: string | null;
+};
+
 export type AuctionSnapshot = {
   state: {
     id: string | null;
@@ -52,6 +59,7 @@ export type AuctionSnapshot = {
     current_category: string | null;
   };
   currentPlayer: CurrentPlayer | null;
+  currentBid: CurrentBid;
   result: SaleResult;
   franchises: FranchiseView[];
   recentSales: {
@@ -64,6 +72,8 @@ export type AuctionSnapshot = {
     categories: string[];
     retentionBasePrice: Record<string, number>;
     ownerBasePrice: Record<string, number>;
+    basePrice: Record<string, number>;
+    bidIncrement: number;
     defaultPurse: number;
     squadMin: number;
     squadMax: number;
@@ -167,6 +177,7 @@ export async function fetchAuctionSnapshot(
     string,
     number
   >;
+  const basePrice = (settingsRow?.base_price ?? {}) as Record<string, number>;
 
   const players = (playersR.data ?? []) as PublicPlayer[];
   const byId = new Map<string, PublicPlayer>();
@@ -228,6 +239,14 @@ export async function fetchAuctionSnapshot(
     }
   }
 
+  const currentBid: CurrentBid = {
+    amount: stateRow?.current_bid ?? null,
+    franchise_id: stateRow?.current_bid_franchise_id ?? null,
+    franchise_name: stateRow?.current_bid_franchise_id
+      ? franchiseNameById.get(stateRow.current_bid_franchise_id) ?? null
+      : null,
+  };
+
   const result: SaleResult = {
     status: (stateRow?.current_result as SaleResult["status"]) ?? null,
     franchise_id: stateRow?.current_result_franchise_id ?? null,
@@ -240,6 +259,7 @@ export async function fetchAuctionSnapshot(
   return {
     state,
     currentPlayer,
+    currentBid,
     result,
     franchises,
     recentSales,
@@ -248,6 +268,8 @@ export async function fetchAuctionSnapshot(
       categories,
       retentionBasePrice,
       ownerBasePrice,
+      basePrice,
+      bidIncrement: settingsRow?.bid_increment ?? 0,
       defaultPurse: settingsRow?.default_purse ?? 175000,
       squadMin: settingsRow?.squad_min ?? 18,
       squadMax: settingsRow?.squad_max ?? 25,
