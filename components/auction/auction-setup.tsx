@@ -44,6 +44,8 @@ export function AuctionSetup({ initial }: { initial: AuctionSnapshot }) {
 
   const retentionPrices = data.settings.retentionBasePrice;
   const ownerPrices = data.settings.ownerBasePrice;
+  const basePrices = data.settings.basePrice;
+  const stepPrices = data.settings.stepPrice;
 
   async function run(
     key: string,
@@ -89,6 +91,19 @@ export function AuctionSetup({ initial }: { initial: AuctionSnapshot }) {
     );
   };
 
+  const saveBidding = (
+    base: Record<string, number>,
+    step: Record<string, number>,
+  ) => {
+    if (!data.settings.id) return;
+    return run("bidding-prices", () =>
+      supabaseRef.current
+        .from("league_settings")
+        .update({ base_price: base, step_price: step })
+        .eq("id", data.settings.id!),
+    );
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -119,6 +134,17 @@ export function AuctionSetup({ initial }: { initial: AuctionSnapshot }) {
         busy={busyId === "base-prices"}
         canEdit={!!data.settings.id}
         onSave={savePrices}
+      />
+
+      {/* Auction bidding: opening base price + step per category */}
+      <BiddingPricePanel
+        key={JSON.stringify([basePrices, stepPrices])}
+        categories={data.settings.categories}
+        basePrices={basePrices}
+        stepPrices={stepPrices}
+        busy={busyId === "bidding-prices"}
+        canEdit={!!data.settings.id}
+        onSave={saveBidding}
       />
 
       {error && (
@@ -222,6 +248,98 @@ function BasePricePanel({
             <Check className="size-3.5" />
           )}
           Save prices
+        </button>
+        {!canEdit && (
+          <span className="text-xs text-[var(--closed)]">
+            League settings row not found — cannot save prices.
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Admin-editable per-category AUCTION prices: the opening base price a player
+ * goes up at, and the step the bid climbs by on each tap in the live console.
+ */
+function BiddingPricePanel({
+  categories,
+  basePrices,
+  stepPrices,
+  busy,
+  canEdit,
+  onSave,
+}: {
+  categories: string[];
+  basePrices: Record<string, number>;
+  stepPrices: Record<string, number>;
+  busy: boolean;
+  canEdit: boolean;
+  onSave: (
+    base: Record<string, number>,
+    step: Record<string, number>,
+  ) => void;
+}) {
+  const initBase = () =>
+    Object.fromEntries(categories.map((c) => [c, String(basePrices[c] ?? 0)]));
+  const initStep = () =>
+    Object.fromEntries(categories.map((c) => [c, String(stepPrices[c] ?? 0)]));
+  const [base, setBase] = useState<Record<string, string>>(initBase);
+  const [step, setStep] = useState<Record<string, string>>(initStep);
+
+  const dirty =
+    categories.some((c) => Number(base[c] || 0) !== (basePrices[c] ?? 0)) ||
+    categories.some((c) => Number(step[c] || 0) !== (stepPrices[c] ?? 0));
+
+  const clean = (draft: Record<string, string>) => {
+    const out: Record<string, number> = {};
+    for (const c of categories) {
+      const n = Number(draft[c]);
+      out[c] = Number.isFinite(n) && n >= 0 ? Math.round(n) : 0;
+    }
+    return out;
+  };
+
+  return (
+    <div className="flex flex-col gap-3 rounded-lg border border-border bg-card px-4 py-3">
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
+          Auction bidding per category
+        </span>
+        <span className="font-mono text-[10px] text-muted-foreground">
+          Opening bid + how much each tap raises it on the live console.
+        </span>
+      </div>
+
+      <PriceRow
+        label="Base"
+        categories={categories}
+        draft={base}
+        setDraft={setBase}
+        disabled={!canEdit || busy}
+      />
+      <PriceRow
+        label="Step"
+        categories={categories}
+        draft={step}
+        setDraft={setStep}
+        disabled={!canEdit || busy}
+      />
+
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => onSave(clean(base), clean(step))}
+          disabled={!canEdit || busy || !dirty}
+          className="inline-flex items-center gap-1.5 rounded-sm bg-primary px-4 py-2 font-heading text-xs font-bold tracking-wide text-primary-foreground uppercase transition-opacity hover:opacity-90 disabled:opacity-50"
+        >
+          {busy ? (
+            <Loader2 className="size-3.5 animate-spin" />
+          ) : (
+            <Check className="size-3.5" />
+          )}
+          Save bidding prices
         </button>
         {!canEdit && (
           <span className="text-xs text-[var(--closed)]">

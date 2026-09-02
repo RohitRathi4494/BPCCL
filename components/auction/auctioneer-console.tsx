@@ -321,7 +321,12 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
                   openingBid={
                     data.settings.basePrice[onBlock.assigned_category ?? ""] ?? 0
                   }
-                  bidIncrement={data.settings.bidIncrement}
+                  defaultStep={
+                    data.settings.stepPrice[onBlock.assigned_category ?? ""] ||
+                    (data.settings.bidIncrement >= 100
+                      ? data.settings.bidIncrement
+                      : 1000)
+                  }
                   squadMax={data.settings.squadMax}
                   busy={busy}
                   onSetBid={setBid}
@@ -493,7 +498,7 @@ function LiveBidPanel({
   franchises,
   currentBid,
   openingBid,
-  bidIncrement,
+  defaultStep,
   squadMax,
   busy,
   onSetBid,
@@ -501,14 +506,15 @@ function LiveBidPanel({
   franchises: FranchiseView[];
   currentBid: CurrentBid;
   openingBid: number;
-  bidIncrement: number;
+  defaultStep: number;
   squadMax: number;
   busy: boolean;
   onSetBid: (amount: number | null, franchiseId: string | null) => void;
 }) {
-  // bid_increment default (20) predates the current purse scale — fall back to
-  // a sensible ₹1000 step when it's clearly too small. Editable live either way.
-  const [step, setStep] = useState(bidIncrement >= 100 ? bidIncrement : 1000);
+  // Step defaults to the on-block player's category step price (set in Auction
+  // Setup); still fully editable live. Keyed by player in the parent, so it
+  // re-seeds to the right category step each time a new player comes up.
+  const [step, setStep] = useState(defaultStep >= 1 ? defaultStep : 1000);
   const [overrideStr, setOverrideStr] = useState("");
 
   const hasBid = currentBid.amount != null;

@@ -171,6 +171,17 @@ separate auth systems per role.
     change needed (columns already typed). Verified: `tsc` + `eslint` clean,
     `/auction/display` renders with 0 console errors / 0 failed requests and no
     page scroll.
+- **Auction Setup: per-category auction base price + step price editors.** The
+  live-bid opening price (`league_settings.base_price[category]`) was seeded to
+  0 with no UI — added a **`BiddingPricePanel`** to `/admin/auction-setup`
+  (`components/auction/auction-setup.tsx`) with a **Base** row and a **Step** row
+  per category (reuses `PriceRow`; saves `base_price` + `step_price` straight to
+  `league_settings` via admin RLS). New per-category **`step_price` jsonb** column
+  (migration `20260903000000_auction_step_price.sql`, **pushed**; `step_price?:
+  Json` hand-added to `database.types.ts`), seeded `Legend/A+ = 1000`, `A/B = 500`
+  where unset. The live console's step now defaults to the on-block player's
+  category step price (still editable live); opening bid still uses the category
+  base price. `settings.stepPrice` added to the snapshot.
 
 ### Recent updates (as of 2026-08-21)
 

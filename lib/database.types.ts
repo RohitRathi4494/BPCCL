@@ -342,6 +342,7 @@ export type Database = {
           squad_max_per_franchise: number
           squad_min: number
           squad_min_per_franchise: number
+          step_price: Json
           topup_1: number
           topup_2: number
         }
@@ -366,6 +367,7 @@ export type Database = {
           squad_max_per_franchise?: number
           squad_min?: number
           squad_min_per_franchise?: number
+          step_price?: Json
           topup_1?: number
           topup_2?: number
         }
@@ -390,6 +392,7 @@ export type Database = {
           squad_max_per_franchise?: number
           squad_min?: number
           squad_min_per_franchise?: number
+          step_price?: Json
           topup_1?: number
           topup_2?: number
         }

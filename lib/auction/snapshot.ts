@@ -73,6 +73,7 @@ export type AuctionSnapshot = {
     retentionBasePrice: Record<string, number>;
     ownerBasePrice: Record<string, number>;
     basePrice: Record<string, number>;
+    stepPrice: Record<string, number>;
     bidIncrement: number;
     defaultPurse: number;
     squadMin: number;
@@ -178,6 +179,7 @@ export async function fetchAuctionSnapshot(
     number
   >;
   const basePrice = (settingsRow?.base_price ?? {}) as Record<string, number>;
+  const stepPrice = (settingsRow?.step_price ?? {}) as Record<string, number>;
 
   const players = (playersR.data ?? []) as PublicPlayer[];
   const byId = new Map<string, PublicPlayer>();
@@ -269,6 +271,7 @@ export async function fetchAuctionSnapshot(
       retentionBasePrice,
       ownerBasePrice,
       basePrice,
+      stepPrice,
       bidIncrement: settingsRow?.bid_increment ?? 0,
       defaultPurse: settingsRow?.default_purse ?? 175000,
       squadMin: settingsRow?.squad_min ?? 18,
