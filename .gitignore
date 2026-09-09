@@ -51,3 +51,6 @@ next-env.d.ts
 # supabase CLI local temp
 /supabase/.temp/
 /supabase/.branches/
+
+# Claude Code local worktrees/agent state
+.claude/
