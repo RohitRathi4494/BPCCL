@@ -207,7 +207,7 @@ export default async function HomePage() {
               lights at{" "}
               <span className="text-primary">Champions Den, Bandhwari</span> in{" "}
               {site.venue.city} — the home of the league. Floodlit T20
-              cricket, sixteen franchises, one ground.
+              cricket, {settings?.franchise_count ?? 14} franchises, one ground.
             </p>
             <div className="relative overflow-hidden rounded-lg border border-border">
               <Image
@@ -252,9 +252,9 @@ export default async function HomePage() {
                 This spot is open
               </p>
               <p className="text-sm text-muted-foreground">
-                Put your brand in front of sixteen franchises and a season of
-                floodlit T20 cricket. Title, Co-title, Associate and Ground
-                Partner slots are available.
+                Put your brand in front of {settings?.franchise_count ?? 14}{" "}
+                franchises and a season of floodlit T20 cricket. Title,
+                Co-title, Associate and Ground Partner slots are available.
               </p>
               <Link
                 href="/sponsors"

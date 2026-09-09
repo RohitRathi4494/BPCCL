@@ -6,7 +6,7 @@ import "./globals.css";
 
 const SITE_TITLE = "Urban Sports Champions League — Season 2";
 const SITE_DESCRIPTION =
-  "Urban Sports Champions League Season 2 — Gurugram's finest T20 cricket league at Champions Den, Bandhwari, Gurugram. 16 franchises, live auction, live scoring.";
+  "Urban Sports Champions League Season 2 — Gurugram's finest T20 cricket league at Champions Den, Bandhwari, Gurugram. 14 franchises, live auction, live scoring.";
 
 // Body / UI — Barlow (athletic, clean grotesque). Sports/fitness pairing.
 const barlow = Barlow({

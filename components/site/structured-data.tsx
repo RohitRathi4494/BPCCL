@@ -63,7 +63,7 @@ export function OrganizationJsonLd() {
         logo: `${base}/uscl-logo.png`,
         image: `${base}/hero-champions.jpg`,
         description:
-          "Urban Sports Champions League Season 2 — Gurugram's finest T20 cricket league. 16 franchises, live player auction, and live match scoring.",
+          "Urban Sports Champions League Season 2 — Gurugram's finest T20 cricket league. 14 franchises, live player auction, and live match scoring.",
         email: "Urbansportsstudio@gmail.com",
         parentOrganization: {
           "@type": "Organization",
@@ -133,7 +133,7 @@ export function SeasonEventsJsonLd({
     "@id": auctionId,
     name: `${site.name} ${site.season} — Player Auction`,
     description:
-      "Live player auction where all 16 franchises build their squads using mock/virtual purse currency.",
+      "Live player auction where all 14 franchises build their squads using mock/virtual purse currency.",
     sport: "Cricket",
     ...(auctionAt ? { startDate: auctionAt } : {}),
     eventStatus: SCHEDULED,
@@ -150,7 +150,7 @@ export function SeasonEventsJsonLd({
     name: `${site.name} — ${site.season}`,
     alternateName: `${site.shortName} ${site.season}`,
     description:
-      "Urban Sports Champions League Season 2 — a T20 cricket league of 16 franchises at Champions Den, Bandhwari, Gurugram.",
+      "Urban Sports Champions League Season 2 — a T20 cricket league of 14 franchises at Champions Den, Bandhwari, Gurugram.",
     sport: "Cricket",
     url: base,
     image: `${base}/hero-champions.jpg`,

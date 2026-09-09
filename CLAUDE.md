@@ -16,7 +16,7 @@ Real-world process this platform supports, in order:
    showcase them).
 2. **Player registration** — players register themselves via a public form on the website, submitting a
    CricHeroes profile link among other details.
-3. **Player auction** — all 16 franchises participate in a live auction and bid (mock currency, not real money)
+3. **Player auction** — all 14 franchises participate in a live auction and bid (mock currency, not real money)
    to build their squads from the registered/approved player pool.
 4. **Team lists released** — squads are published publicly once the auction concludes.
 5. **Match scheduling** — fixtures are created for the season.
@@ -27,7 +27,7 @@ The website is the umbrella property: it hosts the sponsor showcase, and the reg
 
 ## 2. Scale & Key Numbers (lock these in, ask the user before changing)
 
-- **Franchises:** 16
+- **Franchises:** 14 (was 16 in early planning; two teams removed 2026-09-09 — migrations `20260909000000` + `20260909010000`, `league_settings.franchise_count = 14`)
 - **Expected registrations:** 500–600 players
 - **Auction currency:** mock/virtual purse only — no real money changes hands in the auction itself
 - **Squad size per franchise:** not finalized — build this as a configurable setting

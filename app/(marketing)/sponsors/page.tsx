@@ -3,6 +3,7 @@ import { SectionHeading } from "@/components/site/section-heading";
 import { SponsorCard } from "@/components/site/sponsor-card";
 import { SponsorEnquiryForm } from "@/components/site/sponsor-enquiry-form";
 import { getSponsorsByTier } from "@/lib/queries/sponsors";
+import { getLeagueSettings } from "@/lib/queries/settings";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -18,7 +19,10 @@ const TIER_BLURB: Record<string, string> = {
 };
 
 export default async function SponsorsPage() {
-  const grouped = await getSponsorsByTier();
+  const [grouped, settings] = await Promise.all([
+    getSponsorsByTier(),
+    getLeagueSettings(),
+  ]);
   const hasAny = grouped.some((g) => g.sponsors.length > 0);
 
   return (
@@ -33,8 +37,9 @@ export default async function SponsorsPage() {
             Put your brand under the lights
           </h1>
           <p className="mt-5 max-w-2xl text-lg text-foreground/85">
-            {site.name} {site.season} brings sixteen franchises, a live auction
-            and a full season of floodlit T20 cricket to {site.venue.city}.
+            {site.name} {site.season} brings {settings?.franchise_count ?? 14}{" "}
+            franchises, a live auction and a full season of floodlit T20 cricket
+            to {site.venue.city}.
             Align your brand with the action.
           </p>
         </div>

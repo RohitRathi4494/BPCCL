@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MapPin } from "lucide-react";
 import { BrandMark } from "@/components/site/brand-mark";
+import { getLeagueSettings } from "@/lib/queries/settings";
 import { site } from "@/lib/site";
 
 const cols: { heading: string; links: { label: string; href: string; soon?: boolean }[] }[] = [
@@ -23,15 +24,17 @@ const cols: { heading: string; links: { label: string; href: string; soon?: bool
   },
 ];
 
-export function SiteFooter() {
+export async function SiteFooter() {
+  const settings = await getLeagueSettings();
+  const franchiseCount = settings?.franchise_count ?? 14;
   return (
     <footer className="mt-24 border-t border-border bg-[var(--card)]">
       <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 sm:grid-cols-2 md:grid-cols-4">
         <div className="sm:col-span-2 md:col-span-2">
           <BrandMark />
           <p className="mt-4 max-w-xs text-sm text-muted-foreground">
-            {site.tagline} · {site.season}. Sixteen franchises, one floodlit
-            ground.
+            {site.tagline} · {site.season}. {franchiseCount} franchises, one
+            floodlit ground.
           </p>
           <p className="mt-4 flex items-start gap-2 text-sm text-foreground/85">
             <MapPin className="mt-0.5 size-4 shrink-0 text-primary" />

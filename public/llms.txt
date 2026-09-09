@@ -2,13 +2,13 @@
 
 > Urban Sports Studio runs the Urban Sports Champions League (USCL), Gurugram's
 > finest amateur T20 cricket league. Season 2 is played at Champions Den,
-> Bandhwari, Gurugram, and features 16 franchises, a live player auction, and
+> Bandhwari, Gurugram, and features 14 franchises, a live player auction, and
 > live match scoring. This site is the league's official home: sponsor showcase,
 > public player registration, franchise squads, fixtures, and live scorecards.
 
 ## What USCL is
 
-- A community T20 cricket league of 16 franchises.
+- A community T20 cricket league of 14 franchises.
 - Players register publicly, then are reviewed and assigned a category
   (Legend / Category A+ / Category A / Category B) by league admins.
 - Franchises build squads through a live auction that uses mock/virtual purse
