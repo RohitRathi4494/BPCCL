@@ -26,7 +26,7 @@ async function ensureAdmin(): Promise<string | null> {
   return null;
 }
 
-/** Rename a franchise / set its short code + owner name (admin, RLS-enforced). */
+/** Rename a franchise / set its short code (admin, RLS-enforced). */
 export async function updateFranchise(
   _prev: FranchiseState,
   formData: FormData,
@@ -38,13 +38,12 @@ export async function updateFranchise(
   if (!UUID_RE.test(id)) return { error: "Invalid franchise." };
   const name = String(formData.get("name") ?? "").trim();
   const short_code = String(formData.get("short_code") ?? "").trim() || null;
-  const owner_name = String(formData.get("owner_name") ?? "").trim() || null;
   if (!name) return { error: "Franchise name is required." };
 
   const supabase = await createClient();
   const { error } = await supabase
     .from("franchises")
-    .update({ name, short_code, owner_name })
+    .update({ name, short_code })
     .eq("id", id);
   if (error) {
     console.error("updateFranchise:", error.message);
@@ -77,7 +76,6 @@ export async function setFranchiseOwnerLogin(
   if (!UUID_RE.test(franchiseId)) return { error: "Invalid franchise." };
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
-  const ownerName = String(formData.get("owner_name") ?? "").trim() || null;
 
   if (!EMAIL_RE.test(email)) return { error: "Enter a valid email." };
   if (password.length < 8)
@@ -115,15 +113,10 @@ export async function setFranchiseOwnerLogin(
     id: userId,
     role: "franchise_owner",
     franchise_id: franchiseId,
-    full_name: ownerName,
   });
   if (profErr) {
     console.error("link profile:", profErr.message);
     return { error: "Login created but linking failed. Please try again." };
-  }
-
-  if (ownerName) {
-    await admin.from("franchises").update({ owner_name: ownerName }).eq("id", franchiseId);
   }
 
   revalidatePath("/admin/franchises");

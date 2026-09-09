@@ -1,17 +1,13 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
 import { Check, Loader2, KeyRound } from "lucide-react";
 import {
   updateFranchise,
   setFranchiseOwnerLogin,
   type FranchiseState,
 } from "@/app/admin/(protected)/franchises/actions";
-import type {
-  FranchiseRow,
-  PlayerOption,
-} from "@/app/admin/(protected)/franchises/page";
-import { OwnerNamePicker } from "@/components/admin/owner-name-picker";
+import type { FranchiseRow } from "@/app/admin/(protected)/franchises/page";
 
 const inr = (n: number) => new Intl.NumberFormat("en-IN").format(n);
 const fieldClass =
@@ -19,17 +15,11 @@ const fieldClass =
 const labelClass =
   "font-mono text-[10px] tracking-[0.16em] text-muted-foreground uppercase";
 
-export function FranchiseManager({
-  rows,
-  players,
-}: {
-  rows: FranchiseRow[];
-  players: PlayerOption[];
-}) {
+export function FranchiseManager({ rows }: { rows: FranchiseRow[] }) {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       {rows.map((f) => (
-        <FranchiseCard key={f.id} f={f} players={players} />
+        <FranchiseCard key={f.id} f={f} />
       ))}
     </div>
   );
@@ -47,16 +37,7 @@ function StateMsg({ state }: { state: FranchiseState }) {
   return null;
 }
 
-function FranchiseCard({
-  f,
-  players,
-}: {
-  f: FranchiseRow;
-  players: PlayerOption[];
-}) {
-  // Owner name is shared between both forms so the login form uses the
-  // currently-picked owner, not just the last saved value.
-  const [ownerName, setOwnerName] = useState(f.owner_name ?? "");
+function FranchiseCard({ f }: { f: FranchiseRow }) {
   const [editState, editAction, editing] = useActionState<FranchiseState, FormData>(
     updateFranchise,
     {},
@@ -103,15 +84,6 @@ function FranchiseCard({
             />
           </label>
         </div>
-        <div className="flex flex-col gap-1">
-          <span className={labelClass}>Owner Name (registered player)</span>
-          <input type="hidden" name="owner_name" value={ownerName} />
-          <OwnerNamePicker
-            players={players}
-            value={ownerName}
-            onChange={setOwnerName}
-          />
-        </div>
         <div className="flex items-center gap-3">
           <button
             type="submit"
@@ -130,7 +102,6 @@ function FranchiseCard({
       {/* Owner login */}
       <form action={loginAction} className="flex flex-col gap-3">
         <input type="hidden" name="franchise_id" value={f.id} />
-        <input type="hidden" name="owner_name" value={ownerName} />
         <div className="flex items-center gap-2">
           <KeyRound className="size-4 text-muted-foreground" />
           <span className="font-mono text-[11px] tracking-wider text-muted-foreground uppercase">

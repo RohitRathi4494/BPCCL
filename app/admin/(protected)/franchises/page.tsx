@@ -13,18 +13,10 @@ export type FranchiseRow = {
   id: string;
   name: string;
   short_code: string | null;
-  owner_name: string | null;
   purse_total: number;
   purse_remaining: number;
   ownerEmail: string | null;
   hasOwner: boolean;
-};
-
-/** Minimal registered-player record used to pick a franchise owner by name. */
-export type PlayerOption = {
-  id: string;
-  full_name: string;
-  registration_code: string | null;
 };
 
 export default async function AdminFranchisesPage() {
@@ -33,20 +25,13 @@ export default async function AdminFranchisesPage() {
 
   const { data: franchises } = await supabase
     .from("franchises")
-    .select("id, name, short_code, owner_name, purse_total, purse_remaining")
+    .select("id, name, short_code, purse_total, purse_remaining")
     .order("created_at", { ascending: true });
 
   const { data: owners } = await supabase
     .from("profiles")
     .select("id, franchise_id")
     .eq("role", "franchise_owner");
-
-  // Registered players — the owner name must be picked from this list.
-  const { data: players } = await supabase
-    .from("players")
-    .select("id, full_name, registration_code")
-    .order("full_name", { ascending: true });
-  const playerOptions: PlayerOption[] = players ?? [];
 
   const ownerUserByFranchise = new Map<string, string>();
   for (const o of owners ?? []) {
@@ -86,8 +71,9 @@ export default async function AdminFranchisesPage() {
           Franchises
         </h1>
         <p className="text-sm text-muted-foreground">
-          Name each franchise, set its owner, and create the login they&apos;ll
-          use for the franchise dashboard.
+          Name each franchise, set its short code, and create the login
+          they&apos;ll use for the franchise dashboard. Owners and retentions are
+          assigned in Auction Setup.
         </p>
       </div>
 
@@ -100,7 +86,7 @@ export default async function AdminFranchisesPage() {
         </p>
       )}
 
-      <FranchiseManager rows={rows} players={playerOptions} />
+      <FranchiseManager rows={rows} />
     </div>
   );
 }
