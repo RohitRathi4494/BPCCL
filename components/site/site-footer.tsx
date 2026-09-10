@@ -17,7 +17,7 @@ const cols: { heading: string; links: { label: string; href: string; soon?: bool
     heading: "Season",
     links: [
       { label: "Register", href: "/register" },
-      { label: "Franchises", href: "/franchises", soon: true },
+      { label: "Franchises", href: "/franchises" },
       { label: "Fixtures", href: "/fixtures", soon: true },
       { label: "Live Scores", href: "/live", soon: true },
     ],
