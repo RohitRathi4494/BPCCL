@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, MapPin } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Reveal } from "@/components/site/reveal";
 import { getPublicFranchises } from "@/lib/queries/franchises";
 import { getLeagueSettings } from "@/lib/queries/settings";
@@ -67,7 +67,6 @@ export default async function FranchisesPage() {
               {franchises.map((f) => {
                 const meta = metaFor(f.short_code);
                 const accent = meta?.accent ?? GOLD;
-                const region = meta?.region;
                 const tagline = meta?.tagline;
                 const initials = f.short_code || initialsOf(f.name);
                 return (
@@ -123,13 +122,7 @@ export default async function FranchisesPage() {
 
                     {/* info */}
                     <div className="relative border-t border-border/70 p-5">
-                      {region && (
-                        <span className="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.22em] text-[var(--team)] uppercase">
-                          <MapPin className="size-3" />
-                          {region}
-                        </span>
-                      )}
-                      <h2 className="mt-1.5 font-heading text-xl font-bold tracking-tight text-foreground uppercase">
+                      <h2 className="font-heading text-xl font-bold tracking-tight text-foreground uppercase">
                         {f.name}
                       </h2>
                       {tagline && (
