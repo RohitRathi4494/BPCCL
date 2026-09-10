@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { Loader2 } from "lucide-react";
 import { franchiseLogin, type LoginState } from "@/app/franchise/actions";
@@ -9,7 +10,13 @@ const fieldClass =
 const labelClass =
   "font-mono text-[11px] tracking-[0.18em] text-muted-foreground uppercase";
 
-export function FranchiseLoginForm({ notice }: { notice?: string }) {
+export function FranchiseLoginForm({
+  notice,
+  success,
+}: {
+  notice?: string;
+  success?: string;
+}) {
   const [state, formAction, pending] = useActionState<LoginState, FormData>(
     franchiseLogin,
     {},
@@ -18,6 +25,11 @@ export function FranchiseLoginForm({ notice }: { notice?: string }) {
 
   return (
     <form action={formAction} className="flex flex-col gap-5">
+      {success && !state.error && (
+        <p className="rounded-sm border border-primary/40 bg-primary/10 px-3.5 py-2.5 text-sm text-foreground">
+          {success}
+        </p>
+      )}
       {message && (
         <p className="rounded-sm border border-[var(--closed)]/40 bg-[var(--closed)]/10 px-3.5 py-2.5 text-sm text-[var(--closed)]">
           {message}
@@ -30,9 +42,17 @@ export function FranchiseLoginForm({ notice }: { notice?: string }) {
         <input id="email" name="email" type="email" autoComplete="email" className={fieldClass} placeholder="owner@franchise.in" />
       </div>
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="password" className={labelClass}>
-          Password
-        </label>
+        <div className="flex items-center justify-between gap-2">
+          <label htmlFor="password" className={labelClass}>
+            Password
+          </label>
+          <Link
+            href="/franchise/forgot-password"
+            className="font-mono text-[11px] tracking-wide text-muted-foreground normal-case transition-colors hover:text-primary"
+          >
+            Forgot password?
+          </Link>
+        </div>
         <input id="password" name="password" type="password" autoComplete="current-password" className={fieldClass} placeholder="••••••••" />
       </div>
       <button

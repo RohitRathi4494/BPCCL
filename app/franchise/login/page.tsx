@@ -25,6 +25,10 @@ export default async function FranchiseLoginPage({
     params.error === "forbidden"
       ? "Please sign in with your franchise owner account."
       : undefined;
+  const success =
+    params.reset === "success"
+      ? "Your password has been updated. Sign in with your new password."
+      : undefined;
 
   return (
     <div className="grass-stripes flex min-h-dvh flex-col items-center justify-center px-5">
@@ -36,7 +40,7 @@ export default async function FranchiseLoginPage({
           </p>
         </div>
         <div className="rounded-xl border border-border bg-card p-6 sm:p-8">
-          <FranchiseLoginForm notice={notice} />
+          <FranchiseLoginForm notice={notice} success={success} />
         </div>
       </div>
     </div>
