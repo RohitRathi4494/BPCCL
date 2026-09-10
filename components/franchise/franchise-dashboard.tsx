@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   ExternalLink,
@@ -9,6 +10,7 @@ import {
   Search,
   Trash2,
   Check,
+  User,
   Users,
   Wallet,
 } from "lucide-react";
@@ -90,6 +92,46 @@ function CricLink({ url }: { url: string | null }) {
     >
       CricHeroes <ExternalLink className="size-3" />
     </a>
+  );
+}
+
+/** Player photo (uploaded at registration), or a fallback silhouette. */
+function PlayerAvatar({
+  src,
+  name,
+  size = "md",
+}: {
+  src: string | null;
+  name: string | null;
+  size?: "sm" | "md";
+}) {
+  const dim = size === "sm" ? "size-9" : "size-14";
+  return (
+    <div
+      className={cn(
+        "relative shrink-0 overflow-hidden rounded-md border border-border bg-background",
+        dim,
+      )}
+    >
+      {src ? (
+        <Image
+          src={src}
+          alt={name ?? "Player"}
+          fill
+          sizes={size === "sm" ? "36px" : "56px"}
+          className="object-cover"
+        />
+      ) : (
+        <span className="grid size-full place-items-center">
+          <User
+            className={cn(
+              size === "sm" ? "size-4" : "size-6",
+              "text-muted-foreground/40",
+            )}
+          />
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -274,14 +316,17 @@ export function FranchiseDashboard({
                     className="flex flex-col gap-2 rounded-lg border border-border bg-card p-4"
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-foreground">
-                            {p.full_name}
-                          </span>
-                          <CategoryBadge category={p.assigned_category} />
+                      <div className="flex items-start gap-3">
+                        <PlayerAvatar src={p.photo_url} name={p.full_name} />
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-foreground">
+                              {p.full_name}
+                            </span>
+                            <CategoryBadge category={p.assigned_category} />
+                          </div>
+                          <Roles roles={p.roles} />
                         </div>
-                        <Roles roles={p.roles} />
                       </div>
                       <button
                         disabled={pending || onList || !p.id}
@@ -363,8 +408,17 @@ export function FranchiseDashboard({
                 <tbody>
                   {squad.map((s) => (
                     <tr key={s.player_id} className="border-b border-border/60 last:border-0">
-                      <td className="px-4 py-3 font-medium text-foreground">
-                        {s.player?.full_name ?? "—"}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2.5">
+                          <PlayerAvatar
+                            src={s.player?.photo_url ?? null}
+                            name={s.player?.full_name ?? null}
+                            size="sm"
+                          />
+                          <span className="font-medium text-foreground">
+                            {s.player?.full_name ?? "—"}
+                          </span>
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <CategoryBadge category={s.player?.assigned_category ?? null} />
@@ -442,15 +496,21 @@ function WishlistRow({
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
       <div className="flex items-start justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-foreground">
-              {entry.player?.full_name ?? "Player"}
-            </span>
-            <CategoryBadge category={entry.player?.assigned_category ?? null} />
+        <div className="flex items-start gap-3">
+          <PlayerAvatar
+            src={entry.player?.photo_url ?? null}
+            name={entry.player?.full_name ?? null}
+          />
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-foreground">
+                {entry.player?.full_name ?? "Player"}
+              </span>
+              <CategoryBadge category={entry.player?.assigned_category ?? null} />
+            </div>
+            {entry.player && <StatLine p={entry.player} />}
+            <CricLink url={entry.player?.cricheroes_url ?? null} />
           </div>
-          {entry.player && <StatLine p={entry.player} />}
-          <CricLink url={entry.player?.cricheroes_url ?? null} />
         </div>
         <button
           disabled={pending}
