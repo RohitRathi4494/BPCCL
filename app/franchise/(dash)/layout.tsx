@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { LogOut } from "lucide-react";
+import Link from "next/link";
+import { KeyRound, LogOut } from "lucide-react";
 import { BrandMark } from "@/components/site/brand-mark";
 import { requireFranchiseOwner } from "@/lib/auth";
 import { franchiseSignOut } from "@/app/franchise/actions";
@@ -28,6 +29,13 @@ export default async function FranchiseDashLayout({
             <span className="hidden font-heading text-sm font-bold tracking-wide text-foreground uppercase sm:inline">
               {franchise.name}
             </span>
+            <Link
+              href="/franchise/update-password"
+              className="inline-flex items-center gap-1.5 rounded-sm border border-border px-3 py-1.5 font-mono text-[11px] tracking-wider text-muted-foreground uppercase transition-colors hover:border-primary hover:text-primary"
+            >
+              <KeyRound className="size-3.5" />
+              <span className="hidden sm:inline">Change password</span>
+            </Link>
             <form action={franchiseSignOut}>
               <button
                 type="submit"

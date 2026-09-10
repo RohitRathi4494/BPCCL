@@ -36,6 +36,12 @@ export default async function FranchiseUpdatePasswordPage() {
                 in with it next time.
               </p>
               <UpdatePasswordForm />
+              <Link
+                href="/franchise"
+                className="mt-4 block text-center text-sm text-muted-foreground transition-colors hover:text-primary"
+              >
+                Back to dashboard
+              </Link>
             </>
           ) : (
             <>
