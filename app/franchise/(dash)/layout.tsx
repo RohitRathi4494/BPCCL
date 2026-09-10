@@ -19,7 +19,7 @@ export default async function FranchiseDashLayout({
       <header className="sticky top-0 z-30 border-b border-border bg-background/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3.5">
           <div className="flex items-center gap-4">
-            <BrandMark showSeason={false} />
+            <BrandMark showSeason={false} href={null} />
             <span className="hidden font-mono text-[11px] tracking-[0.2em] text-muted-foreground uppercase sm:inline">
               Franchise Portal
             </span>

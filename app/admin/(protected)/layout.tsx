@@ -24,7 +24,7 @@ export default async function AdminLayout({
       <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur">
         <div className="relative mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-5">
           <div className="flex items-center gap-6">
-            <BrandMark showSeason={false} />
+            <BrandMark showSeason={false} href={null} />
             <span className="hidden rounded-sm border border-primary/40 px-2 py-0.5 font-mono text-[10px] tracking-[0.2em] text-primary uppercase sm:inline">
               Admin
             </span>
