@@ -38,7 +38,7 @@ export default async function SponsorsPage() {
           </h1>
           <p className="mt-5 max-w-2xl text-lg text-foreground/85">
             {site.name} {site.season} brings {settings?.franchise_count ?? 14}{" "}
-            franchises, a live auction and a full season of floodlit T20 cricket
+            franchises, a live auction and a full season of T20 cricket
             to {site.venue.city}.
             Align your brand with the action.
           </p>

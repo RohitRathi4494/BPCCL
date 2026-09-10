@@ -5,16 +5,19 @@ import { StatusBadge } from "@/components/site/status-badge";
 import { Countdown } from "@/components/site/countdown";
 import { SectionHeading } from "@/components/site/section-heading";
 import { SponsorCard } from "@/components/site/sponsor-card";
+import { FranchiseMarquee } from "@/components/site/franchise-marquee";
 import { Reveal } from "@/components/site/reveal";
 import { SeasonEventsJsonLd } from "@/components/site/structured-data";
 import { getLeagueSettings, settingsCategories } from "@/lib/queries/settings";
 import { getSponsors } from "@/lib/queries/sponsors";
+import { getPublicFranchises } from "@/lib/queries/franchises";
 import { site } from "@/lib/site";
 
 export default async function HomePage() {
   const settings = await getLeagueSettings();
   const categories = settingsCategories(settings);
   const sponsors = await getSponsors();
+  const franchises = await getPublicFranchises();
   const featured = sponsors.filter(
     (s) => s.tier === "Title" || s.tier === "Co-title",
   );
@@ -203,11 +206,11 @@ export default async function HomePage() {
           <SectionHeading kicker="The Ground" title="Champions Den" />
           <div className="mt-8 grid gap-8 md:grid-cols-2">
             <p className="text-lg leading-relaxed text-foreground/85">
-              Every match of {site.shortName} {site.season} is played under
-              lights at{" "}
+              Every match of {site.shortName} {site.season} is played at{" "}
               <span className="text-primary">Champions Den, Bandhwari</span> in{" "}
-              {site.venue.city} — the home of the league. Floodlit T20
-              cricket, {settings?.franchise_count ?? 14} franchises, one ground.
+              {site.venue.city} — the home of the league. Day games under the
+              sun and night games under lights: T20 cricket,{" "}
+              {settings?.franchise_count ?? 14} franchises, one ground.
             </p>
             <div className="relative overflow-hidden rounded-lg border border-border">
               <Image
@@ -228,6 +231,32 @@ export default async function HomePage() {
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ================= FRANCHISES ================= */}
+      <section className="border-t border-border bg-[var(--card)]/40">
+        <div className="mx-auto max-w-6xl px-5 py-20">
+          <SectionHeading
+            kicker="The League"
+            title="Meet the Franchises"
+            align="center"
+          />
+          <p className="mx-auto mt-4 max-w-xl text-center text-sm text-muted-foreground">
+            {settings?.franchise_count ?? franchises.length} teams battle for the{" "}
+            {site.shortName} {site.season} title.
+          </p>
+          <div className="mt-12">
+            <FranchiseMarquee franchises={franchises} />
+          </div>
+          <div className="mt-10 text-center">
+            <Link
+              href="/franchises"
+              className="font-mono text-xs tracking-[0.2em] text-primary uppercase hover:underline"
+            >
+              Explore all franchises →
+            </Link>
           </div>
         </div>
       </section>
@@ -253,7 +282,7 @@ export default async function HomePage() {
               </p>
               <p className="text-sm text-muted-foreground">
                 Put your brand in front of {settings?.franchise_count ?? 14}{" "}
-                franchises and a season of floodlit T20 cricket. Title,
+                franchises and a full season of T20 cricket. Title,
                 Co-title, Associate and Ground Partner slots are available.
               </p>
               <Link

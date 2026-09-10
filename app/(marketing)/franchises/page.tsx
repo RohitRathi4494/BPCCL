@@ -41,8 +41,8 @@ export default async function FranchisesPage() {
           </h1>
           <p className="mt-5 max-w-2xl text-lg text-foreground/85">
             {count} teams. One title. Every franchise builds its squad at the
-            live auction, then battles it out under the lights at{" "}
-            {site.venue.full}. Here&apos;s the line-up.
+            live auction, then battles it out at {site.venue.full}. Here&apos;s
+            the line-up.
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-3">
