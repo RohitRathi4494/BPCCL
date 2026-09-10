@@ -1,12 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import {
+  useEffect,
+  useMemo,
+  useOptimistic,
+  useState,
+  useTransition,
+} from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   ExternalLink,
   Heart,
-  Loader2,
   Search,
   Trash2,
   Check,
@@ -38,6 +43,11 @@ type Franchise = {
 };
 
 type Tab = "pool" | "wishlist" | "squad";
+
+type WishlistAction =
+  | { type: "add"; entry: WishlistEntry }
+  | { type: "remove"; playerId: string }
+  | { type: "save"; playerId: string; target: number | null; remarks: string | null };
 
 /** Compact, non-empty stat chips for a player. */
 function StatLine({ p }: { p: PoolPlayer }) {
@@ -162,11 +172,37 @@ export function FranchiseDashboard({
   const [categoryFilter, setCategoryFilter] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
+
+  // Optimistic wishlist: reflect add/remove/save instantly, then reconcile with
+  // the server in the background. Without this, every click waited on the server
+  // action + a full router.refresh() (re-fetching the whole pool) before the
+  // button changed — which felt sluggish. useOptimistic overlays the pending
+  // change onto the server truth (`wishlist`) and drops it automatically once the
+  // enclosing transition (action + refresh) resolves.
+  const [localWishlist, applyOptimistic] = useOptimistic(
+    wishlist,
+    (state: WishlistEntry[], action: WishlistAction): WishlistEntry[] => {
+      switch (action.type) {
+        case "add":
+          return state.some((w) => w.player_id === action.entry.player_id)
+            ? state
+            : [action.entry, ...state];
+        case "remove":
+          return state.filter((w) => w.player_id !== action.playerId);
+        case "save":
+          return state.map((w) =>
+            w.player_id === action.playerId
+              ? { ...w, target_amount: action.target, remarks: action.remarks }
+              : w,
+          );
+      }
+    },
+  );
 
   const wishlistIds = useMemo(
-    () => new Set(wishlist.map((w) => w.player_id)),
-    [wishlist],
+    () => new Set(localWishlist.map((w) => w.player_id)),
+    [localWishlist],
   );
   const soldSet = useMemo(() => new Set(soldIds), [soldIds]);
 
@@ -221,15 +257,55 @@ export function FranchiseDashboard({
 
   const spent = squad.reduce((sum, s) => sum + s.sold_price, 0);
 
-  const act = (fn: () => Promise<unknown>) =>
+  // Instantly add a player to the wishlist (optimistic), then persist + reconcile.
+  const handleAdd = (p: PoolPlayer) => {
+    const id = p.id;
+    if (!id || wishlistIds.has(id)) return;
+    const optimistic: WishlistEntry = {
+      id: `optimistic-${id}`,
+      franchise_id: franchise.id,
+      player_id: id,
+      target_amount: null,
+      remarks: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      player: p,
+    };
     startTransition(async () => {
-      await fn();
+      applyOptimistic({ type: "add", entry: optimistic });
+      await addToWishlist(id);
       router.refresh();
     });
+  };
+
+  // Instantly remove from the wishlist (optimistic), then persist + reconcile.
+  const handleRemove = (playerId: string) => {
+    startTransition(async () => {
+      applyOptimistic({ type: "remove", playerId });
+      await removeFromWishlist(playerId);
+      router.refresh();
+    });
+  };
+
+  // Optimistically apply target-amount/remarks edits, then persist + reconcile.
+  // Parsing mirrors updateWishlist(); if the server rejects, the background
+  // refresh reconciles the row back to the stored values.
+  const handleSave = (playerId: string, amountRaw: string, remarksRaw: string) => {
+    const trimmed = amountRaw.trim().replace(/[,\s]/g, "");
+    const n = Number(trimmed);
+    const target =
+      trimmed && Number.isFinite(n) && Number.isInteger(n) && n >= 0 ? n : null;
+    const remarks = remarksRaw.trim().slice(0, 500) || null;
+    startTransition(async () => {
+      applyOptimistic({ type: "save", playerId, target, remarks });
+      await updateWishlist(playerId, amountRaw, remarksRaw);
+      router.refresh();
+    });
+  };
 
   const tabs: { key: Tab; label: string; count: number }[] = [
     { key: "pool", label: "Player Pool", count: availablePool.length },
-    { key: "wishlist", label: "Wishlist", count: wishlist.length },
+    { key: "wishlist", label: "Wishlist", count: localWishlist.length },
     { key: "squad", label: "My Squad", count: squad.length },
   ];
 
@@ -239,7 +315,7 @@ export function FranchiseDashboard({
       <div className="grid gap-3 sm:grid-cols-3">
         <Tile icon={Wallet} label="Purse Remaining" value={`₹${inr(franchise.purse_remaining)}`} sub={`of ₹${inr(franchise.purse_total)}`} />
         <Tile icon={Users} label="Squad" value={String(squad.length)} sub={`₹${inr(spent)} spent`} />
-        <Tile icon={Heart} label="Wishlist" value={String(wishlist.length)} sub="players shortlisted" />
+        <Tile icon={Heart} label="Wishlist" value={String(localWishlist.length)} sub="players shortlisted" />
       </div>
 
       {/* Tabs */}
@@ -329,8 +405,8 @@ export function FranchiseDashboard({
                         </div>
                       </div>
                       <button
-                        disabled={pending || onList || !p.id}
-                        onClick={() => p.id && act(() => addToWishlist(p.id!))}
+                        disabled={onList || !p.id}
+                        onClick={() => handleAdd(p)}
                         className={cn(
                           "inline-flex shrink-0 items-center gap-1.5 rounded-sm border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-70",
                           onList
@@ -362,20 +438,19 @@ export function FranchiseDashboard({
       {/* ---- Wishlist ---- */}
       {tab === "wishlist" && (
         <div className="flex flex-col gap-3">
-          {wishlist.length === 0 ? (
+          {localWishlist.length === 0 ? (
             <Empty>
               Your wishlist is empty. Add players from the Player Pool tab.
             </Empty>
           ) : (
-            wishlist.map((w) => (
+            localWishlist.map((w) => (
               <WishlistRow
-                key={w.id}
+                key={w.player_id}
                 entry={w}
-                pending={pending}
-                onSave={(amt, remarks) =>
-                  act(() => updateWishlist(w.player_id, amt, remarks))
+                onSave={(amountRaw, remarksRaw) =>
+                  handleSave(w.player_id, amountRaw, remarksRaw)
                 }
-                onRemove={() => act(() => removeFromWishlist(w.player_id))}
+                onRemove={() => handleRemove(w.player_id)}
               />
             ))
           )}
@@ -476,12 +551,10 @@ function Empty({ children }: { children: React.ReactNode }) {
 
 function WishlistRow({
   entry,
-  pending,
   onSave,
   onRemove,
 }: {
   entry: WishlistEntry;
-  pending: boolean;
   onSave: (amount: string, remarks: string) => void;
   onRemove: () => void;
 }) {
@@ -513,7 +586,6 @@ function WishlistRow({
           </div>
         </div>
         <button
-          disabled={pending}
           onClick={onRemove}
           title="Remove from wishlist"
           className="inline-flex size-8 shrink-0 items-center justify-center rounded-sm border border-border text-muted-foreground transition-colors hover:border-[var(--closed)] hover:text-[var(--closed)] disabled:opacity-60"
@@ -546,11 +618,10 @@ function WishlistRow({
           />
         </label>
         <button
-          disabled={pending || !dirty}
+          disabled={!dirty}
           onClick={() => onSave(amount, remarks)}
           className="inline-flex items-center justify-center gap-2 rounded-sm bg-primary px-4 py-2 font-heading text-xs font-bold tracking-wide text-primary-foreground uppercase transition-opacity hover:opacity-90 disabled:opacity-50"
         >
-          {pending ? <Loader2 className="size-3.5 animate-spin" /> : null}
           Save
         </button>
       </div>
