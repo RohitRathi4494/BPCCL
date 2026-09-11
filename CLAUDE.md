@@ -208,6 +208,8 @@ columns (Docker isn't available, so `supabase gen types` isn't run locally).
   `season_starts_note`. Seeded: reg closes **15 Sep 2026**, auction **26 Sep
   2026** (IST), season start note **"3rd Week of October"**. Home page reads
   these; `Countdown` has a `placeholder` prop for the no-exact-date case.
+  **Auction date finalised as 3 Oct 2026 09:00 IST** (migration
+  `20260911000000_auction_date_oct3.sql`, pushed).
 - **Emails use the real USCL crest.** `lib/email/send.ts` auto-attaches
   `public/uscl-logo.png` as an inline CID (`uscl-logo`) on every send; the
   `templates.ts` shell `<img src="cid:uscl-logo">` replaced the old "US" box
