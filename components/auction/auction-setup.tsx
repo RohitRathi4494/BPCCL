@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Loader2, X, Crown, Lock, ArrowLeft, Check } from "lucide-react";
+import { Loader2, X, Crown, Lock, ArrowLeft, Check, Repeat } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuction } from "@/lib/auction/use-auction";
 import {
@@ -78,6 +78,16 @@ export function AuctionSetup({ initial }: { initial: AuctionSnapshot }) {
       supabaseRef.current.rpc("unlock_squad_member", { p_player: playerId }),
     );
 
+  // Mark / unmark a franchise as a returning Season 1 team (admin RLS on
+  // franchises). Only existing teams get an RTM.
+  const setSeason1 = (franchiseId: string, value: boolean) =>
+    run(`s1:${franchiseId}`, () =>
+      supabaseRef.current
+        .from("franchises")
+        .update({ played_season_1: value })
+        .eq("id", franchiseId),
+    );
+
   const savePrices = (
     owner: Record<string, number>,
     retention: Record<string, number>,
@@ -145,6 +155,15 @@ export function AuctionSetup({ initial }: { initial: AuctionSnapshot }) {
         busy={busyId === "bidding-prices"}
         canEdit={!!data.settings.id}
         onSave={saveBidding}
+      />
+
+      {/* Season 1 franchises → RTM eligibility */}
+      <Season1Panel
+        franchises={data.franchises}
+        rtmPerFranchise={data.settings.rtmPerFranchise}
+        rtmMaxAgainst={data.settings.rtmMaxAgainst}
+        busyId={busyId}
+        onToggle={setSeason1}
       />
 
       {error && (
@@ -346,6 +365,83 @@ function BiddingPricePanel({
             League settings row not found — cannot save prices.
           </span>
         )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Mark which franchises played Season 1. Only these existing teams get an RTM
+ * (Right To Match). Shows each team's RTM state live: available / used, and how
+ * many RTMs have been used against them (capped at rtmMaxAgainst).
+ */
+function Season1Panel({
+  franchises,
+  rtmPerFranchise,
+  rtmMaxAgainst,
+  busyId,
+  onToggle,
+}: {
+  franchises: FranchiseView[];
+  rtmPerFranchise: number;
+  rtmMaxAgainst: number;
+  busyId: string | null;
+  onToggle: (franchiseId: string, value: boolean) => void;
+}) {
+  const existingCount = franchises.filter((f) => f.played_season_1).length;
+  return (
+    <div className="flex flex-col gap-3 rounded-lg border border-border bg-card px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
+          <Repeat className="size-3.5 text-primary" /> Season 1 franchises · RTM
+        </span>
+        <span className="font-mono text-[10px] text-muted-foreground">
+          {existingCount} marked existing · {rtmPerFranchise} RTM each · max{" "}
+          {rtmMaxAgainst} against a team
+        </span>
+      </div>
+      <p className="font-mono text-[10px] tracking-wider text-muted-foreground">
+        Tick the teams that played Season 1 — only they can exercise an RTM for
+        their old players during the auction.
+      </p>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {franchises.map((f) => {
+          const busy = busyId === `s1:${f.id}`;
+          const rtmSpare = f.played_season_1 && f.rtm_used < rtmPerFranchise;
+          return (
+            <label
+              key={f.id}
+              className="flex cursor-pointer items-center justify-between gap-2 rounded-sm border border-border bg-background px-3 py-2"
+            >
+              <span className="flex items-center gap-2.5 min-w-0">
+                <input
+                  type="checkbox"
+                  checked={f.played_season_1}
+                  disabled={busy}
+                  onChange={(e) => onToggle(f.id, e.target.checked)}
+                  className="size-4 shrink-0 accent-[var(--primary)]"
+                />
+                <span className="truncate font-heading text-sm font-bold tracking-wide text-foreground uppercase">
+                  {f.short_code ? `${f.short_code} · ` : ""}
+                  {f.name}
+                </span>
+              </span>
+              <span className="shrink-0 font-mono text-[10px] tracking-wider uppercase">
+                {busy ? (
+                  <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
+                ) : f.played_season_1 ? (
+                  <span className={rtmSpare ? "text-primary" : "text-muted-foreground"}>
+                    {rtmSpare ? "RTM available" : "RTM used"}
+                    {f.rtm_against_count > 0 &&
+                      ` · ${f.rtm_against_count}/${rtmMaxAgainst} vs`}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground/60">no RTM</span>
+                )}
+              </span>
+            </label>
+          );
+        })}
       </div>
     </div>
   );

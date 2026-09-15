@@ -136,6 +136,43 @@ separate auth systems per role.
 - [ ] Social/content hub (auto-generated shareable graphics)
 - [ ] Deployed to production
 
+### Recent updates (as of 2026-09-15)
+
+- **Auction: Right To Match (RTM).** League rule: every **existing (Season 1)**
+  franchise has **one RTM**; it can only be used for **their own old player**;
+  when signalled, the primary (highest) bidder may **revise their bid upward**,
+  then the old franchise may **match** it and take the player; a **maximum of two**
+  successful RTMs can be used **against any one team**. The revise/match
+  negotiation is verbal in the room — the software is the system of record and
+  enforces the franchise-level guardrails.
+  - **Migration `20260915000000_auction_rtm.sql`** (pushed): `franchises` gains
+    `played_season_1 bool`, `rtm_used int` (RTMs spent), `rtm_against_count int`;
+    `league_settings` gains `rtm_per_franchise` (default 1) + `rtm_max_against`
+    (default 2); `auction_state` gains `current_result_via_rtm bool`;
+    `auction_log` action check widened with `'sold_rtm'`. New RPC
+    **`sell_player_rtm(p_player, p_rtm_franchise, p_primary_franchise, p_amount)`**
+    (SECURITY DEFINER, staff-gated): validates the RTM team is a Season 1 team
+    with an RTM spare, the primary team is under the against-cap, purse + squad
+    room, awards the player to the RTM team, spends its RTM, and bumps the primary
+    team's against-count. `undo_last_action()` + `reset_auction()` updated to
+    reverse/clear the new state; `sell_player`/`mark_player_unsold` now clear the
+    `via_rtm` flag. `database.types.ts` hand-edited to match.
+  - **Auction Setup** (`components/auction/auction-setup.tsx`): new
+    **`Season1Panel`** — tick which franchises played Season 1 (direct
+    `franchises.played_season_1` update via admin RLS); shows each team's live RTM
+    state (available / used, and N/max used against them).
+  - **Auctioneer console** (`SellPanel`): a **"Player taken via RTM"** toggle. When
+    on, the "Winning franchise" select becomes the **primary bidder** and a
+    separate **RTM team** dropdown lists only eligible Season 1 teams with an RTM
+    spare; guardrails block if the primary team is at the against-cap or the RTM
+    team lacks purse/squad room. Confirm → `sell_player_rtm`.
+  - **Big screen** (`current-player-card.tsx`): sold band reads **"Sold via RTM
+    to <Team>"** with an RTM tag when `result.via_rtm`.
+  - `AuctionSnapshot` widened: `FranchiseView.{played_season_1,rtm_used,
+    rtm_against_count}`, `settings.{rtmPerFranchise,rtmMaxAgainst}`,
+    `SaleResult.via_rtm`. Verified: `tsc` + `eslint` clean; `/auction/display`
+    renders 200, admin auction routes compile.
+
 ### Recent updates (as of 2026-09-03)
 
 - **Auction: live bidding tracker on the auctioneer console + big-screen redesign.**

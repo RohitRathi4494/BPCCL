@@ -196,8 +196,13 @@ function ResultBand({
     return (
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-accent/40 bg-accent/15 px-6 py-4 sm:px-10">
         <div className="flex flex-col">
-          <span className="font-mono text-[10px] tracking-[0.24em] text-accent uppercase">
-            Sold to
+          <span className="inline-flex items-center gap-2 font-mono text-[10px] tracking-[0.24em] text-accent uppercase">
+            {result.via_rtm ? "Sold via RTM to" : "Sold to"}
+            {result.via_rtm && (
+              <span className="rounded-sm border border-primary/50 bg-primary/15 px-1.5 py-0.5 font-heading text-[9px] font-bold tracking-[0.16em] text-primary">
+                RTM
+              </span>
+            )}
           </span>
           <span
             className={cn(

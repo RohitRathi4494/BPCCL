@@ -18,6 +18,9 @@ export type FranchiseView = {
   purse_remaining: number;
   topup_1_used: boolean;
   topup_2_used: boolean;
+  played_season_1: boolean;
+  rtm_used: number;
+  rtm_against_count: number;
   squad: SquadEntry[];
   squadCount: number;
 };
@@ -42,6 +45,7 @@ export type SaleResult = {
   franchise_id: string | null;
   franchise_name: string | null;
   amount: number | null;
+  via_rtm: boolean;
 };
 
 /** The live "current highest bid" while a player is on the block. */
@@ -80,6 +84,8 @@ export type AuctionSnapshot = {
     squadMax: number;
     topup1: number;
     topup2: number;
+    rtmPerFranchise: number;
+    rtmMaxAgainst: number;
   };
 };
 
@@ -204,6 +210,9 @@ export async function fetchAuctionSnapshot(
       purse_remaining: f.purse_remaining,
       topup_1_used: f.topup_1_used,
       topup_2_used: f.topup_2_used,
+      played_season_1: f.played_season_1 ?? false,
+      rtm_used: f.rtm_used ?? 0,
+      rtm_against_count: f.rtm_against_count ?? 0,
       squad,
       squadCount: squad.length,
     };
@@ -256,6 +265,7 @@ export async function fetchAuctionSnapshot(
       ? franchiseNameById.get(stateRow.current_result_franchise_id) ?? null
       : null,
     amount: stateRow?.current_result_amount ?? null,
+    via_rtm: stateRow?.current_result_via_rtm ?? false,
   };
 
   return {
@@ -278,6 +288,8 @@ export async function fetchAuctionSnapshot(
       squadMax: settingsRow?.squad_max ?? 25,
       topup1: settingsRow?.topup_1 ?? 75000,
       topup2: settingsRow?.topup_2 ?? 50000,
+      rtmPerFranchise: settingsRow?.rtm_per_franchise ?? 1,
+      rtmMaxAgainst: settingsRow?.rtm_max_against ?? 2,
     },
   };
 }

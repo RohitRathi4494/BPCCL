@@ -17,6 +17,7 @@ import {
   RotateCcw,
   CornerUpLeft,
   ExternalLink,
+  Repeat,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuction } from "@/lib/auction/use-auction";
@@ -190,6 +191,20 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
         p_amount: amount,
       }),
     );
+  const sellRtm = (
+    playerId: string,
+    rtmFranchiseId: string,
+    primaryFranchiseId: string,
+    amount: number,
+  ) =>
+    callRpc(() =>
+      supabaseRef.current.rpc("sell_player_rtm", {
+        p_player: playerId,
+        p_rtm_franchise: rtmFranchiseId,
+        p_primary_franchise: primaryFranchiseId,
+        p_amount: amount,
+      }),
+    );
 
   const onBlock = data.currentPlayer;
   const resultPending = data.result.status === null;
@@ -336,9 +351,14 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
                   franchises={data.franchises}
                   squadMax={data.settings.squadMax}
                   squadMin={data.settings.squadMin}
+                  rtmPerFranchise={data.settings.rtmPerFranchise}
+                  rtmMaxAgainst={data.settings.rtmMaxAgainst}
                   currentBid={data.currentBid}
                   busy={busy}
                   onSell={(fid, amt) => sell(onBlock.id, fid, amt)}
+                  onSellRtm={(rtmFid, primaryFid, amt) =>
+                    sellRtm(onBlock.id, rtmFid, primaryFid, amt)
+                  }
                   onUnsold={() => markUnsold(onBlock.id)}
                 />
               </>
@@ -681,22 +701,32 @@ function LiveBidPanel({
   );
 }
 
-/** Sale entry: amount + franchise select + guardrails. */
+/** Sale entry: amount + franchise select + guardrails, with an RTM path. */
 function SellPanel({
   franchises,
   squadMax,
   squadMin,
+  rtmPerFranchise,
+  rtmMaxAgainst,
   currentBid,
   busy,
   onSell,
+  onSellRtm,
   onUnsold,
 }: {
   franchises: FranchiseView[];
   squadMax: number;
   squadMin: number;
+  rtmPerFranchise: number;
+  rtmMaxAgainst: number;
   currentBid: CurrentBid;
   busy: boolean;
   onSell: (franchiseId: string, amount: number) => void;
+  onSellRtm: (
+    rtmFranchiseId: string,
+    primaryFranchiseId: string,
+    amount: number,
+  ) => void;
   onUnsold: () => void;
 }) {
   // The sale fields follow the live bid automatically until the auctioneer
@@ -708,6 +738,12 @@ function SellPanel({
   const [dirty, setDirty] = useState(false);
   const [amountOverride, setAmountOverride] = useState("");
   const [franchiseOverride, setFranchiseOverride] = useState("");
+
+  // RTM: when the old franchise matches the final (revised) bid, the player goes
+  // to them instead of the primary bidder. The "winning franchise" above is the
+  // PRIMARY bidder in that case; the RTM team is chosen separately below.
+  const [rtm, setRtm] = useState(false);
+  const [rtmFranchiseId, setRtmFranchiseId] = useState("");
 
   const amountStr = dirty ? amountOverride : liveAmountStr;
   const franchiseId = dirty ? franchiseOverride : liveFranchiseId;
@@ -730,13 +766,38 @@ function SellPanel({
 
   const full = selected ? selected.squadCount >= squadMax : false;
   const insufficient = selected && validAmount ? selected.purse_remaining < amount : false;
-  const canSell = !!selected && validAmount && !full && !insufficient && !busy;
 
   // Soft warning: this franchise will still be below the squad minimum.
   const shortfall =
     selected && selected.squadCount + 1 < squadMin
       ? squadMin - (selected.squadCount + 1)
       : 0;
+
+  // --- RTM eligibility -------------------------------------------------------
+  // A franchise can exercise RTM if it played Season 1 and still has an RTM
+  // spare. It can't be the primary bidder, and it needs purse + squad room.
+  const rtmEligible = franchises.filter(
+    (f) =>
+      f.played_season_1 &&
+      f.rtm_used < rtmPerFranchise &&
+      f.id !== franchiseId,
+  );
+  const rtmTeam = franchises.find((f) => f.id === rtmFranchiseId) ?? null;
+  const primaryMaxedOut =
+    !!selected && selected.rtm_against_count >= rtmMaxAgainst;
+  const rtmFull = rtmTeam ? rtmTeam.squadCount >= squadMax : false;
+  const rtmInsufficient =
+    rtmTeam && validAmount ? rtmTeam.purse_remaining < amount : false;
+
+  const canSell = !!selected && validAmount && !full && !insufficient && !busy;
+  const canSellRtm =
+    !!selected &&
+    !!rtmTeam &&
+    validAmount &&
+    !primaryMaxedOut &&
+    !rtmFull &&
+    !rtmInsufficient &&
+    !busy;
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-accent/40 bg-accent/5 p-5">
@@ -771,7 +832,7 @@ function SellPanel({
         </label>
         <label className="flex flex-col gap-1">
           <span className="font-mono text-[10px] tracking-[0.16em] text-muted-foreground uppercase">
-            Winning franchise
+            {rtm ? "Primary bidder (final bid)" : "Winning franchise"}
           </span>
           <select
             value={franchiseId}
@@ -789,18 +850,84 @@ function SellPanel({
         </label>
       </div>
 
-      {full && (
+      {/* RTM toggle + old-franchise picker */}
+      <div className="flex flex-col gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
+        <label className="flex cursor-pointer items-center gap-2.5">
+          <input
+            type="checkbox"
+            checked={rtm}
+            onChange={(e) => setRtm(e.target.checked)}
+            className="size-4 accent-[var(--primary)]"
+          />
+          <span className="inline-flex items-center gap-1.5 font-heading text-sm font-bold tracking-wide text-primary uppercase">
+            <Repeat className="size-4" /> Player taken via RTM
+          </span>
+        </label>
+
+        {rtm && (
+          <>
+            <p className="font-mono text-[10px] tracking-wider text-muted-foreground">
+              After the primary bidder&apos;s revised bid, the old franchise
+              matches it and takes the player at ₹{formatMoney(amount || 0)}.
+            </p>
+            <label className="flex flex-col gap-1">
+              <span className="font-mono text-[10px] tracking-[0.16em] text-muted-foreground uppercase">
+                RTM team (old franchise)
+              </span>
+              <select
+                value={rtmFranchiseId}
+                onChange={(e) => setRtmFranchiseId(e.target.value)}
+                className="w-full rounded-sm border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+              >
+                <option value="">Select RTM team…</option>
+                {rtmEligible.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.short_code ? `${f.short_code} · ` : ""}
+                    {f.name} — ₹{formatMoney(f.purse_remaining)} ·{" "}
+                    {f.squadCount}/{squadMax}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {rtmEligible.length === 0 && (
+              <p className="text-xs text-[var(--closed)]">
+                No franchise is eligible — a returning (Season 1) team with its
+                RTM still unused is needed. Mark Season 1 teams in Auction Setup.
+              </p>
+            )}
+            {primaryMaxedOut && (
+              <p className="text-xs text-[var(--closed)]">
+                {rtmMaxAgainst} RTMs have already been used against {selected?.name}
+                {" "}— no further RTM can be used against them.
+              </p>
+            )}
+            {rtmFull && (
+              <p className="text-xs text-[var(--closed)]">
+                {rtmTeam?.name} is already at the squad maximum ({squadMax}).
+              </p>
+            )}
+            {rtmInsufficient && (
+              <p className="text-xs text-[var(--closed)]">
+                {rtmTeam?.name} only has ₹{formatMoney(rtmTeam?.purse_remaining)}{" "}
+                left — not enough for ₹{formatMoney(amount)}.
+              </p>
+            )}
+          </>
+        )}
+      </div>
+
+      {!rtm && full && (
         <p className="text-xs text-[var(--closed)]">
           {selected?.name} is already at the squad maximum ({squadMax}). Cannot buy.
         </p>
       )}
-      {insufficient && (
+      {!rtm && insufficient && (
         <p className="text-xs text-[var(--closed)]">
           {selected?.name} only has ₹{formatMoney(selected?.purse_remaining)} left —
           not enough for ₹{formatMoney(amount)}.
         </p>
       )}
-      {!full && !insufficient && shortfall > 0 && (
+      {!rtm && !full && !insufficient && shortfall > 0 && (
         <p className="text-xs text-amber-500">
           Heads up: {selected?.name} will still need {shortfall} more to reach the{" "}
           {squadMin}-player minimum.
@@ -808,15 +935,31 @@ function SellPanel({
       )}
 
       <div className="flex flex-wrap gap-3">
-        <button
-          type="button"
-          onClick={() => selected && onSell(selected.id, amount)}
-          disabled={!canSell}
-          className="inline-flex items-center gap-2 rounded-sm bg-accent px-6 py-2.5 font-heading text-sm font-bold tracking-wide text-accent-foreground uppercase transition-opacity hover:opacity-90 disabled:opacity-50"
-        >
-          {busy ? <Loader2 className="size-4 animate-spin" /> : <Flag className="size-4" />}
-          Confirm Sale
-        </button>
+        {rtm ? (
+          <button
+            type="button"
+            onClick={() =>
+              selected &&
+              rtmTeam &&
+              onSellRtm(rtmTeam.id, selected.id, amount)
+            }
+            disabled={!canSellRtm}
+            className="inline-flex items-center gap-2 rounded-sm bg-primary px-6 py-2.5 font-heading text-sm font-bold tracking-wide text-primary-foreground uppercase transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <Repeat className="size-4" />}
+            Confirm RTM Sale
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => selected && onSell(selected.id, amount)}
+            disabled={!canSell}
+            className="inline-flex items-center gap-2 rounded-sm bg-accent px-6 py-2.5 font-heading text-sm font-bold tracking-wide text-accent-foreground uppercase transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <Flag className="size-4" />}
+            Confirm Sale
+          </button>
+        )}
         <button
           type="button"
           onClick={onUnsold}

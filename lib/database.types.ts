@@ -48,6 +48,7 @@ export type Database = {
           current_result: string | null
           current_result_amount: number | null
           current_result_franchise_id: string | null
+          current_result_via_rtm: boolean
           id: string
           round: number
           status: string
@@ -61,6 +62,7 @@ export type Database = {
           current_result?: string | null
           current_result_amount?: number | null
           current_result_franchise_id?: string | null
+          current_result_via_rtm?: boolean
           id?: string
           round?: number
           status?: string
@@ -74,6 +76,7 @@ export type Database = {
           current_result?: string | null
           current_result_amount?: number | null
           current_result_franchise_id?: string | null
+          current_result_via_rtm?: boolean
           id?: string
           round?: number
           status?: string
@@ -243,8 +246,11 @@ export type Database = {
           logo_url: string | null
           name: string
           owner_name: string | null
+          played_season_1: boolean
           purse_remaining: number
           purse_total: number
+          rtm_against_count: number
+          rtm_used: number
           short_code: string | null
           topup_1_used: boolean
           topup_2_used: boolean
@@ -255,8 +261,11 @@ export type Database = {
           logo_url?: string | null
           name: string
           owner_name?: string | null
+          played_season_1?: boolean
           purse_remaining: number
           purse_total: number
+          rtm_against_count?: number
+          rtm_used?: number
           short_code?: string | null
           topup_1_used?: boolean
           topup_2_used?: boolean
@@ -267,8 +276,11 @@ export type Database = {
           logo_url?: string | null
           name?: string
           owner_name?: string | null
+          played_season_1?: boolean
           purse_remaining?: number
           purse_total?: number
+          rtm_against_count?: number
+          rtm_used?: number
           short_code?: string | null
           topup_1_used?: boolean
           topup_2_used?: boolean
@@ -335,6 +347,8 @@ export type Database = {
           registration_closes_at: string | null
           registration_fee: number
           retention_base_price: Json
+          rtm_max_against: number
+          rtm_per_franchise: number
           season: string
           season_starts_at: string | null
           season_starts_note: string | null
@@ -360,6 +374,8 @@ export type Database = {
           registration_closes_at?: string | null
           registration_fee?: number
           retention_base_price?: Json
+          rtm_max_against?: number
+          rtm_per_franchise?: number
           season?: string
           season_starts_at?: string | null
           season_starts_note?: string | null
@@ -385,6 +401,8 @@ export type Database = {
           registration_closes_at?: string | null
           registration_fee?: number
           retention_base_price?: Json
+          rtm_max_against?: number
+          rtm_per_franchise?: number
           season?: string
           season_starts_at?: string | null
           season_starts_note?: string | null
@@ -1000,6 +1018,15 @@ export type Database = {
       unlock_squad_member: { Args: { p_player: string }; Returns: Json }
       sell_player: {
         Args: { p_player: string; p_franchise: string; p_amount: number }
+        Returns: Json
+      }
+      sell_player_rtm: {
+        Args: {
+          p_player: string
+          p_rtm_franchise: string
+          p_primary_franchise: string
+          p_amount: number
+        }
         Returns: Json
       }
       undo_last_action: { Args: never; Returns: Json }
