@@ -185,6 +185,10 @@ export default async function HomePage() {
               <p className="font-mono text-xs tracking-[0.2em] text-primary uppercase">
                 Registration is open
               </p>
+              <p className="text-sm font-semibold text-[var(--lime)]">
+                🎉 Deadline extended — last date:{" "}
+                <span className="text-foreground">20 October 2026</span>
+              </p>
               <p className="text-sm text-muted-foreground">
                 No account needed — it&apos;s a quick public form. Open to
                 players aged 30 and above.
