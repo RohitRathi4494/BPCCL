@@ -29,11 +29,18 @@ export const navLinks = [
  * The live, canonical production domain. Hardcoded because it's a fixed brand
  * fact (not a per-environment secret) and because sitemap.xml / robots.txt /
  * canonical tags MUST always emit this domain — never the anonymous *.vercel.app
- * URL. If Google fetches a sitemap at https://urbansportsstudio.in/ that lists
- * *.vercel.app URLs, it treats them as a different site → "URL unknown to
- * Google" and the sitemap is ignored.
+ * URL. If Google fetches a sitemap at the production host that lists *.vercel.app
+ * URLs, it treats them as a different site → "URL unknown to Google" and the
+ * sitemap is ignored.
+ *
+ * IMPORTANT: this MUST match the Vercel Production domain (Project → Settings →
+ * Domains). Vercel is currently set to the www host as primary (non-www 308s to
+ * www), so the canonical host is www. If you flip the Vercel primary domain to
+ * the naked apex, change this to "https://urbansportsstudio.in" AND update the
+ * NEXT_PUBLIC_SITE_URL env var to match — a mismatch reintroduces canonical
+ * confusion for Google.
  */
-export const PROD_SITE_URL = "https://urbansportsstudio.in";
+export const PROD_SITE_URL = "https://www.urbansportsstudio.in";
 
 /**
  * Canonical, absolute base URL of the public site (no trailing slash). Used for
