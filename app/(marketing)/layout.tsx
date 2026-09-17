@@ -15,7 +15,7 @@ export default async function MarketingLayout({
     `${site.shortName} ${site.season}`,
     site.venue.full.toUpperCase(),
     settings ? `${settings.franchise_count} Franchises` : "16 Franchises",
-    "🎉 Registration Extended to 20 October 2026",
+    "🎉 Registration Extended to 20 September 2026",
     "Player Registration Open",
     "Live Auction · Mock Purse",
     categories.length ? categories.join(" · ") : site.tagline,

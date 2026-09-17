@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { X, Megaphone } from "lucide-react";
 
-const BANNER_KEY = "uscl-reg-extended-oct20-v1";
+const BANNER_KEY = "uscl-reg-extended-sep20-v1";
 
 /**
  * Announcement banner — registration deadline extended to 20 October 2026.
@@ -42,7 +42,7 @@ export function AnnouncementBanner() {
         🎉 Registration Extended!{" "}
         <span className="font-normal">
           Last date to register is now{" "}
-          <strong className="font-extrabold">20 October 2026</strong>.
+          <strong className="font-extrabold">20 September 2026</strong>.
         </span>{" "}
         <Link
           href="/register"
