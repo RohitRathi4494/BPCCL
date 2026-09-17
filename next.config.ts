@@ -1,7 +1,5 @@
 import type { NextConfig } from "next";
 
-const PROD_DOMAIN = "urbansportsstudio.in";
-
 const nextConfig: NextConfig = {
   // Ensure the brand logo ships with the serverless functions so transactional
   // emails can embed it as an inline (CID) attachment at runtime.
@@ -18,25 +16,14 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // Canonical URL enforcement — funnel www → non-www so Google doesn't index
-  // www.urbansportsstudio.in as a separate (duplicate) site.
-  //
-  // NOTE: HTTP → HTTPS is intentionally NOT handled here. Vercel already forces
-  // HTTPS at the edge for custom domains. A next.config redirect that keys off
-  // `x-forwarded-proto` is redundant and risks a redirect loop (e.g. Googlebot
-  // fetching /sitemap.xml gets 308'd to the same URL), which surfaces as
-  // "Couldn't fetch" in Search Console.
-  async redirects() {
-    return [
-      // www → non-www (permanent).
-      {
-        source: "/:path*",
-        has: [{ type: "host", value: `www.${PROD_DOMAIN}` }],
-        destination: `https://${PROD_DOMAIN}/:path*`,
-        permanent: true,
-      },
-    ];
-  },
+  // NOTE: www <-> non-www and http -> https canonicalization are intentionally
+  // NOT handled here. Vercel does this at the edge based on which domain is set
+  // as the Production domain in Project → Settings → Domains. A host-based
+  // redirect in next.config FIGHTS Vercel's edge redirect and creates an
+  // infinite loop (ERR_TOO_MANY_REDIRECTS): Vercel sends non-www → www, then
+  // this config sent www → non-www, forever. Keep canonicalization in ONE place
+  // (Vercel domains). Set the canonical host there to non-www
+  // (urbansportsstudio.in) so it matches PROD_SITE_URL in lib/site.ts.
 };
 
 export default nextConfig;
