@@ -26,21 +26,33 @@ export const navLinks = [
 ] as const;
 
 /**
+ * The live, canonical production domain. Hardcoded because it's a fixed brand
+ * fact (not a per-environment secret) and because sitemap.xml / robots.txt /
+ * canonical tags MUST always emit this domain — never the anonymous *.vercel.app
+ * URL. If Google fetches a sitemap at https://urbansportsstudio.in/ that lists
+ * *.vercel.app URLs, it treats them as a different site → "URL unknown to
+ * Google" and the sitemap is ignored.
+ */
+export const PROD_SITE_URL = "https://urbansportsstudio.in";
+
+/**
  * Canonical, absolute base URL of the public site (no trailing slash). Used for
  * the sitemap, robots.txt, and metadataBase (canonical / OG URLs).
  *
  * Resolution order:
- *   1. NEXT_PUBLIC_SITE_URL — set this to your production domain
- *      (e.g. https://uscl.in) in Vercel → Project → Settings → Environment.
- *   2. VERCEL_PROJECT_PRODUCTION_URL — the project's .vercel.app domain,
- *      provided automatically on Vercel builds (fallback if 1 isn't set).
+ *   1. NEXT_PUBLIC_SITE_URL — explicit override (e.g. a staging domain).
+ *   2. On any Vercel deploy, the canonical production domain (PROD_SITE_URL).
+ *      Preview deploys intentionally emit the production domain too so that
+ *      canonical/OG metadata is always correct; previews are noindex-guarded by
+ *      robots.txt not being the concern here (they aren't submitted to Google).
  *   3. http://localhost:3000 — local dev fallback.
  */
 export function getSiteUrl(): string {
   const explicit = process.env.NEXT_PUBLIC_SITE_URL;
   if (explicit) return explicit.replace(/\/+$/, "");
-  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL;
-  if (vercel) return `https://${vercel.replace(/\/+$/, "")}`;
+  // Any Vercel environment (production or preview) resolves to the canonical
+  // production domain so SEO surfaces never leak the *.vercel.app host.
+  if (process.env.VERCEL) return PROD_SITE_URL;
   return "http://localhost:3000";
 }
 

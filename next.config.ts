@@ -18,27 +18,22 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // Canonical URL enforcement — all traffic funnels to https://urbansportsstudio.in
-  // (no www, no http). Without these redirects Google indexes multiple variants
-  // of every page as separate (duplicate) URLs, causing Search Console failures.
+  // Canonical URL enforcement — funnel www → non-www so Google doesn't index
+  // www.urbansportsstudio.in as a separate (duplicate) site.
+  //
+  // NOTE: HTTP → HTTPS is intentionally NOT handled here. Vercel already forces
+  // HTTPS at the edge for custom domains. A next.config redirect that keys off
+  // `x-forwarded-proto` is redundant and risks a redirect loop (e.g. Googlebot
+  // fetching /sitemap.xml gets 308'd to the same URL), which surfaces as
+  // "Couldn't fetch" in Search Console.
   async redirects() {
     return [
-      // 1. www → non-www  (THE main fix — Google was seeing www.urbansportsstudio.in
-      //    as a separate site because there was no redirect. This caused "Page with
-      //    redirect" for 3 pages in Search Console.)
+      // www → non-www (permanent).
       {
         source: "/:path*",
         has: [{ type: "host", value: `www.${PROD_DOMAIN}` }],
         destination: `https://${PROD_DOMAIN}/:path*`,
         permanent: true,
-      },
-      // 2. HTTP → HTTPS  (belt-and-suspenders; Vercel also does this at the edge)
-      {
-        source: "/:path*",
-        has: [{ type: "host", value: PROD_DOMAIN }],
-        destination: `https://${PROD_DOMAIN}/:path*`,
-        permanent: true,
-        missing: [{ type: "header", key: "x-forwarded-proto", value: "https" }],
       },
     ];
   },
