@@ -138,6 +138,18 @@ separate auth systems per role.
 
 ### Recent updates (as of 2026-09-18)
 
+- **Big screen: responsive mobile layout.** `/auction/display` was locked to
+  `h-dvh overflow-hidden` (projector-first), which on phones clipped the player
+  card and crammed all 14 purse rows into overlapping slivers (`fill` +
+  `auto-rows-fr`). `auction-display.tsx` now renders TWO bodies: the existing
+  projector 60/40 no-scroll layout at `lg+` (`hidden ... lg:flex`), and a
+  natural-flow mobile layout below `lg` (`lg:hidden`) — full-size
+  `CurrentPlayerCard size="md"` + single-column readable `PurseBars size="md"`
+  (no `fill`), with the root `min-h-dvh lg:h-dvh lg:overflow-hidden` so the page
+  scrolls on mobile but stays fixed on the projector. PAUSED overlay + the
+  SoldCelebration overlay switched to `fixed inset-0` so they track the viewport
+  when the mobile page is scrolled. Verified: both blocks render, tsc + eslint
+  clean.
 - **Big screen: confetti + "SOLD!" celebration on every sale.** New client
   component `components/auction/sold-celebration.tsx` (GSAP, matches the
   `reveal.tsx` convention: `registerPlugin(useGSAP)`, reduced-motion aware).

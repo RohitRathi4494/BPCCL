@@ -114,7 +114,7 @@ export function SoldCelebration({ result }: { result: SaleResult }) {
   );
 
   return (
-    <div ref={scope} className="pointer-events-none absolute inset-0 z-40 overflow-hidden">
+    <div ref={scope} className="pointer-events-none fixed inset-0 z-40 overflow-hidden">
       {/* Confetti particles are injected here imperatively. */}
       <div ref={layer} className="absolute inset-0" aria-hidden />
 

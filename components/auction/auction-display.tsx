@@ -34,7 +34,7 @@ export function AuctionDisplay({
   const logos = sponsors.filter((s) => s.logo_url);
 
   return (
-    <div className="grass-stripes relative flex h-dvh flex-col overflow-hidden px-5 py-4 sm:px-8">
+    <div className="grass-stripes relative flex min-h-dvh flex-col px-4 py-4 sm:px-8 lg:h-dvh lg:overflow-hidden">
       {/* Branded header: league crest · title · ground crest */}
       <header className="flex shrink-0 items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -92,11 +92,11 @@ export function AuctionDisplay({
         </div>
       </header>
 
-      {/* 60 / 40 body — bounded to the viewport height, never scrolls. Each
-          column is min-h-0 + overflow-hidden so neither can grow the row past
-          the screen; the purse board divides its height evenly (auto-rows-fr)
-          so all 16 teams always fit. */}
-      <div className="flex min-h-0 flex-1 flex-col gap-5 py-4 lg:flex-row">
+      {/* ---- Projector / desktop (lg+) : 60 / 40 body, bounded to the viewport
+          height, never scrolls. Each column is min-h-0 + overflow-hidden so
+          neither can grow the row past the screen; the purse board divides its
+          height evenly (auto-rows-fr) so all teams always fit. ---- */}
+      <div className="hidden min-h-0 flex-1 gap-5 py-4 lg:flex lg:flex-row">
         <div className="min-h-0 overflow-hidden lg:basis-3/5">
           <CurrentPlayerCard snapshot={data} size="lg" />
         </div>
@@ -120,6 +120,30 @@ export function AuctionDisplay({
               fill
             />
           </div>
+        </div>
+      </div>
+
+      {/* ---- Mobile / tablet (< lg) : natural-flow, the page scrolls. The
+          player card renders full-size and the purse board is a readable
+          single-column list (no height-squeezing). ---- */}
+      <div className="flex flex-col gap-4 py-3 lg:hidden">
+        <CurrentPlayerCard snapshot={data} size="md" />
+
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="font-mono text-[11px] tracking-[0.24em] text-primary uppercase">
+              Purse Board
+            </h3>
+            <span className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
+              {data.franchises.length} teams
+            </span>
+          </div>
+          <PurseBars
+            snapshot={data}
+            columns={1}
+            highlightId={data.currentBid.franchise_id}
+            size="md"
+          />
         </div>
       </div>
 
@@ -150,7 +174,7 @@ export function AuctionDisplay({
 
       {/* PAUSED overlay */}
       {paused && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-background/85 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-background/85 backdrop-blur-sm">
           <Pause className="size-16 text-primary" />
           <span className="font-heading text-6xl font-extrabold tracking-[0.2em] text-foreground uppercase sm:text-8xl">
             Paused
