@@ -265,10 +265,10 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
       {confirmReset && (
         <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[var(--closed)]/40 bg-[var(--closed)]/10 px-4 py-3">
           <span className="text-sm text-foreground">
-            <strong>Reset the whole auction?</strong> This clears every squad
-            (owners, retentions and auction picks), restores all purses to the
-            default, clears top-ups, and returns to setup. This can&apos;t be
-            undone.
+            <strong>Reset the auction?</strong> This clears only the auction
+            picks and returns to setup. Owners and retentions are kept, and each
+            purse is restored to the default minus the retention spend. Top-ups
+            are cleared. This can&apos;t be undone.
           </span>
           <div className="ml-auto flex gap-2">
             <button
@@ -278,7 +278,7 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
               className="inline-flex items-center gap-2 rounded-sm bg-[var(--closed)] px-4 py-2 font-heading text-xs font-bold tracking-wide text-white uppercase transition-opacity hover:opacity-90 disabled:opacity-60"
             >
               {busy ? <Loader2 className="size-3.5 animate-spin" /> : <RotateCcw className="size-3.5" />}
-              Yes, reset everything
+              Yes, reset the auction
             </button>
             <button
               type="button"

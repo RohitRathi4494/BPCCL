@@ -138,6 +138,16 @@ separate auth systems per role.
 
 ### Recent updates (as of 2026-09-18)
 
+- **"Reset auction" now keeps the setup (owners + retentions).** Reset clears
+  ONLY the auction picks (`squad_members` where `acquisition_type='auction'`) and
+  the auction-time log entries (`sold`/`sold_rtm`/`unsold`/`topup_applied`/
+  `undo`); owners, retentions, and each franchise's `played_season_1` flag are
+  preserved so just the auction can be re-run. Purses are recomputed as
+  `default_purse - sum(price of remaining owner/retention members)`; top-ups +
+  RTM counters cleared; `auction_state` → `setup` (also clears the live-bid
+  columns). Migration `20260918010000_reset_auction_keep_setup.sql` (**pushed**)
+  supersedes the full-wipe reset from `20260918000000`. Console confirm-dialog
+  copy updated (`auctioneer-console.tsx`).
 - **Fix: "Reset auction" failed with `DELETE requires a WHERE clause`.**
   Supabase runs a safe-update guard (supautils) that rejects unqualified
   `DELETE`/`UPDATE` even inside `SECURITY DEFINER` functions. `reset_auction()`
