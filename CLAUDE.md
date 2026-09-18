@@ -138,6 +138,15 @@ separate auth systems per role.
 
 ### Recent updates (as of 2026-09-18)
 
+- **Big screen: confetti + "SOLD!" celebration on every sale.** New client
+  component `components/auction/sold-celebration.tsx` (GSAP, matches the
+  `reveal.tsx` convention: `registerPlugin(useGSAP)`, reduced-motion aware).
+  Rendered in `auction-display.tsx` as a full-screen `pointer-events-none`
+  overlay (z-40, below the z-50 paused overlay). Fires a one-shot 160-particle
+  confetti burst + a scale-in "SOLD! / team / ₹price (RTM tag)" popup ONLY on
+  the edge into `result.status === "sold"` (tracks previous status + skips the
+  initial mount so a mid-sale reload doesn't re-celebrate). Verified:
+  `/auction/display` renders 200 with the component mounted; tsc + eslint clean.
 - **"Reset auction" now keeps the setup (owners + retentions).** Reset clears
   ONLY the auction picks (`squad_members` where `acquisition_type='auction'`) and
   the auction-time log entries (`sold`/`sold_rtm`/`unsold`/`topup_applied`/

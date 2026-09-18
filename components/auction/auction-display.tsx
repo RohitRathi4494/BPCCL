@@ -5,6 +5,7 @@ import { Pause } from "lucide-react";
 import { useAuction } from "@/lib/auction/use-auction";
 import type { AuctionSnapshot } from "@/lib/auction/snapshot";
 import { CurrentPlayerCard } from "@/components/auction/current-player-card";
+import { SoldCelebration } from "@/components/auction/sold-celebration";
 import { PurseBars } from "@/components/auction/purse-bars";
 import { LiveBadge, AuctionStatusPill } from "@/components/auction/live-badge";
 import { site } from "@/lib/site";
@@ -143,6 +144,9 @@ export function AuctionDisplay({
           </div>
         </footer>
       )}
+
+      {/* Confetti + "SOLD!" celebration whenever a player is sold. */}
+      <SoldCelebration result={data.result} />
 
       {/* PAUSED overlay */}
       {paused && (
