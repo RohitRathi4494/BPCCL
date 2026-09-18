@@ -136,6 +136,19 @@ separate auth systems per role.
 - [ ] Social/content hub (auto-generated shareable graphics)
 - [ ] Deployed to production
 
+### Recent updates (as of 2026-09-18)
+
+- **Fix: "Reset auction" failed with `DELETE requires a WHERE clause`.**
+  Supabase runs a safe-update guard (supautils) that rejects unqualified
+  `DELETE`/`UPDATE` even inside `SECURITY DEFINER` functions. `reset_auction()`
+  cleared whole tables + updated all franchises / the `auction_state` singleton
+  with bare statements, so it errored at runtime and the reset button did
+  nothing. Migration `20260918000000_fix_reset_auction_safe_update.sql`
+  (**pushed**) recreates the function with `where true` on all four bulk
+  statements — behaviour identical, guard satisfied. No type change (signature
+  unchanged). **Rule for future RPCs: any all-rows DELETE/UPDATE must carry an
+  explicit `where true`.**
+
 ### Recent updates (as of 2026-09-15)
 
 - **Auction: Right To Match (RTM).** League rule: every **existing (Season 1)**
