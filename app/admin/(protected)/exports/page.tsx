@@ -38,7 +38,7 @@ export default async function AdminExportsPage() {
     supabase
       .from("squad_members")
       .select("*", { count: "exact", head: true })
-      .in("acquisition_type", ["owner", "retention"])
+      .in("acquisition_type", ["owner", "retention", "legend"])
       .then((r) => r.count ?? 0),
   ]);
 

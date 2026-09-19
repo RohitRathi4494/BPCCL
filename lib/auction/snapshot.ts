@@ -6,7 +6,7 @@ export type SquadEntry = {
   player_id: string;
   full_name: string;
   price: number;
-  acquisition_type: "owner" | "retention" | "auction";
+  acquisition_type: "owner" | "retention" | "legend" | "auction";
   category: string | null;
 };
 
@@ -76,6 +76,7 @@ export type AuctionSnapshot = {
     categories: string[];
     retentionBasePrice: Record<string, number>;
     ownerBasePrice: Record<string, number>;
+    legendBasePrice: Record<string, number>;
     basePrice: Record<string, number>;
     stepPrice: Record<string, number>;
     bidIncrement: number;
@@ -184,6 +185,10 @@ export async function fetchAuctionSnapshot(
     string,
     number
   >;
+  const legendBasePrice = (settingsRow?.legend_base_price ?? {}) as Record<
+    string,
+    number
+  >;
   const basePrice = (settingsRow?.base_price ?? {}) as Record<string, number>;
   const stepPrice = (settingsRow?.step_price ?? {}) as Record<string, number>;
 
@@ -280,6 +285,7 @@ export async function fetchAuctionSnapshot(
       categories,
       retentionBasePrice,
       ownerBasePrice,
+      legendBasePrice,
       basePrice,
       stepPrice,
       bidIncrement: settingsRow?.bid_increment ?? 0,

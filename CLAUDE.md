@@ -129,12 +129,38 @@ separate auth systems per role.
 - [x] Public marketing site (home, sponsors, venue) — originally "Turf & Sodium", now VELYXO light theme; home (hero, ticker, DB-driven stats, DB-driven countdowns, venue photo, sponsors) + sponsors page (tiers + enquiry form). Countdown dates + sponsor enquiry now wired — see Recent updates.
 - [x] Player registration form — **standalone shareable landing page at `/register`** (own layout, decoupled from marketing chrome). **v2 (public rollout) fields, ALL required except where noted:** Full Name, DOB (age 30+ enforced → `age`), Contact Number, Email, CricHeroes link, LinkedIn link, T-Shirt size (36–46 even + Other), Lower size (30–38 even + Other), Jersey Number, Jersey Name, and a **mandatory registration-fee agreement** checkbox (₹`registration_fee` from `league_settings`, default 3000 — player can't submit unchecked; `registration_fee_agreed` stored). Role/photo/medical/achievement removed from form (columns kept; `role` now nullable). Soft duplicate-phone warning via `check_phone_registered` RPC. Migrations through `20260816145956_registration_form_v2.sql` — **push required**, then regen types.
 - [x] Admin registration review dashboard — Supabase Auth email/password login (`/admin/login`), admin-role guard in `app/admin/(protected)/layout.tsx`. `/admin/registrations`: status tabs + counts, debounced search, server-side pagination (25/page); detail page `/admin/registrations/[id]` with photo/links/notes + approve/reject + assign-category (categories from `league_settings`; see Recent updates for the Grade→Category rename). Admin account must be created manually (see setup note below / README).
-- [x] Auction room — **rebuilt as admin-driven (v2)**. Bidding happens verbally in the room; the software is the system of record + projector display, **not** a click-to-bid engine. **No per-franchise bidding console** (`/auction/[franchiseId]` + `place_bid()`/`sell_current_player()` removed). Three views: **`/admin/auction-setup`** (lock up to 3 owners + 2 retentions per franchise, deducting `retention_base_price[category]`), **`/admin/auction`** (category flow Legend→A+→A→B, pull a player onto the block, type sold amount + pick winning franchise, mark unsold, per-franchise top-ups, Undo, pause/resume/complete, purse+squad-max guardrails), and public **`/auction/display`** (70/30 big screen: current player + SOLD/UNSOLD/ON-THE-BLOCK/PAUSED left, 16-franchise purse board right — all live). New tables `squad_members` (owner/retention/auction, single source of truth) + `auction_log` (append-only, powers Undo). RPCs: `lock_squad_member`/`unlock_squad_member`/`sell_player`/`mark_player_unsold`/`apply_topup`/`undo_last_action` (all staff-gated, SECURITY DEFINER). `players_public` widened (roles + styles + stats) for the display. Realtime on `auction_state`/`franchises`/`squad_members`. Migrations `20260827000000`–`20260827040000` — **pushed**; types hand-edited. Auction economy in `league_settings` (default_purse 175000, topup_1 75000, topup_2 50000, squad_min 18, squad_max 25, retention_base_price). **Admin sets the per-category retention prices from the setup page UI** (`RetentionPricePanel` → direct `league_settings` update, admin RLS). Console has **Reopen** (completed→in_progress) and a confirm-gated **Reset auction** (`reset_auction()` RPC: wipes squad_members + auction_log, restores purses to default_purse, clears top-ups → setup) for re-runs. **Security:** `is_auction_staff()` coalesces to `false` for anon (a NULL role previously slipped past `if not is_auction_staff()` since `not null` is null, and SECURITY DEFINER would then bypass RLS — fixed in `20260827040000`).
+- [x] Auction room — **rebuilt as admin-driven (v2)**. Bidding happens verbally in the room; the software is the system of record + projector display, **not** a click-to-bid engine. **No per-franchise bidding console** (`/auction/[franchiseId]` + `place_bid()`/`sell_current_player()` removed). Three views: **`/admin/auction-setup`** (lock up to 3 owners + 2 retentions + 1 legend per franchise, deducting `owner_base_price` / `retention_base_price` / `legend_base_price` `[category]`), **`/admin/auction`** (category flow Legend→A+→A→B, pull a player onto the block, type sold amount + pick winning franchise, mark unsold, per-franchise top-ups, Undo, pause/resume/complete, purse+squad-max guardrails), and public **`/auction/display`** (70/30 big screen: current player + SOLD/UNSOLD/ON-THE-BLOCK/PAUSED left, 16-franchise purse board right — all live). New tables `squad_members` (owner/retention/legend/auction, single source of truth) + `auction_log` (append-only, powers Undo). RPCs: `lock_squad_member`/`unlock_squad_member`/`sell_player`/`mark_player_unsold`/`apply_topup`/`undo_last_action` (all staff-gated, SECURITY DEFINER). `players_public` widened (roles + styles + stats) for the display. Realtime on `auction_state`/`franchises`/`squad_members`. Migrations `20260827000000`–`20260827040000` — **pushed**; types hand-edited. Auction economy in `league_settings` (default_purse 175000, topup_1 75000, topup_2 50000, squad_min 18, squad_max 25, retention_base_price). **Admin sets the per-category retention prices from the setup page UI** (`RetentionPricePanel` → direct `league_settings` update, admin RLS). Console has **Reopen** (completed→in_progress) and a confirm-gated **Reset auction** (`reset_auction()` RPC: wipes squad_members + auction_log, restores purses to default_purse, clears top-ups → setup) for re-runs. **Security:** `is_auction_staff()` coalesces to `false` for anon (a NULL role previously slipped past `if not is_auction_staff()` since `not null` is null, and SECURITY DEFINER would then bypass RLS — fixed in `20260827040000`).
 - [ ] Franchise & squad public pages
 - [ ] Fixtures & scheduling + points table
 - [ ] Live match scoring console + public live scorecard
 - [ ] Social/content hub (auto-generated shareable graphics)
 - [ ] Deployed to production
+
+### Recent updates (as of 2026-09-20)
+
+- **Auction Setup: one "Legend" lock per franchise** (alongside the existing 3
+  owners + 2 retentions). A third `LockSection` (cap 1, `Star` icon) on each
+  `SetupCard` in `components/auction/auction-setup.tsx`; it deducts a per-category
+  base price and counts toward the squad minimum exactly like the other setup
+  locks, and is removable via the ✕ (`unlock_squad_member`) or live-console Undo.
+  - **Migration `20260920000000_auction_legend_lock.sql`** (**pushed**): new
+    `league_settings.legend_base_price` jsonb (per-category); `squad_members`
+    acquisition_type check widened with `'legend'`; `auction_log` action check
+    widened with `'legend_locked'`; `lock_squad_member()` now accepts
+    `p_type='legend'` (cap 1, legend price schedule); `undo_last_action()`
+    reverses `'legend_locked'` too. `reset_auction()` needs **no change** — it
+    only clears `'auction'` picks, so legend locks (setup) are preserved and the
+    purse recompute already sums all remaining setup members.
+  - **`legend_base_price` seeded to 0** (the non-empty column default meant the
+    seed-from-retention `nullif(...,'{}')` didn't fire — same as `owner_base_price`
+    historically). **Admin must set the per-category Legend prices** from the new
+    "Legend" row in `BasePricePanel` on `/admin/auction-setup`, else legends lock
+    at ₹0.
+  - `AuctionSnapshot.settings.legendBasePrice` + `SquadEntry.acquisition_type`
+    widened with `'legend'` (`lib/auction/snapshot.ts`). `database.types.ts`
+    hand-edited (`legend_base_price`). Export "Auction Setup" sheet + the exports
+    page setup count now include `'legend'`. Verified: `tsc` + `eslint` clean,
+    `supabase db push` applied, `legend_base_price` column confirmed present.
 
 ### Recent updates (as of 2026-09-18)
 

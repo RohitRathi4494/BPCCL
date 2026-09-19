@@ -336,7 +336,10 @@ const SQUAD_COLUMNS: ColumnDef[] = [
 async function addAuctionSetupSheet(wb: ExcelJS.Workbook, supabase: AnyClient) {
   const members = await fetchSquadMembers(supabase);
   const setup = members.filter(
-    (m) => m.acquisition_type === "owner" || m.acquisition_type === "retention",
+    (m) =>
+      m.acquisition_type === "owner" ||
+      m.acquisition_type === "retention" ||
+      m.acquisition_type === "legend",
   );
   addSheet(wb, "Auction Setup", SQUAD_COLUMNS, squadRows(setup));
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Loader2, X, Crown, Lock, ArrowLeft, Check, Repeat } from "lucide-react";
+import { Loader2, X, Crown, Lock, Star, ArrowLeft, Check, Repeat } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuction } from "@/lib/auction/use-auction";
 import {
@@ -44,6 +44,7 @@ export function AuctionSetup({ initial }: { initial: AuctionSnapshot }) {
 
   const retentionPrices = data.settings.retentionBasePrice;
   const ownerPrices = data.settings.ownerBasePrice;
+  const legendPrices = data.settings.legendBasePrice;
   const basePrices = data.settings.basePrice;
   const stepPrices = data.settings.stepPrice;
 
@@ -64,7 +65,11 @@ export function AuctionSetup({ initial }: { initial: AuctionSnapshot }) {
     else await refetch();
   }
 
-  const lock = (franchiseId: string, playerId: string, type: "owner" | "retention") =>
+  const lock = (
+    franchiseId: string,
+    playerId: string,
+    type: "owner" | "retention" | "legend",
+  ) =>
     run(`${franchiseId}:${type}`, () =>
       supabaseRef.current.rpc("lock_squad_member", {
         p_franchise: franchiseId,
@@ -91,12 +96,17 @@ export function AuctionSetup({ initial }: { initial: AuctionSnapshot }) {
   const savePrices = (
     owner: Record<string, number>,
     retention: Record<string, number>,
+    legend: Record<string, number>,
   ) => {
     if (!data.settings.id) return;
     return run("base-prices", () =>
       supabaseRef.current
         .from("league_settings")
-        .update({ owner_base_price: owner, retention_base_price: retention })
+        .update({
+          owner_base_price: owner,
+          retention_base_price: retention,
+          legend_base_price: legend,
+        })
         .eq("id", data.settings.id!),
     );
   };
@@ -122,9 +132,10 @@ export function AuctionSetup({ initial }: { initial: AuctionSnapshot }) {
             Auction Setup
           </h1>
           <p className="text-sm text-muted-foreground">
-            Lock each franchise&apos;s pre-auction squad — up to 3 owners and 2
-            retentions. Their per-category base price is deducted from the purse,
-            and they count toward the {data.settings.squadMin}-player minimum.
+            Lock each franchise&apos;s pre-auction squad — up to 3 owners, 2
+            retentions and 1 legend. Their per-category base price is deducted
+            from the purse, and they count toward the {data.settings.squadMin}
+            -player minimum.
           </p>
         </div>
         <Link
@@ -137,10 +148,11 @@ export function AuctionSetup({ initial }: { initial: AuctionSnapshot }) {
 
       {/* Owner + retention base-price editor */}
       <BasePricePanel
-        key={JSON.stringify([ownerPrices, retentionPrices])}
+        key={JSON.stringify([ownerPrices, retentionPrices, legendPrices])}
         categories={data.settings.categories}
         ownerPrices={ownerPrices}
         retentionPrices={retentionPrices}
+        legendPrices={legendPrices}
         busy={busyId === "base-prices"}
         canEdit={!!data.settings.id}
         onSave={savePrices}
@@ -194,6 +206,7 @@ function BasePricePanel({
   categories,
   ownerPrices,
   retentionPrices,
+  legendPrices,
   busy,
   canEdit,
   onSave,
@@ -201,23 +214,29 @@ function BasePricePanel({
   categories: string[];
   ownerPrices: Record<string, number>;
   retentionPrices: Record<string, number>;
+  legendPrices: Record<string, number>;
   busy: boolean;
   canEdit: boolean;
   onSave: (
     owner: Record<string, number>,
     retention: Record<string, number>,
+    legend: Record<string, number>,
   ) => void;
 }) {
   const initOwner = () =>
     Object.fromEntries(categories.map((c) => [c, String(ownerPrices[c] ?? 0)]));
   const initRet = () =>
     Object.fromEntries(categories.map((c) => [c, String(retentionPrices[c] ?? 0)]));
+  const initLegend = () =>
+    Object.fromEntries(categories.map((c) => [c, String(legendPrices[c] ?? 0)]));
   const [owner, setOwner] = useState<Record<string, string>>(initOwner);
   const [retention, setRetention] = useState<Record<string, string>>(initRet);
+  const [legend, setLegend] = useState<Record<string, string>>(initLegend);
 
   const dirty =
     categories.some((c) => Number(owner[c] || 0) !== (ownerPrices[c] ?? 0)) ||
-    categories.some((c) => Number(retention[c] || 0) !== (retentionPrices[c] ?? 0));
+    categories.some((c) => Number(retention[c] || 0) !== (retentionPrices[c] ?? 0)) ||
+    categories.some((c) => Number(legend[c] || 0) !== (legendPrices[c] ?? 0));
 
   const clean = (draft: Record<string, string>) => {
     const out: Record<string, number> = {};
@@ -253,11 +272,18 @@ function BasePricePanel({
         setDraft={setRetention}
         disabled={!canEdit || busy}
       />
+      <PriceRow
+        label="Legend"
+        categories={categories}
+        draft={legend}
+        setDraft={setLegend}
+        disabled={!canEdit || busy}
+      />
 
       <div className="flex items-center gap-3">
         <button
           type="button"
-          onClick={() => onSave(clean(owner), clean(retention))}
+          onClick={() => onSave(clean(owner), clean(retention), clean(legend))}
           disabled={!canEdit || busy || !dirty}
           className="inline-flex items-center gap-1.5 rounded-sm bg-primary px-4 py-2 font-heading text-xs font-bold tracking-wide text-primary-foreground uppercase transition-opacity hover:opacity-90 disabled:opacity-50"
         >
@@ -502,11 +528,16 @@ function SetupCard({
   available: PoolOption[];
   busyId: string | null;
   squadMin: number;
-  onLock: (franchiseId: string, playerId: string, type: "owner" | "retention") => void;
+  onLock: (
+    franchiseId: string,
+    playerId: string,
+    type: "owner" | "retention" | "legend",
+  ) => void;
   onUnlock: (playerId: string) => void;
 }) {
   const owners = f.squad.filter((s) => s.acquisition_type === "owner");
   const retentions = f.squad.filter((s) => s.acquisition_type === "retention");
+  const legends = f.squad.filter((s) => s.acquisition_type === "legend");
 
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-border bg-card p-5">
@@ -547,6 +578,16 @@ function SetupCard({
         available={available}
         busy={busyId === `${f.id}:retention`}
         onAdd={(pid) => onLock(f.id, pid, "retention")}
+        onRemove={onUnlock}
+      />
+      <LockSection
+        label="Legend"
+        icon={<Star className="size-3.5" />}
+        cap={1}
+        entries={legends}
+        available={available}
+        busy={busyId === `${f.id}:legend`}
+        onAdd={(pid) => onLock(f.id, pid, "legend")}
         onRemove={onUnlock}
       />
     </div>
