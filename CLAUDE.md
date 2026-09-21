@@ -136,6 +136,27 @@ separate auth systems per role.
 - [ ] Social/content hub (auto-generated shareable graphics)
 - [ ] Deployed to production
 
+### Recent updates (as of 2026-09-21)
+
+- **Admin can edit a player's career stats from the review page.** Many
+  registrants entered "NA" (or wrong figures) in the self-reported stats, so the
+  read-only stats grid on `/admin/registrations/[id]` is now an inline editable
+  form. New client component `components/admin/edit-stats-form.tsx` (mirrors
+  `review-form.tsx`: `useActionState`, hidden `player_id`, per-field text inputs
+  pre-filled from the player row, "Save Stats" button with pending spinner +
+  success/error banner). New server action **`editPlayerStats`** in
+  `app/admin/(protected)/registrations/actions.ts` (+ `EditStatsState` type):
+  UUID-guarded, `getUser()` guard, whitelists only the `STAT_FIELDS` columns
+  (`Partial<Record<StatKey, string | null>>` so an empty box → NULL), updates
+  `players` via the existing **`players admin update` RLS policy** (admin-only),
+  then `revalidatePath` for list + detail. **No migration** — the 7 stat columns
+  (`matches_played`, `runs_scored`, `batting_average`, `batting_strike_rate`,
+  `wickets_taken`, `bowling_strike_rate`, `economy`) are all nullable `text` and
+  the update policy already covers arbitrary columns. Saving corrected stats also
+  refreshes the "Suggested from stats" category hint on next load (recomputed by
+  `computeCategory`) and propagates to the `players_public`/auction views.
+  Verified: `tsc` + `eslint` clean.
+
 ### Recent updates (as of 2026-09-20)
 
 - **Auction Setup: one "Legend" lock per franchise** (alongside the existing 3

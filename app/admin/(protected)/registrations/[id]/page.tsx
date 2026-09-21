@@ -10,6 +10,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getLeagueSettings, settingsCategories } from "@/lib/queries/settings";
 import { RegistrationStatus as StatusBadge } from "@/components/admin/registration-status";
 import { ReviewForm } from "@/components/admin/review-form";
+import { EditStatsForm } from "@/components/admin/edit-stats-form";
 import { ResetStatusButton } from "@/components/admin/reset-status-button";
 import { DeletePlayerButton } from "@/components/admin/delete-player-button";
 
@@ -206,15 +207,22 @@ export default async function ReviewPlayerPage({
               )}
             </div>
 
-            {/* Self-reported career stats */}
-            <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {STAT_FIELDS.map((f) => (
-                <Detail
-                  key={f.key}
-                  label={f.label}
-                  value={player[f.key] ?? "—"}
-                />
-              ))}
+            {/* Self-reported career stats — editable (many players entered "NA"). */}
+            <div className="mt-6 flex flex-col gap-3">
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="font-mono text-[10px] tracking-[0.16em] text-muted-foreground uppercase">
+                  Career Stats
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  Correct any &quot;NA&quot; or wrong values, then save.
+                </span>
+              </div>
+              <EditStatsForm
+                playerId={player.id}
+                stats={Object.fromEntries(
+                  STAT_FIELDS.map((f) => [f.key, player[f.key]]),
+                )}
+              />
             </div>
 
             <hr className="crease-rule my-6 w-full" />

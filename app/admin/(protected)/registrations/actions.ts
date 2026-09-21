@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getLeagueSettings, settingsCategories } from "@/lib/queries/settings";
 import { computeCategory } from "@/lib/categorization";
+import { STAT_FIELDS, type StatKey } from "@/lib/registration";
 import { getSiteUrl } from "@/lib/site";
 import { sendEmail } from "@/lib/email/send";
 import {
@@ -14,6 +15,7 @@ import {
 } from "@/lib/email/templates";
 
 export type ReviewState = { error?: string };
+export type EditStatsState = { error?: string; saved?: boolean };
 export type ResetState = { error?: string };
 export type DeleteState = { error?: string };
 export type BulkState = { error?: string; approved?: number };
@@ -362,6 +364,51 @@ export async function reviewPlayer(
   revalidatePath("/admin/registrations");
   revalidatePath(`/admin/registrations/${playerId}`);
   redirect(`/admin/registrations?reviewed=1`);
+}
+
+/**
+ * Correct a single player's self-reported career stats. Many registrants entered
+ * "NA" (or wrong values), so the admin can overwrite the stat columns from the
+ * review page. Only the known stat columns are writable here (whitelist), and an
+ * empty box is stored as NULL. Admin-only via RLS ("players admin update").
+ *
+ * Note: the stats-based category suggestion recomputes on the next load, so
+ * saving corrected stats also refreshes the "Suggested from stats" hint.
+ */
+export async function editPlayerStats(
+  _prev: EditStatsState,
+  formData: FormData,
+): Promise<EditStatsState> {
+  const playerId = String(formData.get("player_id") ?? "");
+  if (!UUID_RE.test(playerId)) return { error: "Missing or invalid player." };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Your session expired — please sign in again." };
+
+  // Whitelist: only the recognised stat columns can be written from this form.
+  const updates: Partial<Record<StatKey, string | null>> = {};
+  for (const { key } of STAT_FIELDS) {
+    if (!formData.has(key)) continue;
+    const v = String(formData.get(key) ?? "").trim();
+    updates[key] = v === "" ? null : v;
+  }
+  if (Object.keys(updates).length === 0) return { error: "No stats to save." };
+
+  const { error } = await supabase
+    .from("players")
+    .update(updates)
+    .eq("id", playerId);
+  if (error) {
+    console.error("editPlayerStats:", error.message);
+    return { error: "Could not save the stats. Please try again." };
+  }
+
+  revalidatePath("/admin/registrations");
+  revalidatePath(`/admin/registrations/${playerId}`);
+  return { saved: true };
 }
 
 /**
