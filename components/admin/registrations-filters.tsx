@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { AGE_BUCKETS } from "@/lib/registration";
 
 const selectClass =
   "rounded-sm border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary";
@@ -79,6 +80,20 @@ export function RegistrationsFilters({
         <option value="">Aadhaar: any</option>
         <option value="missing">Aadhaar missing</option>
         <option value="uploaded">Aadhaar uploaded</option>
+      </select>
+
+      <select
+        aria-label="Filter by age"
+        value={params.get("age") ?? ""}
+        onChange={(e) => setParam("age", e.target.value)}
+        className={selectClass}
+      >
+        <option value="">All ages</option>
+        {AGE_BUCKETS.map((b) => (
+          <option key={b.key} value={b.key}>
+            {b.label}
+          </option>
+        ))}
       </select>
     </div>
   );

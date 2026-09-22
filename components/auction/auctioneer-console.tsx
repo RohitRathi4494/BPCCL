@@ -28,6 +28,7 @@ import {
   type FranchiseView,
 } from "@/lib/auction/snapshot";
 import type { TablesUpdate } from "@/lib/types";
+import { AGE_BUCKETS, ageBucketOf } from "@/lib/registration";
 import { CurrentPlayerCard } from "@/components/auction/current-player-card";
 import { LiveBadge, AuctionStatusPill } from "@/components/auction/live-badge";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,7 @@ type PoolPlayer = {
   role: string | null;
   assigned_category: string | null;
   cricheroes_url: string | null;
+  age: number | null;
 };
 type RpcResult = { ok: boolean; error?: string } | null;
 
@@ -57,7 +59,7 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
     (async () => {
       const { data: rows } = await supabaseRef.current
         .from("players")
-        .select("id, full_name, role, assigned_category, cricheroes_url")
+        .select("id, full_name, role, assigned_category, cricheroes_url, age")
         .eq("status", "approved")
         .order("full_name", { ascending: true });
       setPool(rows ?? []);
@@ -98,6 +100,17 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   };
 
+  // Age-bucket pool filter (30–<35 / 35+), also sticky in the URL. "" = any age.
+  const ageParam = searchParams.get("age") ?? "";
+  const poolAge = AGE_BUCKETS.some((b) => b.key === ageParam) ? ageParam : "";
+  const setPoolAge = (value: string) => {
+    const next = new URLSearchParams(searchParams.toString());
+    if (value) next.set("age", value);
+    else next.delete("age");
+    const qs = next.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  };
+
   const available = useMemo(() => {
     const q = query.trim().toLowerCase();
     return pool.filter(
@@ -105,9 +118,10 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
         !soldIds.has(p.id) &&
         p.id !== data.state.current_player_id &&
         (showAllCategories || p.assigned_category === poolCat) &&
+        (!poolAge || ageBucketOf(p.age) === poolAge) &&
         (!q || p.full_name.toLowerCase().includes(q)),
     );
-  }, [pool, soldIds, data.state.current_player_id, showAllCategories, poolCat, query]);
+  }, [pool, soldIds, data.state.current_player_id, showAllCategories, poolCat, poolAge, query]);
 
   async function updateState(patch: TablesUpdate<"auction_state">) {
     if (!stateId) return;
@@ -429,6 +443,40 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
                 </button>
               ))}
             </div>
+
+            {/* Age-bucket filter — combines with the category filter above. */}
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              <span className="mr-1 font-mono text-[10px] tracking-[0.18em] text-muted-foreground uppercase">
+                Age
+              </span>
+              <button
+                type="button"
+                onClick={() => setPoolAge("")}
+                className={cn(
+                  "rounded-sm border px-2.5 py-1 font-mono text-[11px] tracking-wider uppercase transition-colors",
+                  !poolAge
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border text-foreground/70 hover:border-primary/40",
+                )}
+              >
+                All
+              </button>
+              {AGE_BUCKETS.map((b) => (
+                <button
+                  key={b.key}
+                  type="button"
+                  onClick={() => setPoolAge(b.key)}
+                  className={cn(
+                    "rounded-sm border px-2.5 py-1 font-mono text-[11px] tracking-wider uppercase transition-colors",
+                    poolAge === b.key
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-foreground/70 hover:border-primary/40",
+                  )}
+                >
+                  {b.label}
+                </button>
+              ))}
+            </div>
             <div className="mt-3 max-h-96 overflow-y-auto">
               {available.length === 0 ? (
                 <p className="py-8 text-center text-sm text-muted-foreground">
@@ -451,6 +499,7 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
                         </p>
                         <p className="truncate font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
                           {p.assigned_category ?? "—"} · {p.role ?? "—"}
+                          {p.age != null && ` · ${p.age}y`}
                         </p>
                       </div>
                       <div className="flex shrink-0 items-center gap-2">

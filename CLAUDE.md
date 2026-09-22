@@ -136,6 +136,30 @@ separate auth systems per role.
 - [ ] Social/content hub (auto-generated shareable graphics)
 - [ ] Deployed to production
 
+### Recent updates (as of 2026-09-22)
+
+- **Age-category filter in the registrations list + auction console.** Two age
+  buckets keyed off the `players.age` integer: **"30 – below 35"** (`u35`, age
+  ≥30 and <35) and **"35 & above"** (`o35`, age ≥35). Shared source of truth
+  `AGE_BUCKETS` + `ageBucketOf()` in `lib/registration.ts` (min inclusive / max
+  exclusive; keys `u35`/`o35` are stable URL tokens). **No migration** — `age` is
+  already a non-null `int` on `players`, populated at registration from DOB.
+  - **Registrations list** (`/admin/registrations`): new "All ages / 30 – below
+    35 / 35 & above" `<select>` in `components/admin/registrations-filters.tsx`
+    (mirrors the stats/aadhaar dropdowns, writes `?age=` via `router.replace`).
+    `RegistrationQuery.age` + a `gte("age",min).lt("age",max)` block in
+    `getRegistrations` (`lib/queries/players.ts`); page reads `sp.age`, passes it
+    through, and keeps it sticky in `buildHref` + the detail-page back-link
+    preserve-keys array.
+  - **Auction console** (`/admin/auction`): a second sticky filter row ("Age:
+    All / 30 – below 35 / 35 & above") under the category row in
+    `components/auction/auctioneer-console.tsx`, persisted in the URL as `?age=`
+    and combined with the existing category + text filters in the `available`
+    useMemo. `age` added to the inline `players` pool SELECT + `PoolPlayer` type
+    (the console reads the base `players` table directly, so `players_public`
+    needs no change), and each pool row now shows the player's age (`· 32y`).
+  - Verified: `tsc` + `eslint` clean.
+
 ### Recent updates (as of 2026-09-21)
 
 - **Admin can edit a player's career stats from the review page.** Many

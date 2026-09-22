@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { ROLE_GROUPS, STAT_FIELDS } from "@/lib/registration";
+import { AGE_BUCKETS, ROLE_GROUPS, STAT_FIELDS } from "@/lib/registration";
 import type { Player } from "@/lib/types";
 
 // Column names of the self-reported career stats.
@@ -19,6 +19,7 @@ export type RegistrationQuery = {
   role?: string; // a ROLE_GROUPS label (Batting / Bowling / All Rounder / Wicket Keeper)
   stats?: string; // "na" = has NA/blank in any stat, "complete" = all filled
   aadhaar?: string; // "missing" | "uploaded"
+  age?: string; // an AGE_BUCKETS key ("u35" = 30–<35, "o35" = 35+)
   pageSize?: number;
 };
 
@@ -78,6 +79,14 @@ export async function getRegistrations(
     q = q.is("aadhaar_path", null);
   } else if (query.aadhaar === "uploaded") {
     q = q.not("aadhaar_path", "is", null);
+  }
+
+  if (query.age) {
+    const bucket = AGE_BUCKETS.find((b) => b.key === query.age);
+    if (bucket) {
+      q = q.gte("age", bucket.min);
+      if (bucket.max != null) q = q.lt("age", bucket.max);
+    }
   }
 
   if (query.q) {

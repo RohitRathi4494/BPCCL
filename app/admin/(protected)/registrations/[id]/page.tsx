@@ -53,7 +53,7 @@ export default async function ReviewPlayerPage({
 
   // Preserve the list's filters/search/page so "Back" returns to the same view.
   const backQuery = new URLSearchParams();
-  for (const key of ["status", "q", "category", "role", "stats", "aadhaar", "size", "page"]) {
+  for (const key of ["status", "q", "category", "role", "stats", "aadhaar", "age", "size", "page"]) {
     const v = sp[key];
     if (typeof v === "string" && v) backQuery.set(key, v);
   }

@@ -53,6 +53,24 @@ export const MIN_AGE = 30;
 /** Upper bound purely to catch typos, not an eligibility rule. */
 export const MAX_AGE = 75;
 
+/**
+ * Age brackets used to filter the pool (registrations list + auction console).
+ * Two buckets keyed off the `players.age` integer: "30 to below 35" and
+ * "35 & above". `min` is inclusive, `max` exclusive (null = no upper bound).
+ * The `key` is the URL/query token and must stay stable.
+ */
+export const AGE_BUCKETS = [
+  { key: "u35", label: "30 – below 35", min: MIN_AGE, max: 35 },
+  { key: "o35", label: "35 & above", min: 35, max: null },
+] as const;
+export type AgeBucketKey = (typeof AGE_BUCKETS)[number]["key"];
+
+/** Which age bucket an age falls into (null if below MIN_AGE / unset). */
+export function ageBucketOf(age: number | null | undefined): AgeBucketKey | null {
+  if (age == null || age < MIN_AGE) return null;
+  return age < 35 ? "u35" : "o35";
+}
+
 /** Kit sizing (even sizes). "Other" reveals a free-text field on the form. */
 export const TSHIRT_SIZES = ["36", "38", "40", "42", "44", "46"] as const;
 export const LOWER_SIZES = ["30", "32", "34", "36", "38"] as const;
