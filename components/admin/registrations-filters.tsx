@@ -95,6 +95,17 @@ export function RegistrationsFilters({
           </option>
         ))}
       </select>
+
+      <select
+        aria-label="Sort players"
+        value={params.get("sort") ?? ""}
+        onChange={(e) => setParam("sort", e.target.value)}
+        className={selectClass}
+      >
+        <option value="">Newest first</option>
+        <option value="age_asc">Age: youngest first</option>
+        <option value="age_desc">Age: oldest first</option>
+      </select>
     </div>
   );
 }

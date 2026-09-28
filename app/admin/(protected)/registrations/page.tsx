@@ -44,12 +44,13 @@ export default async function RegistrationsPage({
   const stats = typeof sp.stats === "string" ? sp.stats : "";
   const aadhaar = typeof sp.aadhaar === "string" ? sp.aadhaar : "";
   const age = typeof sp.age === "string" ? sp.age : "";
+  const sort = typeof sp.sort === "string" ? sp.sort : "";
   const pageSize = PAGE_SIZES.includes(Number(sp.size)) ? Number(sp.size) : 25;
   const page = Math.max(1, Number(sp.page) || 1);
 
   const [counts, result, settings] = await Promise.all([
     getRegistrationCounts(),
-    getRegistrations({ status, q, category, role, stats, aadhaar, age, page, pageSize }),
+    getRegistrations({ status, q, category, role, stats, aadhaar, age, sort, page, pageSize }),
     getLeagueSettings(),
   ]);
   const categories = settingsCategories(settings);
@@ -57,7 +58,7 @@ export default async function RegistrationsPage({
 
   const buildHref = (overrides: Record<string, string | number | undefined>) => {
     const params = new URLSearchParams();
-    const merged = { status, q, category, role, stats, aadhaar, age, size: pageSize, page, ...overrides };
+    const merged = { status, q, category, role, stats, aadhaar, age, sort, size: pageSize, page, ...overrides };
     if (merged.status && merged.status !== "all") params.set("status", String(merged.status));
     if (merged.q) params.set("q", String(merged.q));
     if (merged.category) params.set("category", String(merged.category));
@@ -65,6 +66,7 @@ export default async function RegistrationsPage({
     if (merged.stats) params.set("stats", String(merged.stats));
     if (merged.aadhaar) params.set("aadhaar", String(merged.aadhaar));
     if (merged.age) params.set("age", String(merged.age));
+    if (merged.sort) params.set("sort", String(merged.sort));
     if (merged.size && Number(merged.size) !== 25) params.set("size", String(merged.size));
     if (merged.page && Number(merged.page) > 1) params.set("page", String(merged.page));
     const s = params.toString();

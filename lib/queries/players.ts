@@ -11,6 +11,9 @@ const NA_PCT = "N%A";
 
 export type RegistrationStatus = "all" | "pending" | "approved" | "rejected";
 
+/** Result ordering. Default (newest) sorts by submission date, descending. */
+export type RegistrationSort = "newest" | "age_asc" | "age_desc";
+
 export type RegistrationQuery = {
   page?: number;
   q?: string;
@@ -20,6 +23,7 @@ export type RegistrationQuery = {
   stats?: string; // "na" = has NA/blank in any stat, "complete" = all filled
   aadhaar?: string; // "missing" | "uploaded"
   age?: string; // an AGE_BUCKETS key ("u35" = 30–<35, "o35" = 35+)
+  sort?: string; // a RegistrationSort ("newest" | "age_asc" | "age_desc")
   pageSize?: number;
 };
 
@@ -44,8 +48,17 @@ export async function getRegistrations(
   let q = supabase
     .from("players")
     .select("*", { count: "exact" })
-    .order("submitted_at", { ascending: false })
     .range(from, to);
+
+  // Ordering: age (ascending/descending) with a stable submission-date tiebreak,
+  // otherwise newest-first by submission date. Nulls sort last either way.
+  if (query.sort === "age_asc" || query.sort === "age_desc") {
+    q = q
+      .order("age", { ascending: query.sort === "age_asc", nullsFirst: false })
+      .order("submitted_at", { ascending: false });
+  } else {
+    q = q.order("submitted_at", { ascending: false });
+  }
 
   if (query.status && query.status !== "all") {
     q = q.eq("status", query.status);
