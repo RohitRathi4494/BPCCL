@@ -50,11 +50,11 @@ export const FRANCHISE_META: Record<string, FranchiseMeta> = {
     tagline: "Strike from the Sands",
     accent: "#34d399",
   },
-  GM: {
-    logo: "/franchises/gm.png",
-    region: "Goa",
-    tagline: "Calm. Precise. Lethal.",
-    accent: "#fb923c",
+  HB: {
+    logo: "/franchises/hb.png",
+    region: "Haryana",
+    tagline: "Charge of the Bulls",
+    accent: "#dc2626",
   },
   GS: {
     logo: "/franchises/gs.png",
