@@ -25,7 +25,7 @@ import {
   updateWishlist,
 } from "@/app/franchise/actions";
 import { createClient } from "@/lib/supabase/client";
-import { ROLE_GROUPS } from "@/lib/registration";
+import { AGE_BUCKETS, ROLE_GROUPS, ageBucketOf } from "@/lib/registration";
 import { cn } from "@/lib/utils";
 import type { PoolPlayer } from "@/lib/types";
 import type { WishlistEntry, SquadEntry } from "@/lib/queries/franchise";
@@ -154,6 +154,16 @@ function CategoryBadge({ category }: { category: string | null }) {
   );
 }
 
+/** Player age chip, shown while shortlisting. */
+function AgeBadge({ age }: { age: number | null }) {
+  if (age == null) return null;
+  return (
+    <span className="rounded-sm border border-border bg-background px-2 py-0.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
+      {age} yrs
+    </span>
+  );
+}
+
 export function FranchiseDashboard({
   franchise,
   pool,
@@ -171,6 +181,7 @@ export function FranchiseDashboard({
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
+  const [ageFilter, setAgeFilter] = useState(""); // "" = all ages, else an AGE_BUCKETS key
   const router = useRouter();
   const [, startTransition] = useTransition();
 
@@ -249,11 +260,12 @@ export function FranchiseDashboard({
     return availablePool.filter((p) => {
       if (q && !(p.full_name ?? "").toLowerCase().includes(q)) return false;
       if (categoryFilter && p.assigned_category !== categoryFilter) return false;
+      if (ageFilter && ageBucketOf(p.age) !== ageFilter) return false;
       if (groupRoles && !(p.roles ?? []).some((r) => groupRoles.has(r)))
         return false;
       return true;
     });
-  }, [availablePool, query, categoryFilter, roleFilter]);
+  }, [availablePool, query, categoryFilter, ageFilter, roleFilter]);
 
   const spent = squad.reduce((sum, s) => sum + s.sold_price, 0);
 
@@ -376,6 +388,19 @@ export function FranchiseDashboard({
                 </option>
               ))}
             </select>
+            <select
+              aria-label="Filter by age category"
+              value={ageFilter}
+              onChange={(e) => setAgeFilter(e.target.value)}
+              className="rounded-sm border border-input bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+            >
+              <option value="">All ages</option>
+              {AGE_BUCKETS.map((b) => (
+                <option key={b.key} value={b.key}>
+                  {b.label}
+                </option>
+              ))}
+            </select>
             <span className="font-mono text-xs text-muted-foreground">
               {filteredPool.length} shown
             </span>
@@ -395,11 +420,12 @@ export function FranchiseDashboard({
                       <div className="flex items-start gap-3">
                         <PlayerAvatar src={p.photo_url} name={p.full_name} />
                         <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             <span className="font-medium text-foreground">
                               {p.full_name}
                             </span>
                             <CategoryBadge category={p.assigned_category} />
+                            <AgeBadge age={p.age} />
                           </div>
                           <Roles roles={p.roles} />
                         </div>
@@ -575,11 +601,12 @@ function WishlistRow({
             name={entry.player?.full_name ?? null}
           />
           <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="font-medium text-foreground">
                 {entry.player?.full_name ?? "Player"}
               </span>
               <CategoryBadge category={entry.player?.assigned_category ?? null} />
+              <AgeBadge age={entry.player?.age ?? null} />
             </div>
             {entry.player && <StatLine p={entry.player} />}
             <CricLink url={entry.player?.cricheroes_url ?? null} />
