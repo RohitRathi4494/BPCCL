@@ -54,6 +54,15 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
+  // Optimistic live bid: bidding taps update this instantly (and fire the DB
+  // write in the background) so the auctioneer can tap rapidly without waiting
+  // on a round-trip. Realtime echoes the same value back into `data.currentBid`.
+  // Gated by the player it belongs to, so it's ignored the moment a new player
+  // comes on the block (or when the row for that player changes).
+  const [bidOverride, setBidOverride] = useState<{
+    playerId: string;
+    bid: CurrentBid;
+  } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -162,7 +171,9 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
     // Selecting the category to auction re-syncs the pool view to it.
     clearPoolCat();
   };
-  const putUp = (playerId: string) =>
+  const putUp = (playerId: string) => {
+    // Dropping the previous player's optimistic bid before the new one loads.
+    setBidOverride(null);
     updateState({
       current_player_id: playerId,
       current_result: null,
@@ -172,13 +183,44 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
       current_bid_franchise_id: null,
       status: "in_progress",
     });
+  };
 
   // Live bidding: set the running highest bid + which franchise holds it.
-  const setBid = (amount: number | null, franchiseId: string | null) =>
-    updateState({
-      current_bid: amount,
-      current_bid_franchise_id: franchiseId,
+  // Optimistic + fire-and-forget: this is the hot path during a live auction, so
+  // it must NOT gate the UI on a round-trip or a full snapshot refetch. We update
+  // the local view instantly and write to auction_state in the background;
+  // Realtime carries the change to the big screen and every other console.
+  const setBid = (amount: number | null, franchiseId: string | null) => {
+    if (!stateId) return;
+    const playerId = data.state.current_player_id;
+    if (!playerId) return;
+    const franchiseName = franchiseId
+      ? data.franchises.find((f) => f.id === franchiseId)?.name ?? null
+      : null;
+    setBidOverride({
+      playerId,
+      bid: { amount, franchise_id: franchiseId, franchise_name: franchiseName },
     });
+    setError(null);
+    void supabaseRef.current
+      .from("auction_state")
+      .update({
+        current_bid: amount,
+        current_bid_franchise_id: franchiseId,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", stateId)
+      .then(({ error: err }) => {
+        if (err) setError(err.message);
+      });
+  };
+
+  // The bid the panels should show: the optimistic value while it still belongs
+  // to the player on the block, otherwise whatever the snapshot last reported.
+  const currentBid: CurrentBid =
+    bidOverride && bidOverride.playerId === data.state.current_player_id
+      ? bidOverride.bid
+      : data.currentBid;
 
   const undo = () =>
     callRpc(() => supabaseRef.current.rpc("undo_last_action"));
@@ -346,7 +388,7 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
                 <LiveBidPanel
                   key={`bid-${onBlock.id}`}
                   franchises={data.franchises}
-                  currentBid={data.currentBid}
+                  currentBid={currentBid}
                   openingBid={
                     data.settings.basePrice[onBlock.assigned_category ?? ""] ?? 0
                   }
@@ -367,7 +409,7 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
                   squadMin={data.settings.squadMin}
                   rtmPerFranchise={data.settings.rtmPerFranchise}
                   rtmMaxAgainst={data.settings.rtmMaxAgainst}
-                  currentBid={data.currentBid}
+                  currentBid={currentBid}
                   busy={busy}
                   onSell={(fid, amt) => sell(onBlock.id, fid, amt)}
                   onSellRtm={(rtmFid, primaryFid, amt) =>

@@ -13,9 +13,20 @@ export function useAuction(initial: AuctionSnapshot) {
   const [data, setData] = useState<AuctionSnapshot>(initial);
   const [live, setLive] = useState(false);
   const supabaseRef = useRef(createClient());
+  // Monotonic token so a slow refetch that resolves after a newer one can't
+  // clobber the fresher snapshot (rapid bids fire many overlapping refetches).
+  const seqRef = useRef(0);
 
   const refetch = useCallback(async () => {
-    setData(await fetchAuctionSnapshot(supabaseRef.current));
+    const seq = ++seqRef.current;
+    try {
+      const next = await fetchAuctionSnapshot(supabaseRef.current);
+      // Only apply if this is still the most recent request; on any failure keep
+      // the last good snapshot on screen rather than blanking it.
+      if (seq === seqRef.current) setData(next);
+    } catch (err) {
+      console.error("auction refetch:", err);
+    }
   }, []);
 
   useEffect(() => {
