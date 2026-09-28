@@ -2,6 +2,7 @@
 
 import { Fragment, useActionState, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import {
   Check,
@@ -9,6 +10,7 @@ import {
   ExternalLink,
   Loader2,
   Mail,
+  User,
   X,
 } from "lucide-react";
 import {
@@ -66,8 +68,22 @@ function ProfileLink({ href, label }: { href: string | null; label: string }) {
 function PlayerDetails({ p }: { p: Player }) {
   return (
     <div className="flex flex-col gap-5 border-t border-border/60 bg-background/40 px-4 py-5 sm:px-6">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Field label="Registration Code" value={p.registration_code} />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+        <div className="relative grid size-28 shrink-0 place-items-center overflow-hidden rounded-md border border-border bg-background">
+          {p.photo_url ? (
+            <Image
+              src={p.photo_url}
+              alt={p.full_name}
+              fill
+              sizes="112px"
+              className="object-cover"
+            />
+          ) : (
+            <User className="size-9 text-muted-foreground/50" />
+          )}
+        </div>
+        <div className="grid flex-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Field label="Registration Code" value={p.registration_code} />
         <Field label="Contact No." value={p.phone} />
         <Field label="Email" value={p.email} />
         <Field label="Company" value={p.company} />
@@ -86,10 +102,11 @@ function PlayerDetails({ p }: { p: Player }) {
           label="LinkedIn"
           value={<ProfileLink href={p.linkedin_url} label="Open profile" />}
         />
-        <Field
-          label="Registration Fee"
-          value={p.registration_fee_agreed ? "Agreed" : "Not agreed"}
-        />
+          <Field
+            label="Registration Fee"
+            value={p.registration_fee_agreed ? "Agreed" : "Not agreed"}
+          />
+        </div>
       </div>
 
       <div className="flex flex-col gap-2">

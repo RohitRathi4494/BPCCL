@@ -188,14 +188,21 @@ export async function bulkApprovePlayers(
   }
 
   // Notify the newly approved — best effort, never block on email failures.
-  for (const p of newlyApproved) {
-    if (!p.email) continue;
-    try {
-      const mail = approvalEmail(p.full_name, p.assigned_category);
-      await sendEmail({ to: p.email, subject: mail.subject, html: mail.html });
-    } catch (e) {
-      console.error("bulk approval email:", e);
-    }
+  // Send in small concurrent batches (not one-at-a-time) so approving a large
+  // selection isn't gated on each SMTP round-trip in series.
+  const toEmail = newlyApproved.filter((p) => p.email);
+  const BATCH = 8;
+  for (let i = 0; i < toEmail.length; i += BATCH) {
+    await Promise.all(
+      toEmail.slice(i, i + BATCH).map(async (p) => {
+        try {
+          const mail = approvalEmail(p.full_name, p.assigned_category);
+          await sendEmail({ to: p.email!, subject: mail.subject, html: mail.html });
+        } catch (e) {
+          console.error("bulk approval email:", e);
+        }
+      }),
+    );
   }
 
   revalidatePath("/admin/registrations");
