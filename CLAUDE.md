@@ -138,6 +138,28 @@ separate auth systems per role.
 
 ### Recent updates (as of 2026-09-30)
 
+- **Franchise portal: per-category player counts + category filters on all three
+  tabs.** Owners can now see the category spread (Legend / Category A+ / A / B,
+  plus an "Uncategorised" bucket if any) and drill into one category in the
+  **Player Pool**, **Wishlist**, and **My Squad** tabs of
+  `components/franchise/franchise-dashboard.tsx`. **No migration / query change** —
+  all client-side over the already-loaded pool/wishlist/squad, keyed off
+  `players.assigned_category`.
+  - New `CategoryTally` component + `tallyByCategory()` helper + `catKey()`
+    normaliser (null/blank → "Uncategorised"). The tally renders count chips that
+    **double as the category filter** — clicking a chip filters to it, clicking it
+    (or "All") again clears. Pool chips drive the existing `categoryFilter`
+    (replacing the old category `<select>`, so counts + filter are one control);
+    Wishlist/Squad get their own independent `wishlistCategory` / `squadCategory`
+    state.
+  - Pool tally counts reflect the current search/role/age filters (computed from
+    a new `poolByOtherFilters` memo = every pool filter except category), so each
+    chip's number is "how many match my other filters in this category".
+  - Wishlist renders `filteredWishlist`, Squad renders `filteredSquad`; both show
+    an empty-in-this-category message when a filter hides everything. Removed the
+    now-unused `categoryOptions` memo. Verified: `tsc` + `eslint` clean; `/franchise`
+    compiles (307→login without a session).
+
 - **Confirmed sponsors seeded + placeholders removed.** Logos live in
   `public/sponsors/` (`no-belly.png`, `fitsol.png`, `stabl.png`); source files
   the user dropped in the repo-root `SPONSORS/` folder were copied in (that

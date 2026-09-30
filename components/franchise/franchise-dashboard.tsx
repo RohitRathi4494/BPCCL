@@ -35,6 +35,11 @@ const inr = (n: number) => new Intl.NumberFormat("en-IN").format(n);
 // Preferred display order for category filter options.
 const CATEGORY_ORDER = ["Legend", "Category A+", "Category A", "Category B"];
 
+// Normalise a player's category to a stable bucket key (null/blank → the
+// "Uncategorised" bucket) so counts and filters line up.
+const catKey = (c: string | null | undefined) =>
+  c && c.trim() ? c : "Uncategorised";
+
 type Franchise = {
   id: string;
   name: string;
@@ -164,6 +169,82 @@ function AgeBadge({ age }: { age: number | null }) {
   );
 }
 
+/** Count players per assigned category, in the preferred order (+ extras). */
+function tallyByCategory(categories: (string | null | undefined)[]): {
+  items: { category: string; count: number }[];
+  total: number;
+} {
+  const map = new Map<string, number>();
+  for (const c of categories) {
+    const key = catKey(c);
+    map.set(key, (map.get(key) ?? 0) + 1);
+  }
+  const ordered = CATEGORY_ORDER.filter((c) => map.has(c));
+  const extras = [...map.keys()]
+    .filter((c) => !CATEGORY_ORDER.includes(c))
+    .sort();
+  const items = [...ordered, ...extras].map((category) => ({
+    category,
+    count: map.get(category)!,
+  }));
+  return { items, total: categories.length };
+}
+
+/**
+ * Per-category count chips that double as a filter. Clicking a category chip
+ * selects it (`onSelect(category)`); clicking it again — or the "All" chip —
+ * clears the filter (`onSelect("")`). Lets owners see the category spread AND
+ * drill into one category from the same control.
+ */
+function CategoryTally({
+  categories,
+  active,
+  onSelect,
+}: {
+  categories: (string | null | undefined)[];
+  active: string;
+  onSelect: (category: string) => void;
+}) {
+  const { items, total } = useMemo(
+    () => tallyByCategory(categories),
+    [categories],
+  );
+  if (total === 0) return null;
+
+  const chip = (value: string, label: string, count: number) => {
+    const isActive = active === value;
+    return (
+      <button
+        key={value || "__all"}
+        onClick={() => onSelect(isActive ? "" : value)}
+        className={cn(
+          "inline-flex items-center gap-1.5 rounded-sm border px-2.5 py-1 text-xs transition-colors",
+          isActive
+            ? "border-primary bg-primary/10 text-primary"
+            : "border-border text-foreground/80 hover:border-primary/40",
+        )}
+      >
+        {label}
+        <span
+          className={cn(
+            "font-mono text-[11px]",
+            isActive ? "text-primary/80" : "text-muted-foreground",
+          )}
+        >
+          {count}
+        </span>
+      </button>
+    );
+  };
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {chip("", "All", total)}
+      {items.map((it) => chip(it.category, it.category, it.count))}
+    </div>
+  );
+}
+
 export function FranchiseDashboard({
   franchise,
   pool,
@@ -182,6 +263,8 @@ export function FranchiseDashboard({
   const [categoryFilter, setCategoryFilter] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [ageFilter, setAgeFilter] = useState(""); // "" = all ages, else an AGE_BUCKETS key
+  const [wishlistCategory, setWishlistCategory] = useState(""); // "" = all
+  const [squadCategory, setSquadCategory] = useState(""); // "" = all
   const router = useRouter();
   const [, startTransition] = useTransition();
 
@@ -241,17 +324,9 @@ export function FranchiseDashboard({
     [pool, soldSet],
   );
 
-  // Categories present in the available pool, in the preferred order.
-  const categoryOptions = useMemo(() => {
-    const present = new Set(
-      availablePool.map((p) => p.assigned_category).filter(Boolean) as string[],
-    );
-    const ordered = CATEGORY_ORDER.filter((c) => present.has(c));
-    const extras = [...present].filter((c) => !CATEGORY_ORDER.includes(c));
-    return [...ordered, ...extras];
-  }, [availablePool]);
-
-  const filteredPool = useMemo(() => {
+  // Pool matching every filter EXCEPT category — the category tally is computed
+  // from this set so each chip's count reflects the current search/role/age.
+  const poolByOtherFilters = useMemo(() => {
     const q = query.trim().toLowerCase();
     const group = roleFilter
       ? ROLE_GROUPS.find((g) => g.label === roleFilter)
@@ -259,13 +334,42 @@ export function FranchiseDashboard({
     const groupRoles = group ? new Set<string>(group.roles) : null;
     return availablePool.filter((p) => {
       if (q && !(p.full_name ?? "").toLowerCase().includes(q)) return false;
-      if (categoryFilter && p.assigned_category !== categoryFilter) return false;
       if (ageFilter && ageBucketOf(p.age) !== ageFilter) return false;
       if (groupRoles && !(p.roles ?? []).some((r) => groupRoles.has(r)))
         return false;
       return true;
     });
-  }, [availablePool, query, categoryFilter, ageFilter, roleFilter]);
+  }, [availablePool, query, ageFilter, roleFilter]);
+
+  const filteredPool = useMemo(
+    () =>
+      categoryFilter
+        ? poolByOtherFilters.filter(
+            (p) => catKey(p.assigned_category) === categoryFilter,
+          )
+        : poolByOtherFilters,
+    [poolByOtherFilters, categoryFilter],
+  );
+
+  // Category-filtered views for the Wishlist and Squad tabs.
+  const filteredWishlist = useMemo(
+    () =>
+      wishlistCategory
+        ? localWishlist.filter(
+            (w) => catKey(w.player?.assigned_category) === wishlistCategory,
+          )
+        : localWishlist,
+    [localWishlist, wishlistCategory],
+  );
+  const filteredSquad = useMemo(
+    () =>
+      squadCategory
+        ? squad.filter(
+            (s) => catKey(s.player?.assigned_category) === squadCategory,
+          )
+        : squad,
+    [squad, squadCategory],
+  );
 
   const spent = squad.reduce((sum, s) => sum + s.sold_price, 0);
 
@@ -363,19 +467,6 @@ export function FranchiseDashboard({
               />
             </div>
             <select
-              aria-label="Filter by category"
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="rounded-sm border border-input bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-            >
-              <option value="">All categories</option>
-              {categoryOptions.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-            <select
               aria-label="Filter by role"
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
@@ -405,6 +496,11 @@ export function FranchiseDashboard({
               {filteredPool.length} shown
             </span>
           </div>
+          <CategoryTally
+            categories={poolByOtherFilters.map((p) => p.assigned_category)}
+            active={categoryFilter}
+            onSelect={setCategoryFilter}
+          />
           {filteredPool.length === 0 ? (
             <Empty>No approved players match these filters.</Empty>
           ) : (
@@ -469,16 +565,29 @@ export function FranchiseDashboard({
               Your wishlist is empty. Add players from the Player Pool tab.
             </Empty>
           ) : (
-            localWishlist.map((w) => (
-              <WishlistRow
-                key={w.player_id}
-                entry={w}
-                onSave={(amountRaw, remarksRaw) =>
-                  handleSave(w.player_id, amountRaw, remarksRaw)
-                }
-                onRemove={() => handleRemove(w.player_id)}
+            <>
+              <CategoryTally
+                categories={localWishlist.map(
+                  (w) => w.player?.assigned_category,
+                )}
+                active={wishlistCategory}
+                onSelect={setWishlistCategory}
               />
-            ))
+              {filteredWishlist.length === 0 ? (
+                <Empty>No wishlisted players in this category.</Empty>
+              ) : (
+                filteredWishlist.map((w) => (
+                  <WishlistRow
+                    key={w.player_id}
+                    entry={w}
+                    onSave={(amountRaw, remarksRaw) =>
+                      handleSave(w.player_id, amountRaw, remarksRaw)
+                    }
+                    onRemove={() => handleRemove(w.player_id)}
+                  />
+                ))
+              )}
+            </>
           )}
         </div>
       )}
@@ -492,7 +601,16 @@ export function FranchiseDashboard({
           {squad.length === 0 ? (
             <Empty>No players bought yet. Your wins will appear here live.</Empty>
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-border">
+            <>
+              <CategoryTally
+                categories={squad.map((s) => s.player?.assigned_category)}
+                active={squadCategory}
+                onSelect={setSquadCategory}
+              />
+              {filteredSquad.length === 0 ? (
+                <Empty>No squad players in this category.</Empty>
+              ) : (
+                <div className="overflow-x-auto rounded-lg border border-border">
               <table className="w-full min-w-[420px] text-sm">
                 <thead>
                   <tr className="border-b border-border bg-card text-left">
@@ -507,7 +625,7 @@ export function FranchiseDashboard({
                   </tr>
                 </thead>
                 <tbody>
-                  {squad.map((s) => (
+                  {filteredSquad.map((s) => (
                     <tr key={s.player_id} className="border-b border-border/60 last:border-0">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">
@@ -534,7 +652,9 @@ export function FranchiseDashboard({
                   ))}
                 </tbody>
               </table>
-            </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
