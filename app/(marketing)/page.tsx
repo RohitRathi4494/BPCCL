@@ -18,9 +18,11 @@ export default async function HomePage() {
   const categories = settingsCategories(settings);
   const sponsors = await getSponsors();
   const franchises = await getPublicFranchises();
-  const featured = sponsors.filter(
+  const titlePartners = sponsors.filter(
     (s) => s.tier === "Title" || s.tier === "Co-title",
   );
+  const associatePartners = sponsors.filter((s) => s.tier === "Associate");
+  const hasPartners = sponsors.length > 0;
 
   const purse = settings
     ? new Intl.NumberFormat("en-IN").format(settings.purse_per_franchise)
@@ -269,12 +271,33 @@ export default async function HomePage() {
             title="Our Partners"
             align="center"
           />
-          {featured.length > 0 ? (
-            <Reveal className="mt-10 grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4">
-              {featured.map((s) => (
-                <SponsorCard key={s.id} sponsor={s} />
-              ))}
-            </Reveal>
+          {hasPartners ? (
+            <div className="mt-10 space-y-10">
+              {titlePartners.length > 0 && (
+                <div>
+                  <p className="text-center font-mono text-[11px] tracking-[0.2em] text-muted-foreground uppercase">
+                    Title Partner
+                  </p>
+                  <Reveal className="mx-auto mt-4 grid max-w-3xl grid-cols-1 gap-5">
+                    {titlePartners.map((s) => (
+                      <SponsorCard key={s.id} sponsor={s} featured />
+                    ))}
+                  </Reveal>
+                </div>
+              )}
+              {associatePartners.length > 0 && (
+                <div>
+                  <p className="text-center font-mono text-[11px] tracking-[0.2em] text-muted-foreground uppercase">
+                    Associate Partners
+                  </p>
+                  <Reveal className="mx-auto mt-4 grid max-w-3xl grid-cols-1 gap-5 sm:grid-cols-2">
+                    {associatePartners.map((s) => (
+                      <SponsorCard key={s.id} sponsor={s} />
+                    ))}
+                  </Reveal>
+                </div>
+              )}
+            </div>
           ) : (
             <div className="mx-auto mt-10 flex max-w-xl flex-col items-center gap-4 rounded-lg border border-dashed border-primary/40 bg-card p-10 text-center">
               <p className="font-heading text-2xl font-bold tracking-tight text-foreground uppercase">

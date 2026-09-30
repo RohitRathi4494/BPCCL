@@ -136,6 +136,27 @@ separate auth systems per role.
 - [ ] Social/content hub (auto-generated shareable graphics)
 - [ ] Deployed to production
 
+### Recent updates (as of 2026-09-30)
+
+- **Confirmed sponsors seeded + placeholders removed.** Logos live in
+  `public/sponsors/` (`no-belly.png`, `fitsol.png`, `stabl.png`); source files
+  the user dropped in the repo-root `SPONSORS/` folder were copied in (that
+  untracked folder is left as-is, not committed). **Migration
+  `20260930000000_seed_sponsors.sql`** (**pushed**) inserts the three rows into
+  the public `sponsors` table (idempotent delete-by-name then insert):
+  **No-Belly = Title**, **Fitsol + Stabl = Associate** (`website_url` NULL — no
+  confirmed links yet; `SponsorCard` degrades gracefully). No schema change.
+  - **Home `Our Partners` section** (`app/(marketing)/page.tsx`) rebuilt: was a
+    Title/Co-title-only grid, now renders a prominent "Title Partner" featured
+    card + an "Associate Partners" row so all three show. The "This spot is open"
+    fallback only appears when the table is genuinely empty.
+  - **`/sponsors` page** now hides empty tiers — the per-tier "slot available —
+    enquire below" dashed placeholders were the "unnecessary placeholders" and
+    are gone (tiers filtered to `sponsors.length > 0`). The auction big-screen
+    sponsor strip (`/auction/display`) picks the logos up automatically.
+  - Verified: `tsc` + `eslint` clean; dev server serves `/`, `/sponsors`, and all
+    three `/sponsors/*.png` at 200; no placeholder copy remains in the HTML.
+
 ### Recent updates (as of 2026-09-22)
 
 - **Age-category filter in the registrations list + auction console.** Two age

@@ -48,22 +48,23 @@ export default async function SponsorsPage() {
       {/* Tiers */}
       <section className="border-t border-border">
         <div className="mx-auto max-w-6xl space-y-14 px-5 py-16">
-          {grouped.map(({ tier, sponsors }) => {
-            const featured = tier === "Title" || tier === "Co-title";
-            return (
-              <div key={tier}>
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground uppercase">
-                    {tier}{" "}
-                    <span className="text-primary">Partner{sponsors.length === 1 ? "" : "s"}</span>
-                  </h2>
-                  <span className="font-mono text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
-                    {TIER_BLURB[tier]}
-                  </span>
-                </div>
-                <hr className="crease-rule mt-3 mb-6 w-full" />
+          {grouped
+            .filter(({ sponsors }) => sponsors.length > 0)
+            .map(({ tier, sponsors }) => {
+              const featured = tier === "Title" || tier === "Co-title";
+              return (
+                <div key={tier}>
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground uppercase">
+                      {tier}{" "}
+                      <span className="text-primary">Partner{sponsors.length === 1 ? "" : "s"}</span>
+                    </h2>
+                    <span className="font-mono text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
+                      {TIER_BLURB[tier]}
+                    </span>
+                  </div>
+                  <hr className="crease-rule mt-3 mb-6 w-full" />
 
-                {sponsors.length > 0 ? (
                   <div
                     className={
                       featured
@@ -75,16 +76,9 @@ export default async function SponsorsPage() {
                       <SponsorCard key={s.id} sponsor={s} featured={featured} />
                     ))}
                   </div>
-                ) : (
-                  <div className="rounded-lg border border-dashed border-border bg-card/60 px-6 py-8 text-center">
-                    <p className="font-mono text-xs tracking-[0.18em] text-muted-foreground uppercase">
-                      {tier} slot available — enquire below
-                    </p>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                </div>
+              );
+            })}
 
           {!hasAny && (
             <p className="text-center text-sm text-muted-foreground">
