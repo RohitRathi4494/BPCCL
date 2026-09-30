@@ -57,7 +57,7 @@ export default async function SponsorsPage() {
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground uppercase">
                       {tier}{" "}
-                      <span className="text-primary">Partner{sponsors.length === 1 ? "" : "s"}</span>
+                      <span className="text-primary">Sponsor{sponsors.length === 1 ? "" : "s"}</span>
                     </h2>
                     <span className="font-mono text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
                       {TIER_BLURB[tier]}

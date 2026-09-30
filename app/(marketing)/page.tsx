@@ -268,7 +268,7 @@ export default async function HomePage() {
         <div className="mx-auto max-w-6xl px-5 py-20">
           <SectionHeading
             kicker="Powered By"
-            title="Our Partners"
+            title="Our Sponsors"
             align="center"
           />
           {hasPartners ? (
@@ -276,7 +276,7 @@ export default async function HomePage() {
               {titlePartners.length > 0 && (
                 <div>
                   <p className="text-center font-mono text-[11px] tracking-[0.2em] text-muted-foreground uppercase">
-                    Title Partner
+                    Title Sponsor
                   </p>
                   <Reveal className="mx-auto mt-4 grid max-w-3xl grid-cols-1 gap-5">
                     {titlePartners.map((s) => (
@@ -288,7 +288,7 @@ export default async function HomePage() {
               {associatePartners.length > 0 && (
                 <div>
                   <p className="text-center font-mono text-[11px] tracking-[0.2em] text-muted-foreground uppercase">
-                    Associate Partners
+                    Associate Sponsors
                   </p>
                   <Reveal className="mx-auto mt-4 grid max-w-3xl grid-cols-1 gap-5 sm:grid-cols-2">
                     {associatePartners.map((s) => (
@@ -321,7 +321,7 @@ export default async function HomePage() {
               href="/sponsors"
               className="font-mono text-xs tracking-[0.2em] text-primary uppercase hover:underline"
             >
-              View all partners →
+              View all sponsors →
             </Link>
           </div>
         </div>
