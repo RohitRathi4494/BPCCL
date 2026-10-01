@@ -13,6 +13,7 @@ import {
   isValidPhone,
   computeAge,
   generateRegistrationCode,
+  toTitleCase,
 } from "@/lib/registration";
 import type { TablesInsert } from "@/lib/types";
 import { sendEmail } from "@/lib/email/send";
@@ -59,7 +60,7 @@ export async function submitRegistration(
 ): Promise<RegistrationState> {
   const get = (k: string) => String(formData.get(k) ?? "").trim();
 
-  const full_name = get("full_name");
+  const full_name = toTitleCase(get("full_name"));
   const dob = get("dob");
   const phoneRaw = get("phone");
   const email = get("email");

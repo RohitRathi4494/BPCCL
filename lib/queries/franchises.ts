@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { toTitleCase } from "@/lib/registration";
 
 export type PublicFranchise = {
   id: string;
@@ -57,7 +58,7 @@ export async function getPublicFranchises(): Promise<PublicFranchise[]> {
       console.error("getPublicFranchises (owner names):", pErr.message);
     }
     for (const p of people ?? []) {
-      if (p.id && p.full_name) nameById.set(p.id, p.full_name);
+      if (p.id && p.full_name) nameById.set(p.id, toTitleCase(p.full_name));
     }
   }
 
@@ -74,7 +75,11 @@ export async function getPublicFranchises(): Promise<PublicFranchise[]> {
     const locked = ownersByFranchise.get(f.id) ?? [];
     // Fall back to the single owner_name text field if no owner locks exist.
     const ownerList =
-      locked.length > 0 ? locked : f.owner_name ? [f.owner_name] : [];
+      locked.length > 0
+        ? locked
+        : f.owner_name
+          ? [toTitleCase(f.owner_name)]
+          : [];
     return {
       id: f.id,
       name: f.name,

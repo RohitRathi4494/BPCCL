@@ -136,6 +136,28 @@ separate auth systems per role.
 - [ ] Social/content hub (auto-generated shareable graphics)
 - [ ] Deployed to production
 
+### Recent updates (as of 2026-10-01)
+
+- **Public franchises page now lists all 3 owners per team + names title-cased
+  everywhere.** The `/franchises` grid read only `franchises.owner_name` (a single
+  text column set on Texas alone), so only one team showed an owner. Each
+  franchise actually has up to 3 **owner** squad locks (auction setup); the page
+  now resolves those (`squad_members` where `acquisition_type='owner'` →
+  `players_public.full_name`, joined in JS since `players` isn't anon-readable) and
+  lists them under every team, falling back to `owner_name` when no locks exist.
+  `getPublicFranchises` (`lib/queries/franchises.ts`) returns `owners: string[]`;
+  the page renders an "Owners/Owner" block. **No migration for the display.**
+  - **Name title-casing.** New `toTitleCase()` helper in `lib/registration.ts`
+    (lowercases then capitalises each word, incl. after `' - . / (`). Registration
+    now stores `full_name` title-cased on submit (`app/register/actions.ts`); owner
+    names are title-cased in the franchises query. **Backfill migration
+    `20261001000000_titlecase_player_names.sql`** (**pushed**) runs
+    `initcap(full_name)` over existing rows (guarded `where full_name <>
+    initcap(full_name)`), so admin list / auction console / big screen / owners all
+    show consistent title case — verified 0 of 394 names remain all-caps/all-lower.
+  - Verified: `tsc` + `eslint` clean; `/franchises` renders 200 with every team's
+    owners shown.
+
 ### Recent updates (as of 2026-09-30)
 
 - **Franchise portal: per-category player counts + category filters on all three

@@ -166,6 +166,22 @@ export function generateRegistrationCode(): string {
   return `USCL2-${s}`;
 }
 
+/**
+ * Title-case a person's name for display/storage: "KANHAIYA PRASAD" and
+ * "ayush jagga" both become "Kanhaiya Prasad" / "Ayush Jagga". Capitalises the
+ * first letter of each word, including after apostrophes, hyphens, dots, slashes
+ * and opening brackets (so "o'brien" → "O'Brien", "(sherry)" → "(Sherry)"),
+ * and lowercases the rest. Internal spacing is collapsed and trimmed.
+ */
+export function toTitleCase(raw: string | null | undefined): string {
+  if (!raw) return "";
+  return raw
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase()
+    .replace(/(^|[\s'’\-./(])([a-z])/g, (_m, sep: string, ch: string) => sep + ch.toUpperCase());
+}
+
 /** Whole-year age from an ISO date string (YYYY-MM-DD) as of `ref`. */
 export function computeAge(dobISO: string, ref: Date = new Date()): number {
   const dob = new Date(dobISO);
