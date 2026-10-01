@@ -16,6 +16,7 @@ import {
 
 export type ReviewState = { error?: string };
 export type EditStatsState = { error?: string; saved?: boolean };
+export type EditAgeState = { error?: string; saved?: boolean; age?: number };
 export type ResetState = { error?: string };
 export type DeleteState = { error?: string };
 export type BulkState = { error?: string; approved?: number };
@@ -416,6 +417,46 @@ export async function editPlayerStats(
   revalidatePath("/admin/registrations");
   revalidatePath(`/admin/registrations/${playerId}`);
   return { saved: true };
+}
+
+/**
+ * Override a single player's age. The date of birth is intentionally left
+ * untouched — some registrants entered a placeholder/incorrect DOB, so the admin
+ * can correct the age that drives the age buckets (30–below 35 / 35 & above)
+ * without rewriting their DOB. `players.age` is a non-null int, so a valid whole
+ * number is required. Admin-only via RLS ("players admin update").
+ */
+export async function editPlayerAge(
+  _prev: EditAgeState,
+  formData: FormData,
+): Promise<EditAgeState> {
+  const playerId = String(formData.get("player_id") ?? "");
+  if (!UUID_RE.test(playerId)) return { error: "Missing or invalid player." };
+
+  const raw = String(formData.get("age") ?? "").trim();
+  if (!raw) return { error: "Enter an age." };
+  if (!/^\d{1,3}$/.test(raw)) return { error: "Age must be a whole number." };
+  const age = Number(raw);
+  if (age < 1 || age > 120) return { error: "Enter an age between 1 and 120." };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Your session expired — please sign in again." };
+
+  const { error } = await supabase
+    .from("players")
+    .update({ age })
+    .eq("id", playerId);
+  if (error) {
+    console.error("editPlayerAge:", error.message);
+    return { error: "Could not save the age. Please try again." };
+  }
+
+  revalidatePath("/admin/registrations");
+  revalidatePath(`/admin/registrations/${playerId}`);
+  return { saved: true, age };
 }
 
 /**

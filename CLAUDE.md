@@ -138,6 +138,18 @@ separate auth systems per role.
 
 ### Recent updates (as of 2026-10-01)
 
+- **Admin can edit a player's age (DOB untouched).** Some registrants entered a
+  wrong/placeholder DOB, so the age that drives the age buckets (30–below 35 / 35
+  & above) was off. The read-only "Age" cell on `/admin/registrations/[id]` is now
+  an inline editor — new client component `components/admin/edit-age-form.tsx`
+  (mirrors `edit-stats-form.tsx`: `useActionState`, hidden `player_id`, number
+  input + Save). New server action **`editPlayerAge`** (+ `EditAgeState`) in
+  `app/admin/(protected)/registrations/actions.ts`: UUID-guarded, `getUser()`
+  guard, validates a whole number 1–120, updates only `players.age` via the
+  existing **`players admin update` RLS policy**, then `revalidatePath` for list +
+  detail. **The DOB is deliberately NOT changed.** No migration (`age` is already
+  a non-null int). Verified: `tsc` + `eslint` clean; the detail route compiles.
+
 - **Public franchises page now lists all 3 owners per team + names title-cased
   everywhere.** The `/franchises` grid read only `franchises.owner_name` (a single
   text column set on Texas alone), so only one team showed an owner. Each

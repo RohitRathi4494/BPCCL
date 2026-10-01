@@ -11,6 +11,7 @@ import { getLeagueSettings, settingsCategories } from "@/lib/queries/settings";
 import { RegistrationStatus as StatusBadge } from "@/components/admin/registration-status";
 import { ReviewForm } from "@/components/admin/review-form";
 import { EditStatsForm } from "@/components/admin/edit-stats-form";
+import { EditAgeForm } from "@/components/admin/edit-age-form";
 import { ResetStatusButton } from "@/components/admin/reset-status-button";
 import { DeletePlayerButton } from "@/components/admin/delete-player-button";
 
@@ -124,7 +125,7 @@ export default async function ReviewPlayerPage({
               <Detail label="Company" value={player.company} />
               <Detail label="Work Email" value={player.work_email} />
               <Detail label="Date of Birth" value={fmtDate(player.dob)} />
-              <Detail label="Age" value={player.age} />
+              <EditAgeForm playerId={player.id} age={player.age} />
               <Detail label="T-Shirt Size" value={player.tshirt_size} />
               <Detail label="Lower Size" value={player.lower_size} />
               <Detail label="Jersey Number" value={player.jersey_number} />
