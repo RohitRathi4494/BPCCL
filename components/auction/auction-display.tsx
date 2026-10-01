@@ -13,6 +13,7 @@ import {
   type CurrentBid,
 } from "@/lib/auction/snapshot";
 import { FRANCHISE_META } from "@/lib/franchises";
+import { deriveStyleFromRoles } from "@/lib/registration";
 import { SoldCelebration } from "@/components/auction/sold-celebration";
 import { site } from "@/lib/site";
 import styles from "./auction-display.module.css";
@@ -59,8 +60,13 @@ export function AuctionDisplay({
   // current highest bidder.
   const highlightId = result.franchise_id ?? currentBid.franchise_id;
 
-  const skill =
-    (currentPlayer?.roles?.[0] ?? currentPlayer?.role ?? "").toString() || "—";
+  // Batting/bowling style + skill: the dedicated columns are empty (the v2 form
+  // only collects grouped roles), so derive them from `roles`, preferring the DB
+  // columns if a player ever has them set.
+  const derived = deriveStyleFromRoles(currentPlayer?.roles);
+  const skill = currentPlayer?.role || derived.skill || "—";
+  const battingStyle = currentPlayer?.batting_style || derived.batting || "—";
+  const bowlingStyle = currentPlayer?.bowling_style || derived.bowling || "—";
 
   return (
     <div className={styles.root}>
@@ -176,11 +182,11 @@ export function AuctionDisplay({
                   </div>
                   <div className={styles.attr}>
                     <span>Batting Style</span>
-                    <b>{currentPlayer.batting_style || "—"}</b>
+                    <b>{battingStyle}</b>
                   </div>
                   <div className={styles.attr}>
                     <span>Bowling Style</span>
-                    <b>{currentPlayer.bowling_style || "—"}</b>
+                    <b>{bowlingStyle}</b>
                   </div>
                 </div>
 

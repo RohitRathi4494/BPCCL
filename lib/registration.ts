@@ -33,6 +33,45 @@ export const ROLE_GROUPS = [
 ] as const satisfies ReadonlyArray<{ label: string; roles: readonly PlayerRole[] }>;
 
 /**
+ * Derive a player's batting style, bowling style, and overall skill/type from
+ * their selected `roles` (the v2 form collects grouped roles, not the separate
+ * batting_style/bowling_style columns, which are empty for every registrant).
+ *
+ * - batting: the batting-hand role, cleaned ("Right Hand Batsman" → "Right Handed").
+ * - bowling: the bowling-type role as-is ("Right Arm Spin", "Left Arm Pacer", …).
+ * - skill:   a concise type — All Rounder / Wicket Keeper / Bowler / Batsman.
+ * Each is null when the roles don't tell us (caller shows a dash).
+ */
+export function deriveStyleFromRoles(roles: readonly string[] | null | undefined): {
+  batting: string | null;
+  bowling: string | null;
+  skill: string | null;
+} {
+  const list = roles ?? [];
+  const BAT = ROLE_GROUPS[0].roles as readonly string[];
+  const BOWL = ROLE_GROUPS[1].roles as readonly string[];
+  const AR = ROLE_GROUPS[2].roles as readonly string[];
+  const WK = ROLE_GROUPS[3].roles as readonly string[];
+
+  const firstIn = (set: readonly string[]) => list.find((r) => set.includes(r)) ?? null;
+
+  const battingRaw = firstIn(BAT);
+  const batting = battingRaw
+    ? battingRaw.replace(/^Left Hand Batsman$/, "Left Handed").replace(/^Right Hand Batsman$/, "Right Handed")
+    : null;
+  const bowling = firstIn(BOWL);
+
+  let skill: string | null = null;
+  if (firstIn(AR)) skill = "All Rounder";
+  else if (firstIn(WK)) skill = "Wicket Keeper";
+  else if (batting && bowling) skill = "All Rounder";
+  else if (bowling) skill = "Bowler";
+  else if (batting || firstIn(WK)) skill = "Batsman";
+
+  return { batting, bowling, skill };
+}
+
+/**
  * Self-reported career stats collected at registration. Stored as text so a
  * player can enter "NA" where a stat doesn't apply (e.g. a pure batsman's
  * bowling numbers). `key` is the form field name AND the players column name.

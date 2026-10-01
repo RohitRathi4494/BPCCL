@@ -174,6 +174,13 @@ separate auth systems per role.
   - Verified: `tsc` + `eslint` clean; the real page renders live (waiting state +
     purse board + 4 sponsors), and a temp preview route confirmed the on-block
     profile + bid strip render correctly (route removed before commit).
+  - **Batting/Bowling style + Skill are derived from `roles`.** The dedicated
+    `players.batting_style`/`bowling_style` columns are empty for every registrant
+    (the v2 form only collects grouped `roles` like "Right Hand Batsman" / "Right
+    Arm Spin"). `deriveStyleFromRoles()` (`lib/registration.ts`, keyed off
+    `ROLE_GROUPS`) maps roles → batting ("Right/Left Handed"), bowling (pace/spin
+    as-is), and a concise skill (All Rounder / Wicket Keeper / Bowler / Batsman).
+    The big screen prefers the DB columns if ever set, else the derived values.
 
 - **Admin can edit a player's age (DOB untouched).** Some registrants entered a
   wrong/placeholder DOB, so the age that drives the age buckets (30–below 35 / 35
