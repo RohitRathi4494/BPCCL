@@ -10,6 +10,7 @@ import {
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
+  Download,
   ExternalLink,
   Heart,
   Search,
@@ -566,13 +567,21 @@ export function FranchiseDashboard({
             </Empty>
           ) : (
             <>
-              <CategoryTally
-                categories={localWishlist.map(
-                  (w) => w.player?.assigned_category,
-                )}
-                active={wishlistCategory}
-                onSelect={setWishlistCategory}
-              />
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <CategoryTally
+                  categories={localWishlist.map(
+                    (w) => w.player?.assigned_category,
+                  )}
+                  active={wishlistCategory}
+                  onSelect={setWishlistCategory}
+                />
+                <a
+                  href="/franchise/wishlist-export"
+                  className="inline-flex shrink-0 items-center gap-2 rounded-sm border border-border px-3.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+                >
+                  <Download className="size-3.5" /> Download Excel
+                </a>
+              </div>
               {filteredWishlist.length === 0 ? (
                 <Empty>No wishlisted players in this category.</Empty>
               ) : (

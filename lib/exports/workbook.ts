@@ -350,6 +350,88 @@ async function addAuctionResultsSheet(wb: ExcelJS.Workbook, supabase: AnyClient)
 }
 
 // ---------------------------------------------------------------------------
+// Franchise-owner wishlist export
+// ---------------------------------------------------------------------------
+
+/** A wishlist row joined to its pool player, as the franchise dashboard holds it. */
+export type WishlistExportEntry = {
+  target_amount: number | null;
+  remarks: string | null;
+  player: {
+    full_name: string | null;
+    assigned_category: string | null;
+    age: number | null;
+    roles: string[] | null;
+    matches_played: string | null;
+    runs_scored: string | null;
+    batting_average: string | null;
+    batting_strike_rate: string | null;
+    wickets_taken: string | null;
+    bowling_strike_rate: string | null;
+    economy: string | null;
+    cricheroes_url: string | null;
+  } | null;
+};
+
+/** Build a single-sheet workbook of a franchise's own wishlist. */
+export async function buildWishlistExport(
+  franchiseName: string,
+  entries: WishlistExportEntry[],
+): Promise<{ buffer: Buffer; filename: string }> {
+  const wb = new ExcelJS.Workbook();
+  wb.creator = "USCL Season 2";
+
+  const rows = entries.map((e) => ({
+    player: asText(e.player?.full_name),
+    category: asText(e.player?.assigned_category),
+    age: e.player?.age ?? "",
+    roles: asText(e.player?.roles),
+    target_amount: e.target_amount ?? "",
+    remarks: asText(e.remarks),
+    matches_played: asText(e.player?.matches_played),
+    runs_scored: asText(e.player?.runs_scored),
+    batting_average: asText(e.player?.batting_average),
+    batting_strike_rate: asText(e.player?.batting_strike_rate),
+    wickets_taken: asText(e.player?.wickets_taken),
+    bowling_strike_rate: asText(e.player?.bowling_strike_rate),
+    economy: asText(e.player?.economy),
+    cricheroes_url: asText(e.player?.cricheroes_url),
+  }));
+
+  addSheet(
+    wb,
+    "Wishlist",
+    [
+      { header: "Player", key: "player", width: 24 },
+      { header: "Category", key: "category", width: 16 },
+      { header: "Age", key: "age", width: 6 },
+      { header: "Roles", key: "roles", width: 26 },
+      { header: "Target Amount", key: "target_amount", width: 16, numFmt: MONEY },
+      { header: "Remarks", key: "remarks", width: 30 },
+      { header: "Matches Played", key: "matches_played", width: 14 },
+      { header: "Runs Scored", key: "runs_scored", width: 12 },
+      { header: "Batting Avg", key: "batting_average", width: 12 },
+      { header: "Batting SR", key: "batting_strike_rate", width: 12 },
+      { header: "Wickets", key: "wickets_taken", width: 10 },
+      { header: "Bowling SR", key: "bowling_strike_rate", width: 12 },
+      { header: "Economy", key: "economy", width: 10 },
+      { header: "CricHeroes", key: "cricheroes_url", width: 30 },
+    ],
+    rows,
+  );
+
+  const arrayBuffer = await wb.xlsx.writeBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+  // Sanitise the franchise name into a safe filename token.
+  const slug =
+    franchiseName
+      .replace(/[^a-zA-Z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 40) || "Franchise";
+  return { buffer, filename: `USCL2-Wishlist-${slug}.xlsx` };
+}
+
+// ---------------------------------------------------------------------------
 // Entry point
 // ---------------------------------------------------------------------------
 
