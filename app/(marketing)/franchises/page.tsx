@@ -130,13 +130,27 @@ export default async function FranchisesPage() {
                           &ldquo;{tagline}&rdquo;
                         </p>
                       )}
-                      {f.owner_name && (
-                        <p className="mt-3 border-t border-border/60 pt-3 text-xs text-muted-foreground">
-                          <span className="text-muted-foreground/60">Owner </span>
-                          <span className="font-medium text-foreground/90">
-                            {f.owner_name}
-                          </span>
-                        </p>
+                      {f.owners.length > 0 && (
+                        <div className="mt-3 border-t border-border/60 pt-3">
+                          <p className="text-[10px] font-medium tracking-[0.18em] text-muted-foreground/60 uppercase">
+                            {f.owners.length > 1 ? "Owners" : "Owner"}
+                          </p>
+                          <ul className="mt-1.5 flex flex-wrap gap-x-2 gap-y-1">
+                            {f.owners.map((owner, i) => (
+                              <li
+                                key={`${owner}-${i}`}
+                                className="text-xs font-medium text-foreground/90"
+                              >
+                                {owner}
+                                {i < f.owners.length - 1 && (
+                                  <span className="ml-2 text-muted-foreground/40">
+                                    ·
+                                  </span>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
                       )}
                     </div>
                   </article>
