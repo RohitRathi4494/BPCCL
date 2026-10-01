@@ -1,0 +1,170 @@
+/* Big-screen auction display. Projector-first: a 16:9 stage scales to the
+   viewport and container-query units drive all sizing, so nothing scrolls. */
+
+.root {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: radial-gradient(120% 120% at 50% 0%, #140a3a, #07041c 70%);
+  --gold: #ffd24a;
+  --green: #27e07a;
+  --red: #ff4d6d;
+  --ink: #f5f0ff;
+  --muted: #c9b8ff;
+  --glass: linear-gradient(160deg, rgba(26, 14, 74, 0.74), rgba(10, 6, 36, 0.86));
+  --glassLite: linear-gradient(160deg, rgba(40, 22, 104, 0.58), rgba(18, 10, 54, 0.72));
+  --line: rgba(255, 255, 255, 0.14);
+  --cond: "Barlow Condensed", "Oswald", "Arial Narrow", sans-serif;
+  --body: "Barlow", "Inter", system-ui, sans-serif;
+  color: var(--ink);
+  font-family: var(--body);
+}
+
+.stage {
+  position: relative;
+  width: min(100vw - 32px, calc((100dvh - 32px) * 16 / 9));
+  aspect-ratio: 16 / 9;
+  background: #1a0b4d;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 30px 90px -20px rgba(0, 0, 0, 0.8);
+  container-type: size;
+}
+.bgimg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
+.frame {
+  position: absolute; inset: 0; z-index: 1;
+  display: flex; flex-direction: column;
+  padding: 3.8cqh 4cqw; gap: 1.7cqh;
+}
+
+/* ---------- Top bar ---------- */
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 2cqw; height: 10.5cqh; flex: none; }
+.brand { display: flex; align-items: center; gap: 1.2cqw; min-width: 0; }
+.brandLogo { height: 9cqh; width: auto; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5)); }
+.brandTxt { display: flex; flex-direction: column; line-height: 1; }
+.brandName { font-family: var(--cond); font-weight: 800; text-transform: uppercase; font-size: 3.6cqh; letter-spacing: 0.06em; line-height: 1; }
+.brandSub { font-size: 1.35cqh; color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; margin-top: 0.5cqh; }
+.title { display: flex; flex-direction: column; align-items: center; gap: 1cqh; }
+.titleMain {
+  font-family: var(--cond); font-weight: 800; text-transform: uppercase; font-size: 4.4cqh; letter-spacing: 0.14em;
+  background: linear-gradient(180deg, #fff, #ffd8f4); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 2px 10px rgba(255, 120, 220, 0.4));
+}
+.titleMeta { display: flex; align-items: center; gap: 1.1cqw; }
+.livedot { display: inline-flex; align-items: center; gap: 0.5cqw; font-family: var(--cond); font-weight: 700; font-size: 1.6cqh; letter-spacing: 0.18em; color: #fff; text-transform: uppercase; }
+.livedot i { width: 1.1cqh; height: 1.1cqh; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px var(--green); animation: pulse 1.6s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.titleVenue { font-size: 1.4cqh; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+
+.titlespon { display: flex; flex-direction: column; align-items: flex-end; gap: 0.6cqh; }
+.titlesponLbl { font-size: 1.25cqh; color: var(--gold); letter-spacing: 0.24em; text-transform: uppercase; font-weight: 600; }
+.titlesponImg { height: 7.4cqh; width: auto; max-width: 20cqw; object-fit: contain; filter: drop-shadow(0 3px 12px rgba(0, 0, 0, 0.5)); }
+
+/* ---------- Full-width player profile box ---------- */
+.profile {
+  flex: 1 1 auto; min-height: 0; display: flex; align-items: stretch; overflow: hidden;
+  background: var(--glass); border: 1px solid var(--line); border-radius: 2cqh; position: relative;
+}
+.profilePhoto {
+  position: relative; flex: none; height: 100%; aspect-ratio: 3 / 4; overflow: hidden;
+  background: var(--glassLite); border-right: 1px solid var(--line);
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.photoImg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.silh { width: 92%; height: 98%; align-self: flex-end; }
+.photoJersey { position: absolute; top: 1.6cqh; left: 1cqw; z-index: 2; font-family: var(--cond); font-weight: 800; font-size: 3.2cqh; color: var(--gold); text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6); }
+.photoBlock { position: absolute; top: 2cqh; right: 1cqw; z-index: 2; font-family: var(--cond); font-weight: 700; text-transform: uppercase; font-size: 1.4cqh; letter-spacing: 0.14em; color: #fff; background: rgba(0, 0, 0, 0.4); padding: 0.4cqh 0.8cqw; border-radius: 999px; border: 1px solid var(--line); }
+
+.profileBody { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; padding: 2cqh 2.4cqw; gap: 1.3cqh; }
+.profileEy { font-family: var(--cond); font-weight: 700; text-transform: uppercase; font-size: 1.8cqh; letter-spacing: 0.3em; color: var(--gold); }
+.profileName { font-family: var(--cond); font-weight: 800; text-transform: uppercase; font-size: 6.6cqh; line-height: 0.9; letter-spacing: 0.01em; margin-top: -0.4cqh; text-wrap: balance; }
+.chips { display: flex; flex-wrap: wrap; gap: 0.8cqw; }
+.chip { font-family: var(--cond); font-weight: 600; text-transform: uppercase; font-size: 1.6cqh; letter-spacing: 0.08em; color: var(--ink); background: rgba(255, 255, 255, 0.08); border: 1px solid var(--line); padding: 0.4cqh 1.1cqw; border-radius: 999px; }
+.chipCat { color: #1a0b3d; background: var(--gold); border-color: transparent; }
+.attrs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8cqh 2cqw; }
+.attr { display: flex; flex-direction: column; gap: 0.2cqh; border-left: 2px solid rgba(255, 210, 74, 0.5); padding-left: 1cqw; }
+.attr span { font-size: 1.3cqh; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; }
+.attr b { font-family: var(--cond); font-weight: 700; font-size: 2.4cqh; letter-spacing: 0.01em; }
+.stats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1cqw; padding-top: 1.3cqh; border-top: 1px solid var(--line); }
+.stat { display: flex; flex-direction: column; align-items: center; gap: 0.2cqh; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line); border-radius: 1cqh; padding: 0.9cqh 0.5cqw; }
+.stat span { font-size: 1.2cqh; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap; }
+.stat b { font-family: var(--cond); font-weight: 800; font-size: 3.2cqh; color: var(--gold); line-height: 0.9; font-variant-numeric: tabular-nums; }
+
+/* Placeholder when no player is on the block. */
+.waiting { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1cqh; background: var(--glass); border: 1px dashed var(--line); border-radius: 2cqh; text-align: center; }
+.waitingTitle { font-family: var(--cond); font-weight: 800; text-transform: uppercase; font-size: 5cqh; color: var(--muted); }
+.waitingSub { font-size: 1.6cqh; color: var(--muted); }
+
+/* ---------- Current bid strip (right-aligned, dark for contrast) ---------- */
+.bidbar {
+  flex: none; align-self: flex-end; height: 8cqh; display: flex; align-items: center; gap: 1.8cqw;
+  background: var(--glass); border: 1px solid rgba(255, 210, 74, 0.6); border-radius: 1.6cqh; padding: 0 2.2cqw;
+  box-shadow: 0 0 26px rgba(255, 210, 74, 0.22);
+}
+.bidbarSold { border-color: rgba(39, 224, 122, 0.7); box-shadow: 0 0 26px rgba(39, 224, 122, 0.3); }
+.bidbarUnsold { border-color: rgba(255, 77, 109, 0.7); box-shadow: 0 0 26px rgba(255, 77, 109, 0.25); }
+.bidbarAmt { display: flex; align-items: baseline; gap: 1.1cqw; padding-right: 1.8cqw; border-right: 1px solid var(--line); }
+.bidbarLbl { font-family: var(--cond); font-weight: 700; text-transform: uppercase; font-size: 1.9cqh; letter-spacing: 0.16em; color: #fff; }
+.bidbarVal { font-family: var(--cond); font-weight: 800; font-size: 6cqh; color: var(--gold); line-height: 0.9; text-shadow: 0 2px 16px rgba(255, 210, 74, 0.35); font-variant-numeric: tabular-nums; }
+.bidbarValSold { color: var(--green); text-shadow: 0 2px 16px rgba(39, 224, 122, 0.4); }
+.bidbarTeam { display: flex; align-items: center; gap: 1cqw; }
+.bidbarTeam img { height: 6cqh; width: 6cqh; object-fit: contain; }
+.bidbarName { font-family: var(--cond); font-weight: 800; text-transform: uppercase; font-size: 3.4cqh; letter-spacing: 0.02em; color: #fff; }
+.bidbarStatus { font-family: var(--cond); font-weight: 800; text-transform: uppercase; font-size: 4.4cqh; letter-spacing: 0.08em; }
+.statusUnsold { color: var(--red); }
+.rtmTag { font-family: var(--cond); font-weight: 800; font-size: 1.4cqh; letter-spacing: 0.14em; color: #1a0b3d; background: var(--gold); padding: 0.3cqh 0.8cqw; border-radius: 999px; align-self: center; }
+
+/* ---------- Bottom group: sold feed + purse kept tight ---------- */
+.bottom { flex: none; display: flex; flex-direction: column; gap: 0.8cqh; }
+
+/* ---------- Recently sold feed ---------- */
+.soldstrip { flex: none; height: 6cqh; display: flex; align-items: stretch; gap: 1.2cqw; background: var(--glass); border: 1px solid var(--line); border-radius: 1.4cqh; padding: 0.8cqh 1.2cqw; }
+.soldstripLbl { flex: none; align-self: center; font-family: var(--cond); font-weight: 800; text-transform: uppercase; font-size: 1.6cqh; letter-spacing: 0.14em; color: var(--gold); line-height: 1; text-align: right; border-right: 1px solid var(--line); padding-right: 1.2cqw; }
+.soldstripFeed { flex: 1; display: flex; align-items: center; gap: 1.4cqw; overflow: hidden; }
+.sold { display: flex; align-items: center; gap: 0.7cqw; min-width: 0; }
+.sold img { height: 4.2cqh; width: 4.2cqh; object-fit: contain; flex: none; }
+.soldTxt { display: flex; flex-direction: column; line-height: 1.1; min-width: 0; }
+.soldPlayer { font-family: var(--cond); font-weight: 700; text-transform: uppercase; font-size: 1.9cqh; letter-spacing: 0.01em; white-space: nowrap; }
+.soldMeta { font-size: 1.3cqh; color: var(--green); letter-spacing: 0.08em; font-variant-numeric: tabular-nums; }
+.soldEmpty { align-self: center; font-size: 1.5cqh; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* ---------- Purse board ---------- */
+.purse { flex: none; height: 19cqh; display: flex; flex-direction: column; gap: 1cqh; }
+.purseHead { display: flex; align-items: baseline; justify-content: space-between; }
+.purseTitle { font-family: var(--cond); font-weight: 800; text-transform: uppercase; font-size: 2.2cqh; letter-spacing: 0.16em; }
+.purseMeta { font-size: 1.3cqh; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; }
+.pgrid { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: 1fr 1fr; gap: 0.9cqw; }
+.pcard { background: var(--glassLite); border: 1px solid var(--line); border-radius: 1.1cqh; padding: 0.8cqh 1cqw; display: flex; flex-direction: column; justify-content: center; gap: 0.6cqh; min-height: 0; overflow: hidden; }
+.pcardLead { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), 0 0 22px rgba(255, 210, 74, 0.35); }
+.pcardTop { display: flex; align-items: center; gap: 0.7cqw; min-width: 0; }
+.pcardCrest { height: 3.4cqh; width: 3.4cqh; object-fit: contain; flex: none; }
+.pcardName { flex: 1; min-width: 0; font-family: var(--cond); font-weight: 700; text-transform: uppercase; font-size: 1.4cqh; line-height: 1; letter-spacing: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.pcardRow { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6cqw; }
+.pcardPurse { font-family: var(--cond); font-weight: 800; font-size: 2.1cqh; color: var(--gold); line-height: 1; font-variant-numeric: tabular-nums; }
+.pcardSq { font-size: 1.1cqh; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; }
+.pcardDots { display: flex; gap: 0.12cqw; height: 0.55cqh; }
+.pcardDots i { flex: 1; border-radius: 1px; background: rgba(255, 255, 255, 0.14); }
+.pcardDots i.on { background: var(--green); }
+
+/* ---------- Bottom strip: Associate Sponsors | Media Partner ---------- */
+.sponsors { flex: none; height: 7.5cqh; display: flex; align-items: center; justify-content: center; gap: 3cqw; }
+.sponsorsGroup { display: flex; align-items: center; gap: 1.6cqw; }
+.sponsorsLbl { flex: none; font-family: var(--cond); font-weight: 700; font-size: 1.5cqh; color: var(--gold); letter-spacing: 0.14em; text-transform: uppercase; line-height: 1.05; max-width: 9cqw; text-align: right; }
+.sponsorsDiv { width: 1px; height: 5cqh; background: var(--line); }
+.sponsorsRow { display: flex; align-items: center; gap: 1.4cqw; }
+.sponPill { display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(160deg, rgba(10, 6, 36, 0.72), rgba(4, 2, 18, 0.82)); border: 1px solid var(--line); border-radius: 1.2cqh; padding: 0.8cqh 1.8cqw; box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3); }
+.sponPill img { height: 5cqh; width: auto; max-width: 14cqw; object-fit: contain; }
+.sponPillLight { background: #fff; }
+.sponPillMedia { padding: 0.4cqh 1.2cqw; }
+.sponPillMedia img { height: 6.4cqh; max-width: 12cqw; }
+
+/* PAUSED overlay */
+.paused { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; background: rgba(7, 4, 28, 0.85); backdrop-filter: blur(4px); }
+.pausedTitle { font-family: var(--cond); font-weight: 800; text-transform: uppercase; font-size: clamp(3rem, 9vw, 8rem); letter-spacing: 0.2em; color: var(--ink); }
+.pausedSub { font-family: var(--cond); font-size: clamp(0.9rem, 2vw, 1.4rem); letter-spacing: 0.24em; text-transform: uppercase; color: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  .livedot i { animation: none; }
+}

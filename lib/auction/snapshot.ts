@@ -31,6 +31,8 @@ export type CurrentPlayer = {
   full_name: string;
   photo_url: string | null;
   assigned_category: string | null;
+  age: number | null;
+  jersey_number: string | null;
   role: string | null;
   roles: string[];
   batting_style: string | null;
@@ -44,6 +46,7 @@ export type SaleResult = {
   status: "sold" | "unsold" | null;
   franchise_id: string | null;
   franchise_name: string | null;
+  franchise_short_code: string | null;
   amount: number | null;
   via_rtm: boolean;
 };
@@ -53,6 +56,7 @@ export type CurrentBid = {
   amount: number | null;
   franchise_id: string | null;
   franchise_name: string | null;
+  franchise_short_code: string | null;
 };
 
 export type AuctionSnapshot = {
@@ -69,6 +73,7 @@ export type AuctionSnapshot = {
   recentSales: {
     player_name: string;
     franchise_name: string;
+    franchise_short_code: string | null;
     price: number;
   }[];
   settings: {
@@ -133,6 +138,8 @@ type PublicPlayer = {
   batting_style: string | null;
   bowling_style: string | null;
   cricheroes_url: string | null;
+  age: number | null;
+  jersey_number: string | null;
 } & StatsRow;
 
 /**
@@ -224,12 +231,14 @@ export async function fetchAuctionSnapshot(
   });
 
   const franchiseNameById = new Map(franchises.map((f) => [f.id, f.name]));
+  const franchiseCodeById = new Map(franchises.map((f) => [f.id, f.short_code]));
   const recentSales = members
     .filter((m) => m.acquisition_type === "auction")
     .slice(0, 8)
     .map((m) => ({
       player_name: byId.get(m.player_id)?.full_name ?? "Player",
       franchise_name: franchiseNameById.get(m.franchise_id) ?? "—",
+      franchise_short_code: franchiseCodeById.get(m.franchise_id) ?? null,
       price: m.price,
     }));
 
@@ -242,6 +251,8 @@ export async function fetchAuctionSnapshot(
         full_name: p.full_name ?? "Player",
         photo_url: p.photo_url,
         assigned_category: p.assigned_category,
+        age: p.age ?? null,
+        jersey_number: p.jersey_number ?? null,
         role: p.role,
         roles: p.roles ?? [],
         batting_style: p.batting_style,
@@ -261,6 +272,9 @@ export async function fetchAuctionSnapshot(
     franchise_name: stateRow?.current_bid_franchise_id
       ? franchiseNameById.get(stateRow.current_bid_franchise_id) ?? null
       : null,
+    franchise_short_code: stateRow?.current_bid_franchise_id
+      ? franchiseCodeById.get(stateRow.current_bid_franchise_id) ?? null
+      : null,
   };
 
   const result: SaleResult = {
@@ -268,6 +282,9 @@ export async function fetchAuctionSnapshot(
     franchise_id: stateRow?.current_result_franchise_id ?? null,
     franchise_name: stateRow?.current_result_franchise_id
       ? franchiseNameById.get(stateRow.current_result_franchise_id) ?? null
+      : null,
+    franchise_short_code: stateRow?.current_result_franchise_id
+      ? franchiseCodeById.get(stateRow.current_result_franchise_id) ?? null
       : null,
     amount: stateRow?.current_result_amount ?? null,
     via_rtm: stateRow?.current_result_via_rtm ?? false,

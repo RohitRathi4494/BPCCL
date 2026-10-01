@@ -946,6 +946,7 @@ export type Database = {
       }
       players_public: {
         Row: {
+          age: number | null
           assigned_category: string | null
           batting_average: string | null
           batting_strike_rate: string | null
@@ -956,6 +957,7 @@ export type Database = {
           economy: string | null
           full_name: string | null
           id: string | null
+          jersey_number: string | null
           matches_played: string | null
           photo_url: string | null
           role: string | null
@@ -964,6 +966,7 @@ export type Database = {
           wickets_taken: string | null
         }
         Insert: {
+          age?: number | null
           assigned_category?: string | null
           batting_average?: string | null
           batting_strike_rate?: string | null
@@ -974,6 +977,7 @@ export type Database = {
           economy?: string | null
           full_name?: string | null
           id?: string | null
+          jersey_number?: string | null
           matches_played?: string | null
           photo_url?: string | null
           role?: string | null
@@ -982,6 +986,7 @@ export type Database = {
           wickets_taken?: string | null
         }
         Update: {
+          age?: number | null
           assigned_category?: string | null
           batting_average?: string | null
           batting_strike_rate?: string | null
@@ -992,6 +997,7 @@ export type Database = {
           economy?: string | null
           full_name?: string | null
           id?: string | null
+          jersey_number?: string | null
           matches_played?: string | null
           photo_url?: string | null
           role?: string | null

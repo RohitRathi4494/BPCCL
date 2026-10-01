@@ -194,12 +194,17 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
     if (!stateId) return;
     const playerId = data.state.current_player_id;
     if (!playerId) return;
-    const franchiseName = franchiseId
-      ? data.franchises.find((f) => f.id === franchiseId)?.name ?? null
-      : null;
+    const franchise = franchiseId
+      ? data.franchises.find((f) => f.id === franchiseId)
+      : undefined;
     setBidOverride({
       playerId,
-      bid: { amount, franchise_id: franchiseId, franchise_name: franchiseName },
+      bid: {
+        amount,
+        franchise_id: franchiseId,
+        franchise_name: franchise?.name ?? null,
+        franchise_short_code: franchise?.short_code ?? null,
+      },
     });
     setError(null);
     void supabaseRef.current

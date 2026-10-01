@@ -14,7 +14,7 @@ export default async function AuctionDisplayPage() {
     fetchAuctionSnapshot(supabase),
     supabase
       .from("sponsors")
-      .select("id, name, logo_url")
+      .select("id, name, logo_url, tier")
       .order("display_order", { ascending: true })
       .order("name", { ascending: true }),
   ]);

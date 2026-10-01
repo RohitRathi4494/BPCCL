@@ -138,6 +138,43 @@ separate auth systems per role.
 
 ### Recent updates (as of 2026-10-01)
 
+- **Auction big screen (`/auction/display`) fully redesigned** to a CricAuction-
+  style projector layout on a user-supplied vibrant background (design approved
+  via an Artifact preview before implementation). Replaces the old green-theme
+  70/30 layout. New structure, top→bottom: branded top bar (**USCL** + crest ·
+  centered **LIVE AUCTION** + live dot + venue · **Title Sponsor** No-Belly top-
+  right) → **full-width player profile box** with the portrait photo *inside* it
+  at full box height + name, category/role chips, **Age / Skill / Batting /
+  Bowling**, and all six career stats (Matches/Runs/Bat Avg/Bat SR/Wickets/Econ)
+  → **right-aligned current-bid strip** (dark, gold; morphs to SOLD/green +
+  RTM tag / UNSOLD/red) → **recently-sold feed** → live **14-team purse board**
+  with **full team names** (crest, remaining purse, `Squad n/min` + a segmented
+  progress bar, leader ringed gold) → bottom strip split **Associate Sponsors**
+  (Fitsol, Stabl) | **Media Partner** (The Stump Showw). Confetti SoldCelebration
+  + PAUSED overlay retained.
+  - **Implementation:** all layout/sizing lives in a CSS Module
+    `components/auction/auction-display.module.css` using **container-query units
+    (cqh/cqw)** on a 16:9 `container-type:size` stage, so it scales to any
+    projector/screen with **no scroll** (no separate mobile layout — it letter-
+    boxes down). `components/auction/auction-display.tsx` fully rewritten to render
+    it from the live `useAuction` snapshot; crests resolved from `FRANCHISE_META`
+    by `short_code`; sponsors split by `tier`. Old `current-player-card.tsx` /
+    `purse-bars.tsx` kept (still used by the auctioneer console).
+  - **Migration `20261001010000_bigscreen_age_and_media_partner.sql`** (**pushed**):
+    `players_public` widened with `age` + `jersey_number` (appended at end of the
+    view); `sponsors.tier` check widened with **'Media Partner'**; seeded **The
+    Stump Showw** (Media Partner, `/sponsors/stump-show.png`). `database.types.ts`
+    hand-edited (age/jersey_number on `players_public`).
+  - `lib/auction/snapshot.ts`: `CurrentPlayer` gains `age` + `jersey_number`;
+    `CurrentBid`/`SaleResult`/`recentSales` gain `franchise_short_code` (for crest
+    lookup). Display page fetches sponsor `tier`.
+  - **Assets:** `public/auction-bg.jpg` (optimized from the user's "BACKGROUND FOR
+    USCL.png"), `public/sponsors/stump-show.png` (downscaled from the 2 MB source).
+    Source drops left untracked in repo-root `DESIGNS FOR BIG SCREEN/` + `SPONSORS/`.
+  - Verified: `tsc` + `eslint` clean; the real page renders live (waiting state +
+    purse board + 4 sponsors), and a temp preview route confirmed the on-block
+    profile + bid strip render correctly (route removed before commit).
+
 - **Admin can edit a player's age (DOB untouched).** Some registrants entered a
   wrong/placeholder DOB, so the age that drives the age buckets (30–below 35 / 35
   & above) was off. The read-only "Age" cell on `/admin/registrations/[id]` is now

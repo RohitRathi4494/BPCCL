@@ -1,26 +1,42 @@
 "use client";
 
-import Image from "next/image";
-import { Pause } from "lucide-react";
+/* eslint-disable @next/next/no-img-element */
+// Plain <img> is used throughout: every image is sized by height in container-
+// query units (cqh) from the CSS module, which next/image's fill/intrinsic
+// sizing can't express cleanly. These are a fixed set of small, local assets.
+
 import { useAuction } from "@/lib/auction/use-auction";
-import type { AuctionSnapshot } from "@/lib/auction/snapshot";
-import { CurrentPlayerCard } from "@/components/auction/current-player-card";
+import {
+  formatMoney,
+  type AuctionSnapshot,
+  type SaleResult,
+  type CurrentBid,
+} from "@/lib/auction/snapshot";
+import { FRANCHISE_META } from "@/lib/franchises";
 import { SoldCelebration } from "@/components/auction/sold-celebration";
-import { PurseBars } from "@/components/auction/purse-bars";
-import { LiveBadge, AuctionStatusPill } from "@/components/auction/live-badge";
 import { site } from "@/lib/site";
+import styles from "./auction-display.module.css";
 
 export type DisplaySponsor = {
   id: string;
   name: string;
   logo_url: string | null;
+  tier: string | null;
 };
 
+/** Franchise crest artwork path for a short code (e.g. "HB" → /franchises/hb.png). */
+function crestFor(code: string | null): string | null {
+  if (!code) return null;
+  return FRANCHISE_META[code.toUpperCase()]?.logo ?? null;
+}
+
 /**
- * Read-only big-screen view for the venue projector. No login. Fits a full
- * 1080p screen with no scrolling: branded header (league + ground crests),
- * a 70/30 body (player on the block + live purse board for all 16 teams),
- * and a sponsor strip along the bottom.
+ * Read-only big-screen view for the venue projector. No login. A 16:9 stage
+ * scales to fill the screen (container-query units), so it never scrolls:
+ * branded top bar (USCL · LIVE AUCTION · title sponsor), a full-width player
+ * profile with the portrait photo inside, a right-aligned current-bid strip, a
+ * recently-sold feed, the live 14-team purse board, and the associate + media
+ * partner strip. Everything updates live via `useAuction`.
  */
 export function AuctionDisplay({
   initial,
@@ -29,161 +45,348 @@ export function AuctionDisplay({
   initial: AuctionSnapshot;
   sponsors?: DisplaySponsor[];
 }) {
-  const { data, live } = useAuction(initial);
-  const paused = data.state.status === "paused";
-  const logos = sponsors.filter((s) => s.logo_url);
+  const { data } = useAuction(initial);
+  const { currentPlayer, state, result, currentBid, franchises, recentSales, settings } =
+    data;
+  const paused = state.status === "paused";
+  const squadMin = settings.squadMin;
+
+  const titleSponsor = sponsors.find((s) => s.tier === "Title" && s.logo_url);
+  const associates = sponsors.filter((s) => s.tier === "Associate" && s.logo_url);
+  const mediaPartners = sponsors.filter((s) => s.tier === "Media Partner" && s.logo_url);
+
+  // The team to highlight on the purse board: the winner if sold, else the
+  // current highest bidder.
+  const highlightId = result.franchise_id ?? currentBid.franchise_id;
+
+  const skill =
+    (currentPlayer?.roles?.[0] ?? currentPlayer?.role ?? "").toString() || "—";
 
   return (
-    <div className="grass-stripes relative flex min-h-dvh flex-col px-4 py-4 sm:px-8 lg:h-dvh lg:overflow-hidden">
-      {/* Branded header: league crest · title · ground crest */}
-      <header className="flex shrink-0 items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Image
-            src="/uscl-logo.png"
-            alt={`${site.shortName} logo`}
-            width={64}
-            height={64}
-            priority
-            className="size-12 object-contain sm:size-16"
-          />
-          <div className="hidden flex-col sm:flex">
-            <span className="font-heading text-lg font-extrabold tracking-tight text-foreground uppercase leading-none">
-              {site.shortName}
-            </span>
-            <span className="font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
-              {site.season}
-            </span>
-          </div>
-        </div>
+    <div className={styles.root}>
+      <div className={styles.stage}>
+        <img className={styles.bgimg} src="/auction-bg.jpg" alt="" aria-hidden />
 
-        <div className="flex flex-col items-center gap-1.5">
-          <span className="font-heading text-2xl font-extrabold tracking-tight text-foreground uppercase sm:text-3xl">
-            Live Auction
-          </span>
-          <div className="flex items-center gap-3">
-            {data.state.current_category && (
-              <span className="font-mono text-xs tracking-[0.22em] text-primary uppercase sm:text-sm">
-                {data.state.current_category}
-              </span>
-            )}
-            <AuctionStatusPill status={data.state.status} />
-            <LiveBadge live={live} />
-          </div>
-        </div>
+        <div className={styles.frame}>
+          {/* ---- Top bar ---- */}
+          <header className={styles.topbar}>
+            <div className={styles.brand}>
+              <img className={styles.brandLogo} src="/uscl-logo.png" alt="USCL" />
+              <div className={styles.brandTxt}>
+                <span className={styles.brandName}>{site.shortName}</span>
+                <span className={styles.brandSub}>
+                  {site.season} · Live Player Auction
+                </span>
+              </div>
+            </div>
 
-        <div className="flex items-center gap-3">
-          <div className="hidden flex-col items-end sm:flex">
-            <span className="font-heading text-sm font-bold tracking-tight text-foreground uppercase leading-none">
-              {site.venue.name}
-            </span>
-            <span className="font-mono text-[10px] tracking-[0.16em] text-muted-foreground uppercase">
-              {site.venue.area}
-            </span>
-          </div>
-          <div className="relative size-12 overflow-hidden rounded-lg border border-border sm:size-16">
-            <Image
-              src="/ground.png"
-              alt={site.venue.full}
-              fill
-              sizes="64px"
-              className="object-cover"
-            />
-          </div>
-        </div>
-      </header>
+            <div className={styles.title}>
+              <span className={styles.titleMain}>Live Auction</span>
+              <div className={styles.titleMeta}>
+                <span className={styles.livedot}>
+                  <i />
+                  Live
+                </span>
+                <span className={styles.titleVenue}>
+                  {site.venue.name} · {site.venue.area}, {site.venue.city}
+                </span>
+              </div>
+            </div>
 
-      {/* ---- Projector / desktop (lg+) : 60 / 40 body, bounded to the viewport
-          height, never scrolls. Each column is min-h-0 + overflow-hidden so
-          neither can grow the row past the screen; the purse board divides its
-          height evenly (auto-rows-fr) so all teams always fit. ---- */}
-      <div className="hidden min-h-0 flex-1 gap-5 py-4 lg:flex lg:flex-row">
-        <div className="min-h-0 overflow-hidden lg:basis-3/5">
-          <CurrentPlayerCard snapshot={data} size="lg" />
-        </div>
-
-        <div className="flex min-h-0 flex-col lg:basis-2/5">
-          <div className="mb-2 flex shrink-0 items-center justify-between">
-            <h3 className="font-mono text-[11px] tracking-[0.24em] text-primary uppercase">
-              Purse Board
-            </h3>
-            <span className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
-              {data.franchises.length} teams
-            </span>
-          </div>
-          {/* All teams fit — 2 compact columns, rows share the height. */}
-          <div className="min-h-0 flex-1 overflow-hidden">
-            <PurseBars
-              snapshot={data}
-              columns={2}
-              highlightId={data.currentBid.franchise_id}
-              size="sm"
-              fill
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* ---- Mobile / tablet (< lg) : natural-flow, the page scrolls. The
-          player card renders full-size and the purse board is a readable
-          single-column list (no height-squeezing). ---- */}
-      <div className="flex flex-col gap-4 py-3 lg:hidden">
-        <CurrentPlayerCard snapshot={data} size="md" />
-
-        <div>
-          <div className="mb-2 flex items-center justify-between">
-            <h3 className="font-mono text-[11px] tracking-[0.24em] text-primary uppercase">
-              Purse Board
-            </h3>
-            <span className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
-              {data.franchises.length} teams
-            </span>
-          </div>
-          <PurseBars
-            snapshot={data}
-            columns={1}
-            highlightId={data.currentBid.franchise_id}
-            size="md"
-          />
-        </div>
-      </div>
-
-      {/* Sponsor strip */}
-      {logos.length > 0 && (
-        <footer className="flex shrink-0 items-center gap-4 border-t border-border pt-3">
-          <span className="shrink-0 font-mono text-[10px] tracking-[0.24em] text-muted-foreground uppercase">
-            Our Sponsors
-          </span>
-          <div className="flex flex-1 flex-wrap items-center justify-center gap-x-8 gap-y-2">
-            {logos.map((s) => (
-              <div key={s.id} className="relative h-8 w-24 sm:h-10 sm:w-28">
-                <Image
-                  src={s.logo_url!}
-                  alt={s.name}
-                  fill
-                  sizes="112px"
-                  className="object-contain"
+            {titleSponsor ? (
+              <div className={styles.titlespon}>
+                <span className={styles.titlesponLbl}>Title Sponsor</span>
+                <img
+                  className={styles.titlesponImg}
+                  src={titleSponsor.logo_url!}
+                  alt={titleSponsor.name}
                 />
               </div>
-            ))}
-          </div>
-        </footer>
-      )}
+            ) : (
+              <div />
+            )}
+          </header>
 
-      {/* Confetti + "SOLD!" celebration whenever a player is sold. */}
-      <SoldCelebration result={data.result} />
+          {/* ---- Player profile (full width) or waiting placeholder ---- */}
+          {currentPlayer ? (
+            <section className={styles.profile}>
+              <div className={styles.profilePhoto}>
+                {currentPlayer.jersey_number && (
+                  <span className={styles.photoJersey}>#{currentPlayer.jersey_number}</span>
+                )}
+                <span className={styles.photoBlock}>On the block</span>
+                {currentPlayer.photo_url ? (
+                  <img
+                    className={styles.photoImg}
+                    src={currentPlayer.photo_url}
+                    alt={currentPlayer.full_name}
+                  />
+                ) : (
+                  <svg
+                    viewBox="0 0 100 120"
+                    preserveAspectRatio="xMidYMax meet"
+                    className={styles.silh}
+                    aria-hidden
+                  >
+                    <defs>
+                      <linearGradient id="uscl-silh" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0" stopColor="#ffffff" stopOpacity="0.22" />
+                        <stop offset="1" stopColor="#ffffff" stopOpacity="0.06" />
+                      </linearGradient>
+                    </defs>
+                    <circle cx="50" cy="34" r="20" fill="url(#uscl-silh)" />
+                    <path
+                      d="M15 120 C15 86 30 66 50 66 C70 66 85 86 85 120 Z"
+                      fill="url(#uscl-silh)"
+                    />
+                  </svg>
+                )}
+              </div>
+
+              <div className={styles.profileBody}>
+                <span className={styles.profileEy}>Player Profile</span>
+                <h1 className={styles.profileName}>{currentPlayer.full_name}</h1>
+
+                <div className={styles.chips}>
+                  {currentPlayer.assigned_category && (
+                    <span className={`${styles.chip} ${styles.chipCat}`}>
+                      {currentPlayer.assigned_category}
+                    </span>
+                  )}
+                  {(currentPlayer.roles.length > 0
+                    ? currentPlayer.roles
+                    : currentPlayer.role
+                      ? [currentPlayer.role]
+                      : []
+                  ).map((r) => (
+                    <span key={r} className={styles.chip}>
+                      {r}
+                    </span>
+                  ))}
+                </div>
+
+                <div className={styles.attrs}>
+                  <div className={styles.attr}>
+                    <span>Age</span>
+                    <b>{currentPlayer.age ?? "—"}</b>
+                  </div>
+                  <div className={styles.attr}>
+                    <span>Skill</span>
+                    <b>{skill}</b>
+                  </div>
+                  <div className={styles.attr}>
+                    <span>Batting Style</span>
+                    <b>{currentPlayer.batting_style || "—"}</b>
+                  </div>
+                  <div className={styles.attr}>
+                    <span>Bowling Style</span>
+                    <b>{currentPlayer.bowling_style || "—"}</b>
+                  </div>
+                </div>
+
+                {currentPlayer.stats.length > 0 && (
+                  <div className={styles.stats}>
+                    {currentPlayer.stats.map((s) => (
+                      <div key={s.label} className={styles.stat}>
+                        <span>{s.label}</span>
+                        <b>{s.value}</b>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
+          ) : (
+            <section className={styles.waiting}>
+              <span className={styles.waitingTitle}>
+                {state.status === "completed"
+                  ? "Auction Complete"
+                  : state.status === "setup"
+                    ? "Auction Not Started"
+                    : "Waiting for Next Player"}
+              </span>
+              {state.status !== "completed" && (
+                <span className={styles.waitingSub}>
+                  The auctioneer will bring the next player up shortly.
+                </span>
+              )}
+            </section>
+          )}
+
+          {/* ---- Current bid / result strip (right-aligned) ---- */}
+          {currentPlayer && <BidStrip result={result} bid={currentBid} />}
+
+          {/* ---- Bottom: recently sold + purse board ---- */}
+          <div className={styles.bottom}>
+            <section className={styles.soldstrip}>
+              <span className={styles.soldstripLbl}>
+                Recently
+                <br />
+                Sold
+              </span>
+              <div className={styles.soldstripFeed}>
+                {recentSales.length === 0 ? (
+                  <span className={styles.soldEmpty}>No sales yet</span>
+                ) : (
+                  recentSales.map((s, i) => {
+                    const crest = crestFor(s.franchise_short_code);
+                    return (
+                      <div key={`${s.player_name}-${i}`} className={styles.sold}>
+                        {crest && <img src={crest} alt="" aria-hidden />}
+                        <div className={styles.soldTxt}>
+                          <span className={styles.soldPlayer}>{s.player_name}</span>
+                          <span className={styles.soldMeta}>
+                            {(s.franchise_short_code ?? s.franchise_name) + " · ₹" + formatMoney(s.price)}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </section>
+
+            <section className={styles.purse}>
+              <div className={styles.purseHead}>
+                <span className={styles.purseTitle}>Purse Board</span>
+                <span className={styles.purseMeta}>
+                  {franchises.length} Teams · Remaining Purse · Squad to Min {squadMin}
+                </span>
+              </div>
+              <div className={styles.pgrid}>
+                {franchises.map((f) => {
+                  const crest = crestFor(f.short_code);
+                  const lead = f.id === highlightId;
+                  return (
+                    <div
+                      key={f.id}
+                      className={`${styles.pcard} ${lead ? styles.pcardLead : ""}`}
+                    >
+                      <div className={styles.pcardTop}>
+                        {crest && <img className={styles.pcardCrest} src={crest} alt="" aria-hidden />}
+                        <span className={styles.pcardName}>{f.name}</span>
+                      </div>
+                      <div className={styles.pcardRow}>
+                        <span className={styles.pcardPurse}>
+                          ₹{formatMoney(f.purse_remaining)}
+                        </span>
+                        <span className={styles.pcardSq}>
+                          Squad {f.squadCount}/{squadMin}
+                        </span>
+                      </div>
+                      <div className={styles.pcardDots}>
+                        {Array.from({ length: squadMin }).map((_, i) => (
+                          <i key={i} className={i < f.squadCount ? styles.on : undefined} />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* ---- Sponsor strip: Associate | Media Partner ---- */}
+            {(associates.length > 0 || mediaPartners.length > 0) && (
+              <section className={styles.sponsors}>
+                {associates.length > 0 && (
+                  <div className={styles.sponsorsGroup}>
+                    <span className={styles.sponsorsLbl}>Associate Sponsors</span>
+                    <div className={styles.sponsorsRow}>
+                      {associates.map((s) => (
+                        <span key={s.id} className={styles.sponPill}>
+                          <img src={s.logo_url!} alt={s.name} />
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {associates.length > 0 && mediaPartners.length > 0 && (
+                  <div className={styles.sponsorsDiv} />
+                )}
+                {mediaPartners.length > 0 && (
+                  <div className={styles.sponsorsGroup}>
+                    <span className={styles.sponsorsLbl}>Media Partner</span>
+                    <div className={styles.sponsorsRow}>
+                      {mediaPartners.map((s) => (
+                        <span
+                          key={s.id}
+                          className={`${styles.sponPill} ${styles.sponPillMedia}`}
+                        >
+                          <img src={s.logo_url!} alt={s.name} />
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </section>
+            )}
+          </div>
+        </div>
+
+        {/* Confetti + "SOLD!" celebration whenever a player is sold. */}
+        <SoldCelebration result={result} />
+      </div>
 
       {/* PAUSED overlay */}
       {paused && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-background/85 backdrop-blur-sm">
-          <Pause className="size-16 text-primary" />
-          <span className="font-heading text-6xl font-extrabold tracking-[0.2em] text-foreground uppercase sm:text-8xl">
-            Paused
-          </span>
-          <span className="font-mono text-sm tracking-[0.24em] text-muted-foreground uppercase">
-            The auction will resume shortly
-          </span>
+        <div className={styles.paused}>
+          <span className={styles.pausedTitle}>Paused</span>
+          <span className={styles.pausedSub}>The auction will resume shortly</span>
         </div>
       )}
     </div>
+  );
+}
+
+/** Right-aligned strip showing the live bid, or the SOLD/UNSOLD result. */
+function BidStrip({ result, bid }: { result: SaleResult; bid: CurrentBid }) {
+  if (result.status === "sold") {
+    const crest = crestFor(result.franchise_short_code ?? null);
+    return (
+      <section className={`${styles.bidbar} ${styles.bidbarSold}`}>
+        <div className={styles.bidbarAmt}>
+          <span className={styles.bidbarLbl}>{result.via_rtm ? "Sold · RTM" : "Sold"}</span>
+          <span className={`${styles.bidbarVal} ${styles.bidbarValSold}`}>
+            ₹{formatMoney(result.amount)}
+          </span>
+        </div>
+        <div className={styles.bidbarTeam}>
+          {crest && <img src={crest} alt="" aria-hidden />}
+          <span className={styles.bidbarName}>{result.franchise_name ?? "—"}</span>
+          {result.via_rtm && <span className={styles.rtmTag}>RTM</span>}
+        </div>
+      </section>
+    );
+  }
+
+  if (result.status === "unsold") {
+    return (
+      <section className={`${styles.bidbar} ${styles.bidbarUnsold}`}>
+        <span className={`${styles.bidbarStatus} ${styles.statusUnsold}`}>Unsold</span>
+      </section>
+    );
+  }
+
+  if (bid.amount != null) {
+    const crest = crestFor(bid.franchise_short_code ?? null);
+    return (
+      <section className={styles.bidbar}>
+        <div className={styles.bidbarAmt}>
+          <span className={styles.bidbarLbl}>Current Bid</span>
+          <span className={styles.bidbarVal}>₹{formatMoney(bid.amount)}</span>
+        </div>
+        <div className={styles.bidbarTeam}>
+          {crest && <img src={crest} alt="" aria-hidden />}
+          <span className={styles.bidbarName}>{bid.franchise_name ?? "—"}</span>
+        </div>
+      </section>
+    );
+  }
+
+  // Player on the block, no bids yet.
+  return (
+    <section className={styles.bidbar}>
+      <span className={styles.bidbarStatus}>Awaiting Bids</span>
+    </section>
   );
 }
