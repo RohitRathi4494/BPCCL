@@ -496,6 +496,13 @@ export function FranchiseDashboard({
             <span className="font-mono text-xs text-muted-foreground">
               {filteredPool.length} shown
             </span>
+            <a
+              href="/franchise/pool-export"
+              className="ml-auto inline-flex shrink-0 items-center gap-2 rounded-sm border border-border px-3.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+              title="Download the full list of available players as Excel"
+            >
+              <Download className="size-3.5" /> Download pool (Excel)
+            </a>
           </div>
           <CategoryTally
             categories={poolByOtherFilters.map((p) => p.assigned_category)}

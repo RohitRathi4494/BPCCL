@@ -583,6 +583,73 @@ export async function buildWishlistExport(
 }
 
 // ---------------------------------------------------------------------------
+// Franchise-owner available-pool export
+// ---------------------------------------------------------------------------
+
+/** A player available in the pool, as the franchise dashboard holds it. */
+export type PoolExportPlayer = {
+  full_name: string | null;
+  assigned_category: string | null;
+  age: number | null;
+  roles: string[] | null;
+  matches_played: string | null;
+  runs_scored: string | null;
+  batting_average: string | null;
+  batting_strike_rate: string | null;
+  wickets_taken: string | null;
+  bowling_strike_rate: string | null;
+  economy: string | null;
+  cricheroes_url: string | null;
+};
+
+/** Build a single-sheet workbook of the available (unsold) player pool. */
+export async function buildPoolExport(
+  players: PoolExportPlayer[],
+): Promise<{ buffer: Buffer; filename: string }> {
+  const wb = new ExcelJS.Workbook();
+  wb.creator = "USCL Season 2";
+
+  const rows = players.map((p) => ({
+    player: asText(p.full_name),
+    category: asText(p.assigned_category),
+    age: p.age ?? "",
+    roles: asText(p.roles),
+    matches_played: asText(p.matches_played),
+    runs_scored: asText(p.runs_scored),
+    batting_average: asText(p.batting_average),
+    batting_strike_rate: asText(p.batting_strike_rate),
+    wickets_taken: asText(p.wickets_taken),
+    bowling_strike_rate: asText(p.bowling_strike_rate),
+    economy: asText(p.economy),
+    cricheroes_url: asText(p.cricheroes_url),
+  }));
+
+  addSheet(
+    wb,
+    "Player Pool",
+    [
+      { header: "Player", key: "player", width: 24 },
+      { header: "Category", key: "category", width: 16 },
+      { header: "Age", key: "age", width: 6 },
+      { header: "Roles", key: "roles", width: 26 },
+      { header: "Matches Played", key: "matches_played", width: 14 },
+      { header: "Runs Scored", key: "runs_scored", width: 12 },
+      { header: "Batting Avg", key: "batting_average", width: 12 },
+      { header: "Batting SR", key: "batting_strike_rate", width: 12 },
+      { header: "Wickets", key: "wickets_taken", width: 10 },
+      { header: "Bowling SR", key: "bowling_strike_rate", width: 12 },
+      { header: "Economy", key: "economy", width: 10 },
+      { header: "CricHeroes", key: "cricheroes_url", width: 30 },
+    ],
+    rows,
+  );
+
+  const arrayBuffer = await wb.xlsx.writeBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+  return { buffer, filename: "USCL2-Player-Pool.xlsx" };
+}
+
+// ---------------------------------------------------------------------------
 // Entry point
 // ---------------------------------------------------------------------------
 
