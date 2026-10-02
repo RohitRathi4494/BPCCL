@@ -471,6 +471,36 @@ async function addWishlistsSheets(wb: ExcelJS.Workbook, supabase: AnyClient) {
     fetchFranchises(supabase),
   ]);
 
+  // Tally per franchise so the summary + empty-team detection are exact.
+  const byFranchise = new Map<string, AdminWishlistRow[]>();
+  for (const w of wishlists) {
+    const name = w.franchises?.name ?? "—";
+    (byFranchise.get(name) ?? byFranchise.set(name, []).get(name)!).push(w);
+  }
+
+  // Summary sheet FIRST: every one of the 14 teams with its wishlist count, so
+  // it's obvious which teams have shortlisted nobody (count 0) rather than them
+  // looking "missing" because they don't appear on the combined sheet.
+  addSheet(
+    wb,
+    "Summary",
+    [
+      { header: "Code", key: "code", width: 10 },
+      { header: "Franchise", key: "franchise", width: 28 },
+      { header: "Wishlisted Players", key: "count", width: 18 },
+      { header: "Status", key: "status", width: 16 },
+    ],
+    franchises.map((f) => {
+      const n = (byFranchise.get(f.name) ?? []).length;
+      return {
+        code: asText(f.short_code),
+        franchise: asText(f.name),
+        count: n,
+        status: n === 0 ? "No wishlist yet" : "OK",
+      };
+    }),
+  );
+
   // Combined sheet: every row, grouped by franchise order for readability.
   const order = new Map(franchises.map((f, i) => [f.name, i]));
   const sorted = [...wishlists].sort((a, b) => {
@@ -480,15 +510,7 @@ async function addWishlistsSheets(wb: ExcelJS.Workbook, supabase: AnyClient) {
     return (a.franchises?.name ?? "").localeCompare(b.franchises?.name ?? "");
   });
   addSheet(wb, "All Wishlists", WISHLIST_COLUMNS, sorted.map(adminWishlistRow));
-
-  // Per-franchise sheets (includes teams with an empty wishlist so the admin
-  // can see who hasn't shortlisted anyone yet).
-  const byFranchise = new Map<string, AdminWishlistRow[]>();
-  for (const w of wishlists) {
-    const name = w.franchises?.name ?? "—";
-    (byFranchise.get(name) ?? byFranchise.set(name, []).get(name)!).push(w);
-  }
-  const used = new Set<string>(["all wishlists"]);
+  const used = new Set<string>(["summary", "all wishlists"]);
   for (const f of franchises) {
     const rows = (byFranchise.get(f.name) ?? []).map(adminWishlistRow);
     const label = f.short_code ? `${f.short_code} — ${f.name}` : f.name;
