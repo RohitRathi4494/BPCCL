@@ -221,8 +221,21 @@ export function toTitleCase(raw: string | null | undefined): string {
     .replace(/(^|[\s'’\-./(])([a-z])/g, (_m, sep: string, ch: string) => sep + ch.toUpperCase());
 }
 
+/**
+ * League rule: anyone born 1 Oct 1991 – 31 Dec 1991 counts as age 35
+ * (this cohort turns 35 within the season, so they're treated as 35+ for the
+ * age buckets). Returns 35 for a matching DOB, otherwise null.
+ */
+export function ageOverrideForDob(dobISO: string): number | null {
+  const day = dobISO.slice(0, 10); // normalise to YYYY-MM-DD
+  if (day >= "1991-10-01" && day <= "1991-12-31") return 35;
+  return null;
+}
+
 /** Whole-year age from an ISO date string (YYYY-MM-DD) as of `ref`. */
 export function computeAge(dobISO: string, ref: Date = new Date()): number {
+  const override = ageOverrideForDob(dobISO);
+  if (override != null) return override;
   const dob = new Date(dobISO);
   let age = ref.getFullYear() - dob.getFullYear();
   const m = ref.getMonth() - dob.getMonth();
