@@ -97,6 +97,7 @@ async function fetchFranchises(supabase: AnyClient): Promise<FranchiseRow[]> {
 
 type SquadMemberRow = {
   acquisition_type: string;
+  display_as_owner: boolean | null;
   category_at_acquisition: string | null;
   price: number;
   created_at: string;
@@ -113,7 +114,7 @@ async function fetchSquadMembers(supabase: AnyClient): Promise<SquadMemberRow[]>
   const { data, error } = await supabase
     .from("squad_members")
     .select(
-      "acquisition_type, category_at_acquisition, price, created_at, " +
+      "acquisition_type, display_as_owner, category_at_acquisition, price, created_at, " +
         "franchises(name, short_code), " +
         "players(full_name, registration_code, assigned_category, phone)",
     )
@@ -253,7 +254,7 @@ async function addFranchisesSheet(wb: ExcelJS.Workbook, supabase: AnyClient) {
     const c =
       counts.get(label) ?? { total: 0, owners: 0, retentions: 0, auction: 0 };
     c.total += 1;
-    if (m.acquisition_type === "owner") c.owners += 1;
+    if (m.display_as_owner || m.acquisition_type === "owner") c.owners += 1;
     else if (m.acquisition_type === "retention") c.retentions += 1;
     else c.auction += 1;
     counts.set(label, c);
@@ -315,7 +316,9 @@ function squadRows(members: SquadMemberRow[]) {
     player: asText(m.players?.full_name),
     reg_id: asText(m.players?.registration_code),
     category: asText(m.category_at_acquisition ?? m.players?.assigned_category),
-    acquisition_type: asText(m.acquisition_type),
+    // A member flagged "display as owner" (e.g. an owner locked in the Legend
+    // slot) is reported as an owner here too.
+    acquisition_type: asText(m.display_as_owner ? "owner" : m.acquisition_type),
     price: m.price,
     phone: asText(m.players?.phone),
     locked_at: asText(m.created_at),

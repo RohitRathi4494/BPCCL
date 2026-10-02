@@ -83,6 +83,16 @@ export function AuctionSetup({ initial }: { initial: AuctionSnapshot }) {
       supabaseRef.current.rpc("unlock_squad_member", { p_player: playerId }),
     );
 
+  // Mark / unmark a squad member as "also an owner" for display (admin RLS on
+  // squad_members). Keeps their lock type + category — only the portal label.
+  const setOwnerFlag = (playerId: string, value: boolean) =>
+    run(`owner:${playerId}`, () =>
+      supabaseRef.current
+        .from("squad_members")
+        .update({ display_as_owner: value })
+        .eq("player_id", playerId),
+    );
+
   // Mark / unmark a franchise as a returning Season 1 team (admin RLS on
   // franchises). Only existing teams get an RTM.
   const setSeason1 = (franchiseId: string, value: boolean) =>
@@ -194,6 +204,7 @@ export function AuctionSetup({ initial }: { initial: AuctionSnapshot }) {
             squadMin={data.settings.squadMin}
             onLock={lock}
             onUnlock={unlock}
+            onSetOwnerFlag={setOwnerFlag}
           />
         ))}
       </div>
@@ -523,6 +534,7 @@ function SetupCard({
   squadMin,
   onLock,
   onUnlock,
+  onSetOwnerFlag,
 }: {
   f: FranchiseView;
   available: PoolOption[];
@@ -534,6 +546,7 @@ function SetupCard({
     type: "owner" | "retention" | "legend",
   ) => void;
   onUnlock: (playerId: string) => void;
+  onSetOwnerFlag: (playerId: string, value: boolean) => void;
 }) {
   const owners = f.squad.filter((s) => s.acquisition_type === "owner");
   const retentions = f.squad.filter((s) => s.acquisition_type === "retention");
@@ -589,6 +602,8 @@ function SetupCard({
         busy={busyId === `${f.id}:legend`}
         onAdd={(pid) => onLock(f.id, pid, "legend")}
         onRemove={onUnlock}
+        onSetOwnerFlag={onSetOwnerFlag}
+        ownerToggleHint="Owner who plays as a legend — show as Owner on the portal"
       />
     </div>
   );
@@ -603,6 +618,8 @@ function LockSection({
   busy,
   onAdd,
   onRemove,
+  onSetOwnerFlag,
+  ownerToggleHint,
 }: {
   label: string;
   icon: React.ReactNode;
@@ -612,6 +629,9 @@ function LockSection({
   busy: boolean;
   onAdd: (playerId: string) => void;
   onRemove: (playerId: string) => void;
+  /** When provided, each entry gets an "also an owner" display toggle. */
+  onSetOwnerFlag?: (playerId: string, value: boolean) => void;
+  ownerToggleHint?: string;
 }) {
   const full = entries.length >= cap;
   return (
@@ -628,22 +648,38 @@ function LockSection({
           {entries.map((e) => (
             <li
               key={e.player_id}
-              className="flex items-center justify-between gap-2 rounded-sm border border-border bg-background px-3 py-1.5"
+              className="flex flex-col gap-1.5 rounded-sm border border-border bg-background px-3 py-1.5"
             >
-              <span className="min-w-0 truncate text-sm text-foreground">
-                {e.full_name}
-                <span className="ml-2 font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
-                  {e.category ?? "—"} · ₹{formatMoney(e.price)}
+              <div className="flex items-center justify-between gap-2">
+                <span className="min-w-0 truncate text-sm text-foreground">
+                  {e.full_name}
+                  <span className="ml-2 font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
+                    {e.category ?? "—"} · ₹{formatMoney(e.price)}
+                  </span>
                 </span>
-              </span>
-              <button
-                type="button"
-                onClick={() => onRemove(e.player_id)}
-                aria-label={`Remove ${e.full_name}`}
-                className="shrink-0 text-muted-foreground transition-colors hover:text-[var(--closed)]"
-              >
-                <X className="size-3.5" />
-              </button>
+                <button
+                  type="button"
+                  onClick={() => onRemove(e.player_id)}
+                  aria-label={`Remove ${e.full_name}`}
+                  className="shrink-0 text-muted-foreground transition-colors hover:text-[var(--closed)]"
+                >
+                  <X className="size-3.5" />
+                </button>
+              </div>
+              {onSetOwnerFlag && (
+                <label
+                  className="flex cursor-pointer items-center gap-1.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
+                  title={ownerToggleHint}
+                >
+                  <input
+                    type="checkbox"
+                    checked={e.display_as_owner}
+                    onChange={(ev) => onSetOwnerFlag(e.player_id, ev.target.checked)}
+                    className="size-3 accent-[var(--primary)]"
+                  />
+                  Also an owner — show as Owner
+                </label>
+              )}
             </li>
           ))}
         </ul>

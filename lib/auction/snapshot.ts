@@ -8,6 +8,8 @@ export type SquadEntry = {
   price: number;
   acquisition_type: "owner" | "retention" | "legend" | "auction";
   category: string | null;
+  /** Admin-set: show this member as an Owner even if locked in another slot. */
+  display_as_owner: boolean;
 };
 
 export type FranchiseView = {
@@ -213,6 +215,7 @@ export async function fetchAuctionSnapshot(
         price: m.price,
         acquisition_type: m.acquisition_type as SquadEntry["acquisition_type"],
         category: m.category_at_acquisition,
+        display_as_owner: m.display_as_owner ?? false,
       }));
     return {
       id: f.id,

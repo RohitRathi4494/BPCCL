@@ -782,6 +782,7 @@ export type Database = {
           acquisition_type: string
           category_at_acquisition: string | null
           created_at: string
+          display_as_owner: boolean
           franchise_id: string
           id: string
           player_id: string
@@ -791,6 +792,7 @@ export type Database = {
           acquisition_type: string
           category_at_acquisition?: string | null
           created_at?: string
+          display_as_owner?: boolean
           franchise_id: string
           id?: string
           player_id: string
@@ -800,6 +802,7 @@ export type Database = {
           acquisition_type?: string
           category_at_acquisition?: string | null
           created_at?: string
+          display_as_owner?: boolean
           franchise_id?: string
           id?: string
           player_id?: string

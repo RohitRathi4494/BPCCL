@@ -655,7 +655,7 @@ export function FranchiseDashboard({
                         ₹{inr(s.sold_price)}
                       </td>
                       <td className="px-4 py-3 font-mono text-[11px] tracking-wider text-muted-foreground uppercase">
-                        {s.acquisition_type}
+                        {s.display_as_owner ? "owner" : s.acquisition_type}
                       </td>
                     </tr>
                   ))}

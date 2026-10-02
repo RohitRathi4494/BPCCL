@@ -6,6 +6,7 @@ export type SquadEntry = {
   player_id: string;
   sold_price: number;
   acquisition_type: string;
+  display_as_owner: boolean;
   player: PoolPlayer | null;
 };
 
@@ -65,7 +66,7 @@ export async function getSquad(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("squad_members")
-    .select("player_id, price, acquisition_type")
+    .select("player_id, price, acquisition_type, display_as_owner")
     .eq("franchise_id", franchiseId)
     .order("created_at", { ascending: false });
   if (error) {
@@ -77,6 +78,7 @@ export async function getSquad(
     player_id: s.player_id,
     sold_price: s.price,
     acquisition_type: s.acquisition_type,
+    display_as_owner: s.display_as_owner ?? false,
     player: byId.get(s.player_id) ?? null,
   }));
 }

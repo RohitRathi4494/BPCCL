@@ -31,8 +31,10 @@ export async function getPublicFranchises(): Promise<PublicFranchise[]> {
         .order("name"),
       supabase
         .from("squad_members")
+        // Owner locks, plus any member an admin flagged "display as owner"
+        // (e.g. an owner who was locked in the Legend slot).
         .select("franchise_id, player_id, created_at")
-        .eq("acquisition_type", "owner")
+        .or("acquisition_type.eq.owner,display_as_owner.eq.true")
         .order("created_at", { ascending: true }),
     ]);
 
