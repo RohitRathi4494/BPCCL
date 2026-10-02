@@ -50,7 +50,8 @@ export function AuctionDisplay({
   const { currentPlayer, state, result, currentBid, franchises, recentSales, settings } =
     data;
   const paused = state.status === "paused";
-  const squadMin = settings.squadMin;
+  // Denominator is the squad MAX — the most players a team can buy.
+  const squadMax = settings.squadMax;
 
   const titleSponsor = sponsors.find((s) => s.tier === "Title" && s.logo_url);
   const associates = sponsors.filter((s) => s.tier === "Associate" && s.logo_url);
@@ -256,7 +257,7 @@ export function AuctionDisplay({
               <div className={styles.purseHead}>
                 <span className={styles.purseTitle}>Purse Board</span>
                 <span className={styles.purseMeta}>
-                  {franchises.length} Teams · Remaining Purse · Squad to Min {squadMin}
+                  {franchises.length} Teams · Remaining Purse · Squad to Max {squadMax}
                 </span>
               </div>
               <div className={styles.pgrid}>
@@ -277,11 +278,11 @@ export function AuctionDisplay({
                           ₹{formatMoney(f.purse_remaining)}
                         </span>
                         <span className={styles.pcardSq}>
-                          Squad {f.squadCount}/{squadMin}
+                          Squad {f.squadCount}/{squadMax}
                         </span>
                       </div>
                       <div className={styles.pcardDots}>
-                        {Array.from({ length: squadMin }).map((_, i) => (
+                        {Array.from({ length: squadMax }).map((_, i) => (
                           <i key={i} className={i < f.squadCount ? styles.on : undefined} />
                         ))}
                       </div>
