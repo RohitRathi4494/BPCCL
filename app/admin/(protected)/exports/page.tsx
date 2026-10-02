@@ -1,6 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Download, Users, Shield, Lock, Gavel, FileSpreadsheet } from "lucide-react";
+import {
+  Download,
+  Users,
+  Shield,
+  Lock,
+  Gavel,
+  FileSpreadsheet,
+  ListChecks,
+} from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -19,7 +27,7 @@ type Card = {
 
 async function count(
   supabase: Awaited<ReturnType<typeof createClient>>,
-  table: "players" | "franchises" | "squad_members",
+  table: "players" | "franchises" | "squad_members" | "wishlists",
 ) {
   const { count: c } = await supabase
     .from(table)
@@ -31,7 +39,7 @@ export default async function AdminExportsPage() {
   await requireAdmin();
   const supabase = await createClient();
 
-  const [players, franchises, squad, setup] = await Promise.all([
+  const [players, franchises, squad, setup, wishlists] = await Promise.all([
     count(supabase, "players"),
     count(supabase, "franchises"),
     count(supabase, "squad_members"),
@@ -40,6 +48,7 @@ export default async function AdminExportsPage() {
       .select("*", { count: "exact", head: true })
       .in("acquisition_type", ["owner", "retention", "legend"])
       .then((r) => r.count ?? 0),
+    count(supabase, "wishlists"),
   ]);
 
   const cards: Card[] = [
@@ -74,6 +83,14 @@ export default async function AdminExportsPage() {
         "The full built squads — owners, retentions and auction buys with final prices.",
       icon: <Gavel className="size-5" />,
       count: squad,
+    },
+    {
+      dataset: "wishlists",
+      title: "Team Wishlists",
+      description:
+        "Every franchise's pre-auction shortlist — target bid and remarks per player. A combined sheet plus one tab per team.",
+      icon: <ListChecks className="size-5" />,
+      count: wishlists,
     },
   ];
 

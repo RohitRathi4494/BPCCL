@@ -8,6 +8,7 @@ export type ExportDataset =
   | "franchises"
   | "auction-setup"
   | "auction-results"
+  | "wishlists"
   | "all";
 
 type ColumnDef = {
@@ -350,6 +351,153 @@ async function addAuctionResultsSheet(wb: ExcelJS.Workbook, supabase: AnyClient)
 }
 
 // ---------------------------------------------------------------------------
+// Admin: every franchise's wishlist
+// ---------------------------------------------------------------------------
+
+type AdminWishlistRow = {
+  target_amount: number | null;
+  remarks: string | null;
+  created_at: string;
+  franchises: { name: string; short_code: string | null } | null;
+  players: {
+    full_name: string | null;
+    registration_code: string | null;
+    assigned_category: string | null;
+    age: number | null;
+    roles: string[] | null;
+    phone: string | null;
+    matches_played: string | null;
+    runs_scored: string | null;
+    batting_average: string | null;
+    batting_strike_rate: string | null;
+    wickets_taken: string | null;
+    bowling_strike_rate: string | null;
+    economy: string | null;
+    cricheroes_url: string | null;
+  } | null;
+};
+
+/**
+ * Every franchise's wishlist rows (admin-only — relies on the "wishlists admin
+ * read" RLS policy). Ordered by franchise then most-recent first.
+ */
+async function fetchAllWishlists(supabase: AnyClient): Promise<AdminWishlistRow[]> {
+  const { data, error } = await supabase
+    .from("wishlists")
+    .select(
+      "target_amount, remarks, created_at, " +
+        "franchises(name, short_code), " +
+        "players(full_name, registration_code, assigned_category, age, roles, phone, " +
+        "matches_played, runs_scored, batting_average, batting_strike_rate, " +
+        "wickets_taken, bowling_strike_rate, economy, cricheroes_url)",
+    )
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as unknown as AdminWishlistRow[];
+}
+
+const WISHLIST_COLUMNS: ColumnDef[] = [
+  { header: "Code", key: "franchise_code", width: 10 },
+  { header: "Franchise", key: "franchise", width: 26 },
+  { header: "Player", key: "player", width: 24 },
+  { header: "Reg ID", key: "reg_id", width: 16 },
+  { header: "Category", key: "category", width: 16 },
+  { header: "Age", key: "age", width: 6 },
+  { header: "Roles", key: "roles", width: 26 },
+  { header: "Target Amount", key: "target_amount", width: 16, numFmt: MONEY },
+  { header: "Remarks", key: "remarks", width: 30 },
+  { header: "Phone", key: "phone", width: 16 },
+  { header: "Matches Played", key: "matches_played", width: 14 },
+  { header: "Runs Scored", key: "runs_scored", width: 12 },
+  { header: "Batting Avg", key: "batting_average", width: 12 },
+  { header: "Batting SR", key: "batting_strike_rate", width: 12 },
+  { header: "Wickets", key: "wickets_taken", width: 10 },
+  { header: "Bowling SR", key: "bowling_strike_rate", width: 12 },
+  { header: "Economy", key: "economy", width: 10 },
+  { header: "CricHeroes", key: "cricheroes_url", width: 30 },
+  { header: "Added At", key: "created_at", width: 22 },
+];
+
+function adminWishlistRow(w: AdminWishlistRow) {
+  return {
+    franchise_code: asText(w.franchises?.short_code),
+    franchise: asText(w.franchises?.name),
+    player: asText(w.players?.full_name),
+    reg_id: asText(w.players?.registration_code),
+    category: asText(w.players?.assigned_category),
+    age: w.players?.age ?? "",
+    roles: asText(w.players?.roles),
+    target_amount: w.target_amount ?? "",
+    remarks: asText(w.remarks),
+    phone: asText(w.players?.phone),
+    matches_played: asText(w.players?.matches_played),
+    runs_scored: asText(w.players?.runs_scored),
+    batting_average: asText(w.players?.batting_average),
+    batting_strike_rate: asText(w.players?.batting_strike_rate),
+    wickets_taken: asText(w.players?.wickets_taken),
+    bowling_strike_rate: asText(w.players?.bowling_strike_rate),
+    economy: asText(w.players?.economy),
+    cricheroes_url: asText(w.players?.cricheroes_url),
+    created_at: asText(w.created_at),
+  };
+}
+
+/** Make a <=31-char, Excel-safe, unique worksheet name. */
+function safeSheetName(label: string, used: Set<string>): string {
+  const base =
+    label.replace(/[\\/?*[\]:]/g, " ").trim().slice(0, 31) || "Sheet";
+  let name = base;
+  let n = 2;
+  while (used.has(name.toLowerCase())) {
+    const suffix = ` (${n})`;
+    name = base.slice(0, 31 - suffix.length) + suffix;
+    n += 1;
+  }
+  used.add(name.toLowerCase());
+  return name;
+}
+
+/**
+ * Adds a combined "All Wishlists" sheet plus one sheet per franchise (in
+ * franchise order), so the admin can see every team's shortlist at a glance or
+ * drill into a single team.
+ */
+async function addWishlistsSheets(wb: ExcelJS.Workbook, supabase: AnyClient) {
+  const [wishlists, franchises] = await Promise.all([
+    fetchAllWishlists(supabase),
+    fetchFranchises(supabase),
+  ]);
+
+  // Combined sheet: every row, grouped by franchise order for readability.
+  const order = new Map(franchises.map((f, i) => [f.name, i]));
+  const sorted = [...wishlists].sort((a, b) => {
+    const ai = order.get(a.franchises?.name ?? "") ?? 999;
+    const bi = order.get(b.franchises?.name ?? "") ?? 999;
+    if (ai !== bi) return ai - bi;
+    return (a.franchises?.name ?? "").localeCompare(b.franchises?.name ?? "");
+  });
+  addSheet(wb, "All Wishlists", WISHLIST_COLUMNS, sorted.map(adminWishlistRow));
+
+  // Per-franchise sheets (includes teams with an empty wishlist so the admin
+  // can see who hasn't shortlisted anyone yet).
+  const byFranchise = new Map<string, AdminWishlistRow[]>();
+  for (const w of wishlists) {
+    const name = w.franchises?.name ?? "—";
+    (byFranchise.get(name) ?? byFranchise.set(name, []).get(name)!).push(w);
+  }
+  const used = new Set<string>(["all wishlists"]);
+  for (const f of franchises) {
+    const rows = (byFranchise.get(f.name) ?? []).map(adminWishlistRow);
+    const label = f.short_code ? `${f.short_code} — ${f.name}` : f.name;
+    // Drop the redundant franchise columns on a single-team sheet.
+    const cols = WISHLIST_COLUMNS.filter(
+      (c) => c.key !== "franchise_code" && c.key !== "franchise",
+    );
+    addSheet(wb, safeSheetName(label, used), cols, rows);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Franchise-owner wishlist export
 // ---------------------------------------------------------------------------
 
@@ -440,6 +588,7 @@ const LABELS: Record<ExportDataset, string> = {
   franchises: "Franchises",
   "auction-setup": "Auction-Setup",
   "auction-results": "Auction-Results",
+  wishlists: "Wishlists",
   all: "Full-Export",
 };
 
@@ -462,6 +611,11 @@ export async function buildExport(
   }
   if (dataset === "auction-results" || dataset === "all") {
     await addAuctionResultsSheet(wb, supabase);
+  }
+  // Wishlists are a standalone export (a combined sheet + one per franchise) and
+  // are deliberately NOT folded into "all" to keep the full workbook compact.
+  if (dataset === "wishlists") {
+    await addWishlistsSheets(wb, supabase);
   }
 
   const arrayBuffer = await wb.xlsx.writeBuffer();
