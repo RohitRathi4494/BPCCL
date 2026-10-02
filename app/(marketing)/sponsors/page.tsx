@@ -15,6 +15,9 @@ const TIER_BLURB: Record<string, string> = {
   Title: "The marquee partner — top billing across the league.",
   "Co-title": "Shared headline presence across the season.",
   Associate: "Prominent brand presence at matches and online.",
+  "Statistics Partner": "Powers the numbers behind every match.",
+  "Healthcare Partner": "Keeping our players match-fit all season.",
+  "Media Partner": "Bringing the league to screens everywhere.",
   "Ground Partner": "On-ground visibility at Champions Den.",
 };
 
@@ -52,12 +55,22 @@ export default async function SponsorsPage() {
             .filter(({ sponsors }) => sponsors.length > 0)
             .map(({ tier, sponsors }) => {
               const featured = tier === "Title" || tier === "Co-title";
+              // "… Partner" tiers already read as a full label; only the
+              // Title/Co-title/Associate tiers take the "Sponsor(s)" suffix.
+              const isPartnerTier = tier.endsWith("Partner");
               return (
                 <div key={tier}>
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground uppercase">
-                      {tier}{" "}
-                      <span className="text-primary">Sponsor{sponsors.length === 1 ? "" : "s"}</span>
+                      {tier}
+                      {!isPartnerTier && (
+                        <>
+                          {" "}
+                          <span className="text-primary">
+                            Sponsor{sponsors.length === 1 ? "" : "s"}
+                          </span>
+                        </>
+                      )}
                     </h2>
                     <span className="font-mono text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
                       {TIER_BLURB[tier]}

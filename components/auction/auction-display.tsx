@@ -5,6 +5,7 @@
 // query units (cqh) from the CSS module, which next/image's fill/intrinsic
 // sizing can't express cleanly. These are a fixed set of small, local assets.
 
+import { Fragment } from "react";
 import { useAuction } from "@/lib/auction/use-auction";
 import {
   formatMoney,
@@ -55,7 +56,19 @@ export function AuctionDisplay({
 
   const titleSponsor = sponsors.find((s) => s.tier === "Title" && s.logo_url);
   const associates = sponsors.filter((s) => s.tier === "Associate" && s.logo_url);
-  const mediaPartners = sponsors.filter((s) => s.tier === "Media Partner" && s.logo_url);
+  // Single-logo partner slots shown along the bottom strip, in display order.
+  const partnerStrip = (
+    [
+      { label: "Statistics Partner", tier: "Statistics Partner" },
+      { label: "Healthcare Partner", tier: "Healthcare Partner" },
+      { label: "Media Partner", tier: "Media Partner" },
+    ] as const
+  )
+    .map((g) => ({
+      label: g.label,
+      items: sponsors.filter((s) => s.tier === g.tier && s.logo_url),
+    }))
+    .filter((g) => g.items.length > 0);
 
   // The team to highlight on the purse board: the winner if sold, else the
   // current highest bidder.
@@ -292,8 +305,8 @@ export function AuctionDisplay({
               </div>
             </section>
 
-            {/* ---- Sponsor strip: Associate | Media Partner ---- */}
-            {(associates.length > 0 || mediaPartners.length > 0) && (
+            {/* ---- Sponsor strip: Associate | Statistics | Healthcare | Media ---- */}
+            {(associates.length > 0 || partnerStrip.length > 0) && (
               <section className={styles.sponsors}>
                 {associates.length > 0 && (
                   <div className={styles.sponsorsGroup}>
@@ -307,24 +320,26 @@ export function AuctionDisplay({
                     </div>
                   </div>
                 )}
-                {associates.length > 0 && mediaPartners.length > 0 && (
-                  <div className={styles.sponsorsDiv} />
-                )}
-                {mediaPartners.length > 0 && (
-                  <div className={styles.sponsorsGroup}>
-                    <span className={styles.sponsorsLbl}>Media Partner</span>
-                    <div className={styles.sponsorsRow}>
-                      {mediaPartners.map((s) => (
-                        <span
-                          key={s.id}
-                          className={`${styles.sponPill} ${styles.sponPillMedia}`}
-                        >
-                          <img src={s.logo_url!} alt={s.name} />
-                        </span>
-                      ))}
+                {partnerStrip.map((g, gi) => (
+                  <Fragment key={g.label}>
+                    {(associates.length > 0 || gi > 0) && (
+                      <div className={styles.sponsorsDiv} />
+                    )}
+                    <div className={styles.sponsorsGroup}>
+                      <span className={styles.sponsorsLbl}>{g.label}</span>
+                      <div className={styles.sponsorsRow}>
+                        {g.items.map((s) => (
+                          <span
+                            key={s.id}
+                            className={`${styles.sponPill} ${styles.sponPillMedia}`}
+                          >
+                            <img src={s.logo_url!} alt={s.name} />
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  </Fragment>
+                ))}
               </section>
             )}
           </div>

@@ -22,6 +22,15 @@ export default async function HomePage() {
     (s) => s.tier === "Title" || s.tier === "Co-title",
   );
   const associatePartners = sponsors.filter((s) => s.tier === "Associate");
+  // Single-logo partner rows (statistics / healthcare / media), in order.
+  const otherPartners = (
+    ["Statistics Partner", "Healthcare Partner", "Media Partner"] as const
+  )
+    .map((tier) => ({
+      label: tier,
+      items: sponsors.filter((s) => s.tier === tier),
+    }))
+    .filter((g) => g.items.length > 0);
   const hasPartners = sponsors.length > 0;
 
   const purse = settings
@@ -297,6 +306,18 @@ export default async function HomePage() {
                   </Reveal>
                 </div>
               )}
+              {otherPartners.map((g) => (
+                <div key={g.label}>
+                  <p className="text-center font-mono text-[11px] tracking-[0.2em] text-muted-foreground uppercase">
+                    {g.label}
+                  </p>
+                  <Reveal className="mx-auto mt-4 grid max-w-3xl grid-cols-1 gap-5 sm:grid-cols-2">
+                    {g.items.map((s) => (
+                      <SponsorCard key={s.id} sponsor={s} />
+                    ))}
+                  </Reveal>
+                </div>
+              ))}
             </div>
           ) : (
             <div className="mx-auto mt-10 flex max-w-xl flex-col items-center gap-4 rounded-lg border border-dashed border-primary/40 bg-card p-10 text-center">
