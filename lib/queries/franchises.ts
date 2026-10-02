@@ -33,7 +33,7 @@ export async function getPublicFranchises(): Promise<PublicFranchise[]> {
         .from("squad_members")
         // Owner locks, plus any member an admin flagged "display as owner"
         // (e.g. an owner who was locked in the Legend slot).
-        .select("franchise_id, player_id, created_at")
+        .select("franchise_id, player_id, created_at, acquisition_type, display_as_owner")
         .or("acquisition_type.eq.owner,display_as_owner.eq.true")
         .order("created_at", { ascending: true }),
     ]);
@@ -48,7 +48,13 @@ export async function getPublicFranchises(): Promise<PublicFranchise[]> {
   }
 
   // Resolve owner player names via the public view (no PII beyond full_name).
-  const ownerRows = owners ?? [];
+  // A legend flagged "display as owner" leads the list; the query already
+  // orders within each group by created_at (stable sort preserves that).
+  const ownerRows = [...(owners ?? [])].sort((a, b) => {
+    const aLead = a.display_as_owner && a.acquisition_type !== "owner" ? 0 : 1;
+    const bLead = b.display_as_owner && b.acquisition_type !== "owner" ? 0 : 1;
+    return aLead - bLead;
+  });
   const playerIds = [...new Set(ownerRows.map((o) => o.player_id))];
   const nameById = new Map<string, string>();
   if (playerIds.length > 0) {
