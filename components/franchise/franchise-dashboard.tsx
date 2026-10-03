@@ -303,21 +303,33 @@ export function FranchiseDashboard({
 
   // Live: refresh server data whenever ANY player is sold/locked (squad_members
   // changes), so sold players drop out of the pool and this franchise's squad
-  // updates in real time.
+  // updates in real time. Also watch THIS franchise's own row so the wallet
+  // reflects purse changes that don't touch squad_members — e.g. a top-up or a
+  // player release (both only update the franchises table).
   useEffect(() => {
     const supabase = createClient();
     const channel = supabase
-      .channel("franchise-squad-members")
+      .channel("franchise-live")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "squad_members" },
+        () => router.refresh(),
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "franchises",
+          filter: `id=eq.${franchise.id}`,
+        },
         () => router.refresh(),
       )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [router]);
+  }, [router, franchise.id]);
 
   // Available (unsold) players — sold players drop out of the biddable pool.
   const availablePool = useMemo(

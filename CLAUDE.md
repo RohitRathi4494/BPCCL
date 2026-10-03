@@ -138,6 +138,17 @@ separate auth systems per role.
 
 ### Recent updates (as of 2026-10-03)
 
+- **Fix: franchise-owner wallet didn't update after a top-up.** The owner
+  dashboard (`components/franchise/franchise-dashboard.tsx`) only subscribed to
+  `squad_members` changes → `router.refresh()`, so sells updated the wallet but
+  **top-ups (and releases) — which only touch the `franchises` table — did not**.
+  Added a second realtime subscription on this franchise's own row
+  (`table: "franchises", filter: id=eq.<franchise.id>`) that also triggers
+  `router.refresh()`, so the purse reflects top-ups/releases live. Channel renamed
+  `franchise-squad-members` → `franchise-live`. (The auctioneer console + big
+  screen already updated live via `useAuction`'s franchises subscription — this
+  only affected the owner portal.) `tsc` + `eslint` clean.
+
 - **Auction: manual "Release player" action (70% refund).** League rule — if a
   franchise can't complete its minimum squad within its purse, the auctioneer can
   release that team's **most expensive auction-bought player** back to the pool;
