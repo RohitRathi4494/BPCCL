@@ -136,6 +136,46 @@ separate auth systems per role.
 - [ ] Social/content hub (auto-generated shareable graphics)
 - [ ] Deployed to production
 
+### Recent updates (as of 2026-10-03)
+
+- **Stream ticker overlay for the YouTube live stream (`/auction/ticker`).** A
+  transparent broadcast lower-third meant to be added as a **Browser Source in
+  OBS/vMix** over the live video (modelled on a user-supplied reference). New
+  route `app/auction/ticker/` (its `layout.tsx` injects `html,body{background:
+  transparent!important}` so only the bar paints — the rest of the frame is
+  transparent and the video shows through; page `robots:noindex`). Bar left→right:
+  a white **CURRENT BID** box (gold pill label + big red amount; morphs to
+  green **SOLD**/**Sold · RTM** + team, or grey **UNSOLD**) → the on-block
+  **player card** (portrait popping above the bar + navy panel with name, a
+  **Base Value** chip, the category chip, and up to 3 role chips) → a live
+  **14-team board** (`TEAM · REMAINING · MAX BID`) that **auto-rotates** 4 rows
+  at a time (`ROWS_VISIBLE=4`, `ROTATE_MS=4500`) through all franchises. When no
+  player is on the block it shows a slim **idle brand strip** (USCL crest · "Live
+  Auction" · LIVE dot).
+  - **MAX BID column = the live current bid, shown only against the current
+    highest bidder** (per the user's call — "max bid is showing the current
+    bid"). That leading franchise is **pinned to the top row** (gold-ringed) and
+    kept visible regardless of rotation; all other rows show `—` in Max Bid.
+    (If this should instead show every team's own last bid, we'd need per-team
+    bid tracking, which the current verbal-bid model doesn't store.)
+  - **Amounts use the 🪙 coin symbol, not ₹** (points, not cash) — consistent
+    with the big-screen change made the same day.
+  - **Implementation:** `components/auction/auction-ticker.tsx` (client) renders
+    from the live `useAuction` snapshot; all layout/sizing in
+    `components/auction/auction-ticker.module.css` using **container-query units
+    (cqw/cqh)** on a centred 16:9 `container-type:size` stage, so it scales to any
+    OBS source size and never scrolls. Crests via `FRANCHISE_META` by
+    `short_code`; Base Value from `settings.basePrice[category]`. **No migration,
+    no new query** — reuses `fetchAuctionSnapshot`. Verified: `tsc` + `eslint`
+    clean; route serves 200, renders live (idle strip + rotating purse board with
+    coin symbols), 0 console errors.
+
+- **Big screen (`/auction/display`): ₹ → 🪙 coin symbol** on every amount (current
+  bid, SOLD strip, recently-sold feed, purse board, and the SoldCelebration
+  overlay) since the auction uses points, not cash. Display-only
+  (`auction-display.tsx` + `sold-celebration.tsx`); the auctioneer console / setup
+  pages still use ₹.
+
 ### Recent updates (as of 2026-10-01)
 
 - **Auction big screen (`/auction/display`) fully redesigned** to a CricAuction-

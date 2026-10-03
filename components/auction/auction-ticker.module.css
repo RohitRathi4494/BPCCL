@@ -1,0 +1,365 @@
+/*
+ * Transparent lower-third auction overlay (OBS/vMix browser source).
+ * A 16:9 stage uses container-query units (cqw/cqh) so the whole bar scales to
+ * whatever source size is set in OBS without distorting, and nothing scrolls.
+ * Everything outside the bar stays transparent so the video shows through.
+ */
+
+.root {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: transparent;
+  font-family: var(--font-barlow), system-ui, sans-serif;
+}
+
+/* 16:9 stage, centred, sized to fill the browser source. */
+.stage {
+  position: relative;
+  width: min(100vw, 177.78dvh);
+  height: min(100dvh, 56.25vw);
+  container-type: size;
+}
+
+/* The lower-third bar sits near the bottom of the stage. */
+.bar {
+  position: absolute;
+  left: 2.5cqw;
+  right: 2.5cqw;
+  bottom: 4cqh;
+  height: 13cqh;
+  display: flex;
+  align-items: flex-end;
+  gap: 1cqw;
+  filter: drop-shadow(0 0.6cqh 1.4cqh rgba(0, 0, 0, 0.35));
+}
+
+/* ---- Current bid box (left) ---- */
+.bidBox {
+  flex: 0 0 21cqw;
+  height: 100%;
+  background: #ffffff;
+  border-radius: 1.1cqh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1cqh;
+  padding: 1cqh 1.4cqw;
+  position: relative;
+  overflow: hidden;
+}
+
+.bidLabel {
+  background: linear-gradient(90deg, #f6c343, #f3a712);
+  color: #1a1206;
+  font-family: var(--font-barlow-condensed), sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-size: 1.7cqh;
+  line-height: 1;
+  padding: 0.7cqh 1.1cqw;
+  border-radius: 0.5cqh;
+}
+
+.bidValue {
+  color: #d21f3c;
+  font-family: var(--font-barlow-condensed), sans-serif;
+  font-weight: 700;
+  font-size: 6.2cqh;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.bidCoin {
+  font-size: 0.72em;
+  margin-right: 0.12em;
+  vertical-align: 0.04em;
+}
+
+/* Sold / unsold recolouring of the bid box. */
+.bidBoxSold .bidValue {
+  color: #16a34a;
+  font-size: 5cqh;
+}
+.bidBoxSold .bidLabel {
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+  color: #06230f;
+}
+.bidBoxUnsold .bidValue {
+  color: #64748b;
+  font-size: 4.4cqh;
+}
+.bidTeam {
+  color: #0f172a;
+  font-family: var(--font-barlow-condensed), sans-serif;
+  font-weight: 600;
+  font-size: 2cqh;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* ---- Player segment (centre) ---- */
+.playerWrap {
+  flex: 1 1 auto;
+  height: 100%;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  min-width: 0;
+}
+
+/* Portrait pops above the bar. */
+.playerPhoto {
+  position: relative;
+  z-index: 2;
+  height: 19cqh;
+  width: 11cqw;
+  align-self: flex-end;
+  border-radius: 1.1cqh;
+  overflow: hidden;
+  background: #0b1f3f;
+  border: 0.35cqh solid #ffffff;
+  flex: 0 0 auto;
+  box-shadow: 0 0.5cqh 1.2cqh rgba(0, 0, 0, 0.4);
+}
+.playerPhoto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+.playerPhotoFallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #93a4c7;
+  font-family: var(--font-barlow-condensed), sans-serif;
+  font-weight: 700;
+  font-size: 4cqh;
+}
+
+.playerPanel {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  margin-left: -1.2cqw;
+  padding: 1cqh 1.6cqw 1cqh 2.4cqw;
+  background: linear-gradient(100deg, #122a55 0%, #1d3e7a 55%, #2a56a8 100%);
+  border-radius: 0 1.1cqh 1.1cqh 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.9cqh;
+  color: #ffffff;
+}
+
+.playerName {
+  font-family: var(--font-barlow-condensed), sans-serif;
+  font-weight: 700;
+  font-size: 4.4cqh;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.playerMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.8cqw;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.baseChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3cqw;
+  background: rgba(255, 255, 255, 0.14);
+  border: 0.2cqh solid rgba(255, 255, 255, 0.25);
+  border-radius: 0.5cqh;
+  padding: 0.5cqh 0.8cqw;
+  font-family: var(--font-barlow-condensed), sans-serif;
+  font-weight: 600;
+  font-size: 1.9cqh;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #ffffff;
+}
+.baseChip b {
+  font-weight: 700;
+  color: #ffd766;
+}
+
+.roleChip {
+  background: rgba(255, 255, 255, 0.92);
+  color: #163463;
+  border-radius: 0.5cqh;
+  padding: 0.5cqh 0.8cqw;
+  font-family: var(--font-barlow-condensed), sans-serif;
+  font-weight: 700;
+  font-size: 1.7cqh;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.catChip {
+  background: linear-gradient(90deg, #f6c343, #f3a712);
+  color: #1a1206;
+}
+
+/* ---- Team board (right) ---- */
+.teamBox {
+  flex: 0 0 31cqw;
+  height: 100%;
+  background: rgba(10, 23, 51, 0.94);
+  border-radius: 1.1cqh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  color: #ffffff;
+}
+
+.teamHead {
+  display: grid;
+  grid-template-columns: 1.55fr 1fr 1fr;
+  align-items: center;
+  padding: 0.7cqh 1.2cqw;
+  background: rgba(255, 255, 255, 0.08);
+  font-family: var(--font-barlow-condensed), sans-serif;
+  font-weight: 700;
+  font-size: 1.5cqh;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #9cb3dd;
+}
+.teamHead span:nth-child(2),
+.teamHead span:nth-child(3) {
+  text-align: right;
+}
+
+.teamRows {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.teamRow {
+  display: grid;
+  grid-template-columns: 1.55fr 1fr 1fr;
+  align-items: center;
+  padding: 0 1.2cqw;
+  flex: 1 1 0;
+  min-height: 0;
+  border-top: 0.15cqh solid rgba(255, 255, 255, 0.07);
+  font-family: var(--font-barlow-condensed), sans-serif;
+}
+
+.teamRowLead {
+  background: linear-gradient(90deg, rgba(246, 195, 67, 0.22), rgba(246, 195, 67, 0.05));
+  box-shadow: inset 0.3cqw 0 0 #f6c343;
+}
+
+.teamName {
+  display: flex;
+  align-items: center;
+  gap: 0.6cqw;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 2cqh;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.teamCrest {
+  height: 2.6cqh;
+  width: 2.6cqh;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
+.teamRemaining {
+  text-align: right;
+  font-weight: 600;
+  font-size: 2cqh;
+  color: #d9e4ff;
+  white-space: nowrap;
+}
+.teamMax {
+  text-align: right;
+  font-weight: 700;
+  font-size: 2cqh;
+  color: #ffd766;
+  white-space: nowrap;
+}
+.teamMaxEmpty {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.coin {
+  font-size: 0.82em;
+  margin-right: 0.12em;
+}
+
+/* Idle state (no player on the block): show only a slim brand strip. */
+.idle {
+  flex: 1 1 auto;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 1cqw;
+  padding: 0 2cqw;
+  background: linear-gradient(100deg, #122a55, #2a56a8);
+  border-radius: 1.1cqh;
+  color: #ffffff;
+}
+.idleLogo {
+  height: 8cqh;
+  width: auto;
+  object-fit: contain;
+}
+.idleText {
+  font-family: var(--font-barlow-condensed), sans-serif;
+  font-weight: 700;
+  font-size: 3.2cqh;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.idleDot {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5cqw;
+  font-family: var(--font-barlow-condensed), sans-serif;
+  font-weight: 700;
+  font-size: 2.2cqh;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #ff5a5a;
+}
+.idleDot i {
+  width: 1.3cqh;
+  height: 1.3cqh;
+  border-radius: 999px;
+  background: #ff3b3b;
+  box-shadow: 0 0 1.4cqh #ff3b3b;
+}

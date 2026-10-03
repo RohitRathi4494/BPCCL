@@ -135,7 +135,7 @@ export function SoldCelebration({ result }: { result: SaleResult }) {
           )}
           {result.amount != null && (
             <span className="font-heading text-2xl font-bold text-accent sm:text-4xl">
-              ₹{formatMoney(result.amount)}
+              🪙 {formatMoney(result.amount)}
               {result.via_rtm && (
                 <span className="ml-3 rounded-sm border border-primary/50 bg-primary/15 px-2 py-1 align-middle font-heading text-sm font-bold tracking-[0.16em] text-primary">
                   RTM

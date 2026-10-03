@@ -251,7 +251,7 @@ export function AuctionDisplay({
                         <div className={styles.soldTxt}>
                           <span className={styles.soldPlayer}>{s.player_name}</span>
                           <span className={styles.soldMeta}>
-                            {(s.franchise_short_code ?? s.franchise_name) + " · ₹" + formatMoney(s.price)}
+                            {(s.franchise_short_code ?? s.franchise_name) + " · 🪙 " + formatMoney(s.price)}
                           </span>
                         </div>
                       </div>
@@ -283,7 +283,7 @@ export function AuctionDisplay({
                       </div>
                       <div className={styles.pcardRow}>
                         <span className={styles.pcardPurse}>
-                          ₹{formatMoney(f.purse_remaining)}
+                          🪙 {formatMoney(f.purse_remaining)}
                         </span>
                         <span className={styles.pcardSq}>
                           Squad {f.squadCount}/{squadMax}
@@ -349,7 +349,7 @@ function BidStrip({ result, bid }: { result: SaleResult; bid: CurrentBid }) {
         <div className={styles.bidbarAmt}>
           <span className={styles.bidbarLbl}>{result.via_rtm ? "Sold · RTM" : "Sold"}</span>
           <span className={`${styles.bidbarVal} ${styles.bidbarValSold}`}>
-            ₹{formatMoney(result.amount)}
+            🪙 {formatMoney(result.amount)}
           </span>
         </div>
         <div className={styles.bidbarTeam}>
@@ -375,7 +375,7 @@ function BidStrip({ result, bid }: { result: SaleResult; bid: CurrentBid }) {
       <section className={styles.bidbar}>
         <div className={styles.bidbarAmt}>
           <span className={styles.bidbarLbl}>Current Bid</span>
-          <span className={styles.bidbarVal}>₹{formatMoney(bid.amount)}</span>
+          <span className={styles.bidbarVal}>🪙 {formatMoney(bid.amount)}</span>
         </div>
         <div className={styles.bidbarTeam}>
           {crest && <img src={crest} alt="" aria-hidden />}
