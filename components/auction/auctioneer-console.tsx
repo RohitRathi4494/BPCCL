@@ -54,6 +54,9 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
+  // Second confirmation: the final reset button only enables once the auctioneer
+  // types RESET, so an accidental click can't wipe the auction.
+  const [resetConfirmText, setResetConfirmText] = useState("");
   // Optimistic live bid: bidding taps update this instantly (and fire the DB
   // write in the background) so the auctioneer can tap rapidly without waiting
   // on a round-trip. Realtime echoes the same value back into `data.currentBid`.
@@ -230,8 +233,13 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
   const undo = () =>
     callRpc(() => supabaseRef.current.rpc("undo_last_action"));
   const resetAuction = async () => {
+    // Guard: only proceed when the typed confirmation matches exactly.
+    if (resetConfirmText.trim().toUpperCase() !== "RESET") return;
     const ok = await callRpc(() => supabaseRef.current.rpc("reset_auction"));
-    if (ok) setConfirmReset(false);
+    if (ok) {
+      setConfirmReset(false);
+      setResetConfirmText("");
+    }
   };
   const applyTopup = (franchiseId: string, which: 1 | 2) =>
     callRpc(() =>
@@ -322,33 +330,50 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
         </div>
       </div>
 
-      {/* Reset confirmation */}
+      {/* Reset confirmation — two steps: this banner + typing RESET below. */}
       {confirmReset && (
-        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[var(--closed)]/40 bg-[var(--closed)]/10 px-4 py-3">
+        <div className="flex flex-col gap-3 rounded-lg border border-[var(--closed)]/40 bg-[var(--closed)]/10 px-4 py-3">
           <span className="text-sm text-foreground">
             <strong>Reset the auction?</strong> This clears only the auction
             picks and returns to setup. Owners and retentions are kept, and each
             purse is restored to the default minus the retention spend. Top-ups
             are cleared. This can&apos;t be undone.
           </span>
-          <div className="ml-auto flex gap-2">
-            <button
-              type="button"
-              onClick={resetAuction}
-              disabled={busy}
-              className="inline-flex items-center gap-2 rounded-sm bg-[var(--closed)] px-4 py-2 font-heading text-xs font-bold tracking-wide text-white uppercase transition-opacity hover:opacity-90 disabled:opacity-60"
-            >
-              {busy ? <Loader2 className="size-3.5 animate-spin" /> : <RotateCcw className="size-3.5" />}
-              Yes, reset the auction
-            </button>
-            <button
-              type="button"
-              onClick={() => setConfirmReset(false)}
-              disabled={busy}
-              className="inline-flex items-center rounded-sm border border-border px-4 py-2 font-mono text-[11px] tracking-wider text-muted-foreground uppercase transition-colors hover:text-foreground"
-            >
-              Cancel
-            </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              Type <strong className="font-mono text-foreground">RESET</strong> to confirm:
+              <input
+                type="text"
+                value={resetConfirmText}
+                onChange={(e) => setResetConfirmText(e.target.value)}
+                disabled={busy}
+                autoComplete="off"
+                placeholder="RESET"
+                className="w-28 rounded-sm border border-border bg-background px-2 py-1.5 font-mono text-sm tracking-wider text-foreground uppercase outline-none focus:border-[var(--closed)]"
+              />
+            </label>
+            <div className="ml-auto flex gap-2">
+              <button
+                type="button"
+                onClick={resetAuction}
+                disabled={busy || resetConfirmText.trim().toUpperCase() !== "RESET"}
+                className="inline-flex items-center gap-2 rounded-sm bg-[var(--closed)] px-4 py-2 font-heading text-xs font-bold tracking-wide text-white uppercase transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {busy ? <Loader2 className="size-3.5 animate-spin" /> : <RotateCcw className="size-3.5" />}
+                Yes, reset the auction
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmReset(false);
+                  setResetConfirmText("");
+                }}
+                disabled={busy}
+                className="inline-flex items-center rounded-sm border border-border px-4 py-2 font-mono text-[11px] tracking-wider text-muted-foreground uppercase transition-colors hover:text-foreground"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}

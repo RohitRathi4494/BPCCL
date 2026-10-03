@@ -158,8 +158,17 @@ separate auth systems per role.
     kept visible regardless of rotation; all other rows show `—` in Max Bid.
     (If this should instead show every team's own last bid, we'd need per-team
     bid tracking, which the current verbal-bid model doesn't store.)
-  - **Amounts use the 🪙 coin symbol, not ₹** (points, not cash) — consistent
-    with the big-screen change made the same day.
+  - **Amounts use a coin symbol, not ₹** (points, not cash). The coin is drawn
+    as an **inline SVG gold disc** (component `Coin` in `auction-ticker.tsx`),
+    **not** the 🪙 emoji — OBS/vMix browser sources (Chromium Embedded) often
+    lack colour-emoji fonts and render 🪙 as a broken glyph, so the SVG
+    guarantees it shows. (The big screen still uses the 🪙 emoji, which is fine
+    in a normal projector browser.)
+  - **Auctioneer console "Reset auction" now needs a double confirmation:** the
+    existing warning banner plus the auctioneer must **type `RESET`** before the
+    final "Yes, reset the auction" button enables (`resetConfirmText` state in
+    `auctioneer-console.tsx`; `resetAuction()` early-returns unless the text
+    matches). Prevents an accidental click from wiping the auction.
   - **Implementation:** `components/auction/auction-ticker.tsx` (client) renders
     from the live `useAuction` snapshot; all layout/sizing in
     `components/auction/auction-ticker.module.css` using **container-query units

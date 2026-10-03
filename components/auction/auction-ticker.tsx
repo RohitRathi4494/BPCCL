@@ -21,7 +21,24 @@ function crestFor(code: string | null): string | null {
   return FRANCHISE_META[code.toUpperCase()]?.logo ?? null;
 }
 
-const Coin = () => <span className={styles.coin}>🪙</span>;
+/**
+ * A gold coin glyph drawn as inline SVG (not the 🪙 emoji) so it renders
+ * reliably inside OBS/vMix browser sources, which often lack colour-emoji fonts.
+ * Size is controlled by the surrounding font-size (width/height in em).
+ */
+function Coin({ className }: { className?: string }) {
+  return (
+    <svg
+      className={`${styles.coin}${className ? " " + className : ""}`}
+      viewBox="0 0 32 32"
+      aria-hidden
+      focusable="false"
+    >
+      <circle cx="16" cy="16" r="15" fill="#f4b400" stroke="#b9780a" strokeWidth="2" />
+      <circle cx="16" cy="16" r="10.5" fill="none" stroke="#ffe08a" strokeWidth="2" />
+    </svg>
+  );
+}
 
 // How many team rows are visible at once, and how long each page stays up.
 const ROWS_VISIBLE = 4;
@@ -105,7 +122,7 @@ export function AuctionTicker({ initial }: { initial: AuctionSnapshot }) {
                 <span className={styles.bidValue}>
                   {bidAmount != null ? (
                     <>
-                      <span className={styles.bidCoin}>🪙</span>
+                      <Coin className={styles.bidCoin} />
                       {formatMoney(bidAmount)}
                     </>
                   ) : (

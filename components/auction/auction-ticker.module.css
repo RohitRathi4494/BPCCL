@@ -75,11 +75,6 @@
   white-space: nowrap;
 }
 
-.bidCoin {
-  font-size: 0.72em;
-  margin-right: 0.12em;
-  vertical-align: 0.04em;
-}
 
 /* Sold / unsold recolouring of the bid box. */
 .bidBoxSold .bidValue {
@@ -316,8 +311,18 @@
 }
 
 .coin {
-  font-size: 0.82em;
-  margin-right: 0.12em;
+  display: inline-block;
+  width: 0.92em;
+  height: 0.92em;
+  vertical-align: -0.14em;
+  margin-right: 0.22em;
+  flex: none;
+}
+
+.bidCoin {
+  width: 0.74em;
+  height: 0.74em;
+  vertical-align: 0.02em;
 }
 
 /* Idle state (no player on the block): show only a slim brand strip. */
