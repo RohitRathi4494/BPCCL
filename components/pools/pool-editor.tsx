@@ -10,6 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 import {
   EMPTY_POOLS,
   POOL_CHANNEL,
+  POOL_LABELS,
   POOL_STORAGE_KEY,
   SLOTS_PER_POOL,
   buildPoolTeams,
@@ -139,10 +140,10 @@ export function PoolEditor({ franchises }: { franchises: FranchiseRow[] }) {
           Pool Creation
         </span>
         <span className="inline-flex items-center gap-1.5 rounded-sm bg-amber-400/15 px-2.5 py-1 font-mono text-xs text-amber-300">
-          <Users className="size-3.5" /> Group A {countA}/{SLOTS_PER_POOL}
+          <Users className="size-3.5" /> {POOL_LABELS.A} {countA}/{SLOTS_PER_POOL}
         </span>
         <span className="inline-flex items-center gap-1.5 rounded-sm bg-sky-400/15 px-2.5 py-1 font-mono text-xs text-sky-300">
-          <Users className="size-3.5" /> Group B {countB}/{SLOTS_PER_POOL}
+          <Users className="size-3.5" /> {POOL_LABELS.B} {countB}/{SLOTS_PER_POOL}
         </span>
         <div className="ml-auto flex items-center gap-2">
           <Link

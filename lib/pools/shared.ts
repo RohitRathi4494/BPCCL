@@ -8,6 +8,12 @@ export type Pools = { A: (string | null)[]; B: (string | null)[] };
 
 export const SLOTS_PER_POOL = 7;
 
+/** Display names for the two pools (data keys stay A / B). */
+export const POOL_LABELS: { A: string; B: string } = {
+  A: "Boundary",
+  B: "Wicket",
+};
+
 export const EMPTY_POOLS: Pools = {
   A: Array(SLOTS_PER_POOL).fill(null),
   B: Array(SLOTS_PER_POOL).fill(null),
