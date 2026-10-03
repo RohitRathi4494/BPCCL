@@ -138,6 +138,11 @@ separate auth systems per role.
 
 ### Recent updates (as of 2026-10-03)
 
+- **Squad size limits: min 17, max 22.** `league_settings.squad_min` set 18 → 17
+  (`20261003010000`) and `squad_max` set 20 → 22 (`20261003020000`) — both value +
+  column default, applied to remote. Max is enforced by `sell_player`; both read
+  from settings so the console/big screen/owner views update live.
+
 - **Fix: franchise-owner wallet didn't update after a top-up.** The owner
   dashboard (`components/franchise/franchise-dashboard.tsx`) only subscribed to
   `squad_members` changes → `router.refresh()`, so sells updated the wallet but
