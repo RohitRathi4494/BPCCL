@@ -1,0 +1,102 @@
+/*
+ * The Pool Creation backdrop + 14 shield drop-slots. A 16:9 stage scales to
+ * fill the screen (container-query units) and never scrolls, so it reads the
+ * same on a projector, a stream capture, and the admin editor.
+ */
+
+.root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #05070f;
+  overflow: hidden;
+}
+
+.stage {
+  position: relative;
+  width: min(100%, 177.78dvh);
+  height: min(100%, 56.25vw);
+  container-type: size;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* One drop slot, centred on its shield via left/top percentages. */
+.slot {
+  position: absolute;
+  width: 7.2cqw;
+  height: 7.2cqw;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+}
+
+.slotInteractive {
+  cursor: pointer;
+}
+
+/* Dark disc behind a placed crest — masks the baked-in "TEAM n" shield text. */
+.disc {
+  position: absolute;
+  inset: 4%;
+  border-radius: 999px;
+  background: radial-gradient(circle at 50% 40%, #12224a, #060d1f 72%);
+  box-shadow: 0 0 0 0.35cqh rgba(255, 255, 255, 0.12);
+}
+
+.logo {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0.4cqh 0.8cqh rgba(0, 0, 0, 0.5));
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Edit affordances: empty slots get a faint ring; drag-over lights up gold. */
+.slotEmptyEdit {
+  outline: 0.3cqh dashed rgba(255, 255, 255, 0.25);
+  outline-offset: -0.3cqh;
+}
+.slotOver {
+  outline: 0.5cqh solid #ffcc33;
+  outline-offset: -0.3cqh;
+  background: rgba(255, 204, 51, 0.18);
+}
+
+.filledDraggable {
+  cursor: grab;
+}
+.filledDraggable:active {
+  cursor: grabbing;
+}
+
+/* Tiny remove badge on a filled slot (edit only). */
+.remove {
+  position: absolute;
+  top: -0.4cqh;
+  right: -0.4cqh;
+  z-index: 3;
+  width: 2.6cqh;
+  height: 2.6cqh;
+  border-radius: 999px;
+  border: none;
+  background: #e11d48;
+  color: #fff;
+  font-size: 1.5cqh;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 0.2cqh 0.5cqh rgba(0, 0, 0, 0.5);
+}
+.remove:hover {
+  background: #be123c;
+}

@@ -138,6 +138,37 @@ separate auth systems per role.
 
 ### Recent updates (as of 2026-10-03)
 
+- **Pool Creation screen (`/pools` + `/pools/edit`) — drag 14 team crests into
+  Group A / Group B.** A broadcast-styled screen matching a user-supplied design:
+  the designed artwork (stadium, gold "POOL CREATION · 14 TEAMS" title, GROUP A /
+  GROUP B panels with 7 shields each, VS, sponsor strip) is used as a **backdrop
+  image** (`public/pool-bg.jpg`, optimized from the user's reference) and 14
+  **shield drop-slots** are overlaid at percentage coordinates over the shields.
+  - **`/pools/edit`** (admin-gated via `requireAdmin()` in the page — full-bleed,
+    outside the admin chrome): drag crests from a bottom **tray** into shields,
+    drag between shields (swaps), drag back to the tray or click the ✕ to
+    unassign; live **Group A n/7 · Group B n/7** counts, **Reset**, and an "Open
+    display" link. Native HTML5 drag-and-drop.
+  - **`/pools`** (public, read-only): the same stage, filled live.
+  - **No DB (per the user's call).** Arrangement persists in **localStorage** on
+    the editor, and syncs to the public display via a **Supabase Realtime
+    *broadcast* channel** (`pool-creation`, ephemeral — nothing stored): editor
+    broadcasts on every change + a 4 s heartbeat and replies to a display's
+    `sync-request`; display seeds from localStorage (same browser) then follows
+    broadcasts. **No migration.**
+  - **Code:** `lib/pools/shared.ts` (types, slot coords `SLOTS_A`/`SLOTS_B`,
+    channel/storage keys, `buildPoolTeams` from `franchises` + `FRANCHISE_META`
+    crests, `normalisePools`); `components/pools/pool-stage.tsx` (+ CSS module,
+    container-query-unit 16:9 stage, shared by both views); `pool-editor.tsx`
+    (state + localStorage + broadcast + tray); `pool-display.tsx` (subscribe).
+    Admin nav gains a **Pools** link (`/pools/edit`). Verified end-to-end in the
+    browser (drag places a crest, counter + tray + storage update); `tsc` +
+    `eslint` clean; `/pools` 200, `/pools/edit` 307→login.
+  - **NOTE:** the backdrop still carries the baked-in "TEAM 1..7" labels (covered
+    by a crest + dark disc when filled). A cleaner **empty-shield** export can be
+    dropped in at `public/pool-bg.jpg` with no code change; nudge `SLOTS_A/B` if
+    the shield positions shift.
+
 - **Stream ticker overlay for the YouTube live stream (`/auction/ticker`).** A
   transparent broadcast lower-third meant to be added as a **Browser Source in
   OBS/vMix** over the live video (modelled on a user-supplied reference). New
