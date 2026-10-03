@@ -248,6 +248,12 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
         p_which: which,
       }),
     );
+  // Release a franchise's most expensive auction-bought player back to the pool
+  // (refunds 70% of the price, floored). Separate, confirm-gated, not undoable.
+  const releasePlayer = (playerId: string) =>
+    callRpc(() =>
+      supabaseRef.current.rpc("release_player", { p_player: playerId }),
+    );
   const markUnsold = (playerId: string) =>
     callRpc(() =>
       supabaseRef.current.rpc("mark_player_unsold", { p_player: playerId }),
@@ -615,10 +621,12 @@ export function AuctioneerConsole({ initial }: { initial: AuctionSnapshot }) {
                   key={f.id}
                   f={f}
                   squadMax={data.settings.squadMax}
+                  squadMin={data.settings.squadMin}
                   topup1={data.settings.topup1}
                   topup2={data.settings.topup2}
                   busy={busy}
                   onTopup={(which) => applyTopup(f.id, which)}
+                  onRelease={releasePlayer}
                 />
               ))}
             </div>
@@ -1098,22 +1106,37 @@ function SellPanel({
 function TopupRow({
   f,
   squadMax,
+  squadMin,
   topup1,
   topup2,
   busy,
   onTopup,
+  onRelease,
 }: {
   f: FranchiseView;
   squadMax: number;
+  squadMin: number;
   topup1: number;
   topup2: number;
   busy: boolean;
   onTopup: (which: 1 | 2) => void;
+  onRelease: (playerId: string) => void;
 }) {
+  const [confirming, setConfirming] = useState(false);
   const pct =
     f.purse_total > 0
       ? Math.max(0, Math.min(100, (f.purse_remaining / f.purse_total) * 100))
       : 0;
+
+  // The most expensive AUCTION-bought player — the only one eligible to release.
+  const costliest = useMemo(() => {
+    const auctionPicks = f.squad.filter((s) => s.acquisition_type === "auction");
+    if (auctionPicks.length === 0) return null;
+    return auctionPicks.reduce((max, s) => (s.price > max.price ? s : max));
+  }, [f.squad]);
+  const refund = costliest ? Math.floor(costliest.price * 0.7) : 0;
+  const belowMin = f.squadCount < squadMin;
+
   return (
     <div className="rounded-lg border border-border bg-card px-3.5 py-2.5">
       <div className="flex items-center justify-between gap-2">
@@ -1121,8 +1144,13 @@ function TopupRow({
           {f.short_code ? `${f.short_code} · ` : ""}
           {f.name}
         </span>
-        <span className="shrink-0 font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
-          {f.squadCount}/{squadMax}
+        <span
+          className={cn(
+            "shrink-0 font-mono text-[10px] tracking-wider uppercase",
+            belowMin ? "text-[var(--closed)]" : "text-muted-foreground",
+          )}
+        >
+          {f.squadCount}/{squadMax} · min {squadMin}
         </span>
       </div>
       <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-background">
@@ -1135,7 +1163,18 @@ function TopupRow({
         <span className="font-mono text-[11px] text-foreground/90">
           ₹{formatMoney(f.purse_remaining)}
         </span>
-        <div className="flex gap-1.5">
+        <div className="flex items-center gap-1.5">
+          {costliest && (
+            <button
+              type="button"
+              onClick={() => setConfirming((v) => !v)}
+              disabled={busy}
+              title={`Release ${costliest.full_name} (most expensive auction pick)`}
+              className="inline-flex items-center gap-0.5 rounded-sm border border-border px-2 py-1 font-mono text-[10px] tracking-wider text-foreground/70 uppercase transition-colors hover:border-[var(--closed)] hover:text-[var(--closed)] disabled:opacity-50"
+            >
+              <Undo2 className="size-3" /> Release
+            </button>
+          )}
           <TopupButton
             used={f.topup_1_used}
             amount={topup1}
@@ -1150,6 +1189,40 @@ function TopupRow({
           />
         </div>
       </div>
+
+      {confirming && costliest && (
+        <div className="mt-2 rounded-md border border-[var(--closed)]/40 bg-[var(--closed)]/10 px-2.5 py-2">
+          <p className="text-[11px] leading-snug text-foreground/90">
+            Release <strong>{costliest.full_name}</strong> (₹
+            {formatMoney(costliest.price)}) back to the pool? The team gets{" "}
+            <strong>₹{formatMoney(refund)}</strong> back (70%); ₹
+            {formatMoney(costliest.price - refund)} is forfeited. This isn&apos;t
+            undoable.
+          </p>
+          <div className="mt-2 flex gap-2">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => {
+                onRelease(costliest.player_id);
+                setConfirming(false);
+              }}
+              className="inline-flex items-center gap-1 rounded-sm bg-[var(--closed)] px-3 py-1.5 font-mono text-[10px] font-bold tracking-wider text-white uppercase transition-opacity hover:opacity-90 disabled:opacity-60"
+            >
+              {busy ? <Loader2 className="size-3 animate-spin" /> : <Undo2 className="size-3" />}
+              Release for ₹{formatMoney(refund)}
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => setConfirming(false)}
+              className="inline-flex items-center rounded-sm border border-border px-3 py-1.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase transition-colors hover:text-foreground"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

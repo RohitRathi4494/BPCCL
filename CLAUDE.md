@@ -138,6 +138,33 @@ separate auth systems per role.
 
 ### Recent updates (as of 2026-10-03)
 
+- **Auction: manual "Release player" action (70% refund).** League rule — if a
+  franchise can't complete its minimum squad within its purse, the auctioneer can
+  release that team's **most expensive auction-bought player** back to the pool;
+  the team is refunded **70% of the price paid (floored)**, the other 30% is
+  forfeited. **Manual** (auctioneer-triggered, confirm-gated), **auction-bought
+  players only** (owner/retention/legend locks are never released here), and a
+  **separate, non-undoable** action.
+  - **Migration `20261003000000_auction_release_player.sql`** (**pushed**):
+    widens `auction_log.action` check with `'released'`; new RPC
+    **`release_player(p_player)`** (SECURITY DEFINER, staff-gated, auction must be
+    `in_progress`) — validates the player sits in an `acquisition_type='auction'`
+    slot, deletes the `squad_members` row (player auto-returns to the derived
+    pool), adds `floor(price*0.7)` to `purse_remaining`, logs `'released'`.
+    `undo_last_action()` recreated with a **release boundary guard**: if the newest
+    live action is a `'released'` row, undo stops ("cannot be undone") instead of
+    skipping it to reverse an older sale. All additive — `sell_player`/`apply_topup`
+    untouched. `database.types.ts` hand-edited (`release_player`).
+  - **UI:** each franchise row in the console's "Purses & Top-ups" panel
+    (`TopupRow` in `auctioneer-console.tsx`) gets a **Release** button → two-step
+    confirm showing the costliest auction pick, its price, the 70% refund, and the
+    forfeited 30%. Rows below the squad minimum flag the count in red. Verified:
+    `tsc` + `eslint` clean; migration applied to remote.
+  - **NOTE:** `league_settings.squad_min` is currently **18** (the "17" in the old
+    plan was the legacy `squad_min_per_franchise` column). The release action
+    doesn't enforce the min (manual), but the console label reads "min 18". Change
+    `squad_min` in `league_settings` if 17 is intended.
+
 - **Pool Creation screen (`/pools` + `/pools/edit`) — drag 14 team crests into
   Group A / Group B.** A broadcast-styled screen matching a user-supplied design:
   the designed artwork (stadium, gold "POOL CREATION · 14 TEAMS" title, GROUP A /
