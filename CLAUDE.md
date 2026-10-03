@@ -171,10 +171,9 @@ separate auth systems per role.
     confirm showing the costliest auction pick, its price, the 70% refund, and the
     forfeited 30%. Rows below the squad minimum flag the count in red. Verified:
     `tsc` + `eslint` clean; migration applied to remote.
-  - **NOTE:** `league_settings.squad_min` is currently **18** (the "17" in the old
-    plan was the legacy `squad_min_per_franchise` column). The release action
-    doesn't enforce the min (manual), but the console label reads "min 18". Change
-    `squad_min` in `league_settings` if 17 is intended.
+  - **`league_settings.squad_min` is 17** (migration `20261003010000_squad_min_17.sql`
+    set the value + column default from 18 → 17; snapshot fallback also 17). The
+    release action doesn't enforce the min (manual); the console label reads "min 17".
 
 - **Pool Creation screen (`/pools` + `/pools/edit`) — drag 14 team crests into
   Group A / Group B.** A broadcast-styled screen matching a user-supplied design:

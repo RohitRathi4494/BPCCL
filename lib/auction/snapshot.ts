@@ -310,7 +310,7 @@ export async function fetchAuctionSnapshot(
       stepPrice,
       bidIncrement: settingsRow?.bid_increment ?? 0,
       defaultPurse: settingsRow?.default_purse ?? 175000,
-      squadMin: settingsRow?.squad_min ?? 18,
+      squadMin: settingsRow?.squad_min ?? 17,
       squadMax: settingsRow?.squad_max ?? 25,
       topup1: settingsRow?.topup_1 ?? 50000,
       topup2: settingsRow?.topup_2 ?? 25000,
