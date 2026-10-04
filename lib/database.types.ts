@@ -347,6 +347,7 @@ export type Database = {
           purse_per_franchise: number
           registration_closes_at: string | null
           registration_fee: number
+          registration_open: boolean
           retention_base_price: Json
           rtm_max_against: number
           rtm_per_franchise: number
@@ -375,6 +376,7 @@ export type Database = {
           purse_per_franchise?: number
           registration_closes_at?: string | null
           registration_fee?: number
+          registration_open?: boolean
           retention_base_price?: Json
           rtm_max_against?: number
           rtm_per_franchise?: number
@@ -403,6 +405,7 @@ export type Database = {
           purse_per_franchise?: number
           registration_closes_at?: string | null
           registration_fee?: number
+          registration_open?: boolean
           retention_base_price?: Json
           rtm_max_against?: number
           rtm_per_franchise?: number
@@ -1026,6 +1029,10 @@ export type Database = {
         Returns: Json
       }
       mark_player_unsold: { Args: { p_player: string }; Returns: Json }
+      my_squad_contacts: {
+        Args: never
+        Returns: { player_id: string; phone: string | null }[]
+      }
       release_player: { Args: { p_player: string }; Returns: Json }
       reset_auction: { Args: never; Returns: Json }
       unlock_squad_member: { Args: { p_player: string }; Returns: Json }

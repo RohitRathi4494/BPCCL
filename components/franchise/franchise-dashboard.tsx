@@ -433,7 +433,7 @@ export function FranchiseDashboard({
   };
 
   const tabs: { key: Tab; label: string; count: number }[] = [
-    { key: "pool", label: "Player Pool", count: availablePool.length },
+    { key: "pool", label: "Unsold Players", count: availablePool.length },
     { key: "wishlist", label: "Wishlist", count: localWishlist.length },
     { key: "squad", label: "My Squad", count: squad.length },
   ];
@@ -475,7 +475,7 @@ export function FranchiseDashboard({
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search approved players…"
+                placeholder="Search unsold players…"
                 className="w-full rounded-sm border border-input bg-background py-2.5 pr-3.5 pl-9 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary"
               />
             </div>
@@ -522,7 +522,7 @@ export function FranchiseDashboard({
             onSelect={setCategoryFilter}
           />
           {filteredPool.length === 0 ? (
-            <Empty>No approved players match these filters.</Empty>
+            <Empty>No unsold players match these filters.</Empty>
           ) : (
             <div className="grid gap-3 md:grid-cols-2">
               {filteredPool.map((p) => {
@@ -639,10 +639,10 @@ export function FranchiseDashboard({
                 <Empty>No squad players in this category.</Empty>
               ) : (
                 <div className="overflow-x-auto rounded-lg border border-border">
-              <table className="w-full min-w-[420px] text-sm">
+              <table className="w-full min-w-[540px] text-sm">
                 <thead>
                   <tr className="border-b border-border bg-card text-left">
-                    {["Player", "Category", "Price", "Type"].map((h) => (
+                    {["Player", "Category", "Contact", "Price", "Type"].map((h) => (
                       <th
                         key={h}
                         className="px-4 py-3 font-mono text-[10px] tracking-[0.16em] text-muted-foreground uppercase"
@@ -669,6 +669,18 @@ export function FranchiseDashboard({
                       </td>
                       <td className="px-4 py-3">
                         <CategoryBadge category={s.player?.assigned_category ?? null} />
+                      </td>
+                      <td className="px-4 py-3 font-mono text-sm">
+                        {s.phone ? (
+                          <a
+                            href={`tel:${s.phone}`}
+                            className="text-primary hover:underline"
+                          >
+                            {s.phone}
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 font-mono text-foreground">
                         ₹{inr(s.sold_price)}

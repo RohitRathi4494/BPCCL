@@ -23,6 +23,7 @@ export default async function RegisterPage() {
   const settings = await getLeagueSettings();
   const fee = settings?.registration_fee ?? DEFAULT_REGISTRATION_FEE;
   const feeText = new Intl.NumberFormat("en-IN").format(fee);
+  const registrationOpen = settings?.registration_open !== false;
 
   return (
     <>
@@ -41,18 +42,31 @@ export default async function RegisterPage() {
             Player Registration · {site.season}
           </span>
           <h1 className="mt-4 font-heading text-4xl font-extrabold tracking-tight text-foreground uppercase sm:text-6xl">
-            Enter the pool
+            {registrationOpen ? "Enter the pool" : "Registrations Closed"}
           </h1>
-          <p className="mt-5 text-lg text-foreground/85">
-            Register to be part of{" "}
-            <span className="font-bold text-foreground">
-              {site.name} {site.season}
-            </span>{" "}
-            at{" "}
-            <span className="font-bold text-foreground">{site.venue.full}</span>.
-            No account needed — just fill the form below. Open to players aged{" "}
-            <span className="text-primary">{MIN_AGE} and above</span>.
-          </p>
+          {registrationOpen ? (
+            <p className="mt-5 text-lg text-foreground/85">
+              Register to be part of{" "}
+              <span className="font-bold text-foreground">
+                {site.name} {site.season}
+              </span>{" "}
+              at{" "}
+              <span className="font-bold text-foreground">
+                {site.venue.full}
+              </span>
+              . No account needed — just fill the form below. Open to players aged{" "}
+              <span className="text-primary">{MIN_AGE} and above</span>.
+            </p>
+          ) : (
+            <p className="mt-5 text-lg text-foreground/85">
+              Registrations for{" "}
+              <span className="font-bold text-foreground">
+                {site.name} {site.season}
+              </span>{" "}
+              are now closed — the auction is complete and squads have been
+              announced. Thank you to everyone who registered.
+            </p>
+          )}
 
           <Link
             href="/register/aadhaar"
@@ -62,6 +76,7 @@ export default async function RegisterPage() {
             Already registered? Add your Aadhaar card
           </Link>
 
+          {registrationOpen && (
           <div className="mt-10 grid gap-4 sm:grid-cols-3">
             {steps.map((s, i) => (
               <div
@@ -81,22 +96,44 @@ export default async function RegisterPage() {
               </div>
             ))}
           </div>
+          )}
         </div>
       </section>
 
-      {/* Form */}
-      <section className="border-t border-border">
-        <div className="mx-auto max-w-4xl px-5 py-16">
-          <SectionHeading kicker="Your Details" title="Registration Form" />
-          <div className="mt-10 rounded-xl border border-border bg-card p-6 sm:p-8">
-            <RegistrationForm registrationFee={fee} />
+      {/* Form (open) / closed notice */}
+      {registrationOpen ? (
+        <section className="border-t border-border">
+          <div className="mx-auto max-w-4xl px-5 py-16">
+            <SectionHeading kicker="Your Details" title="Registration Form" />
+            <div className="mt-10 rounded-xl border border-border bg-card p-6 sm:p-8">
+              <RegistrationForm registrationFee={fee} />
+            </div>
+            <p className="mt-6 text-center text-xs text-muted-foreground">
+              A mandatory registration fee of ₹{feeText} applies only if you are
+              selected during the auction. Registering does not guarantee
+              selection.
+            </p>
           </div>
-          <p className="mt-6 text-center text-xs text-muted-foreground">
-            A mandatory registration fee of ₹{feeText} applies only if you are
-            selected during the auction. Registering does not guarantee selection.
-          </p>
-        </div>
-      </section>
+        </section>
+      ) : (
+        <section className="border-t border-border">
+          <div className="mx-auto flex max-w-2xl flex-col items-center gap-5 px-5 py-20 text-center">
+            <p className="font-heading text-2xl font-bold tracking-tight text-foreground uppercase">
+              The squads are out
+            </p>
+            <p className="text-muted-foreground">
+              Registration and the player auction are complete. Head over to the
+              franchises to see every team&apos;s line-up for {site.season}.
+            </p>
+            <Link
+              href="/franchises"
+              className="inline-flex items-center rounded-sm bg-primary px-6 py-3 font-heading text-sm font-bold tracking-wide text-primary-foreground uppercase shadow-[0_0_20px_rgba(61,123,239,0.3)] transition-shadow hover:shadow-[0_0_28px_rgba(61,123,239,0.5)]"
+            >
+              View the Squads
+            </Link>
+          </div>
+        </section>
+      )}
     </>
   );
 }

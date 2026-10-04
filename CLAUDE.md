@@ -130,11 +130,40 @@ separate auth systems per role.
 - [x] Player registration form — **standalone shareable landing page at `/register`** (own layout, decoupled from marketing chrome). **v2 (public rollout) fields, ALL required except where noted:** Full Name, DOB (age 30+ enforced → `age`), Contact Number, Email, CricHeroes link, LinkedIn link, T-Shirt size (36–46 even + Other), Lower size (30–38 even + Other), Jersey Number, Jersey Name, and a **mandatory registration-fee agreement** checkbox (₹`registration_fee` from `league_settings`, default 3000 — player can't submit unchecked; `registration_fee_agreed` stored). Role/photo/medical/achievement removed from form (columns kept; `role` now nullable). Soft duplicate-phone warning via `check_phone_registered` RPC. Migrations through `20260816145956_registration_form_v2.sql` — **push required**, then regen types.
 - [x] Admin registration review dashboard — Supabase Auth email/password login (`/admin/login`), admin-role guard in `app/admin/(protected)/layout.tsx`. `/admin/registrations`: status tabs + counts, debounced search, server-side pagination (25/page); detail page `/admin/registrations/[id]` with photo/links/notes + approve/reject + assign-category (categories from `league_settings`; see Recent updates for the Grade→Category rename). Admin account must be created manually (see setup note below / README).
 - [x] Auction room — **rebuilt as admin-driven (v2)**. Bidding happens verbally in the room; the software is the system of record + projector display, **not** a click-to-bid engine. **No per-franchise bidding console** (`/auction/[franchiseId]` + `place_bid()`/`sell_current_player()` removed). Three views: **`/admin/auction-setup`** (lock up to 3 owners + 2 retentions + 1 legend per franchise, deducting `owner_base_price` / `retention_base_price` / `legend_base_price` `[category]`), **`/admin/auction`** (category flow Legend→A+→A→B, pull a player onto the block, type sold amount + pick winning franchise, mark unsold, per-franchise top-ups, Undo, pause/resume/complete, purse+squad-max guardrails), and public **`/auction/display`** (70/30 big screen: current player + SOLD/UNSOLD/ON-THE-BLOCK/PAUSED left, 16-franchise purse board right — all live). New tables `squad_members` (owner/retention/legend/auction, single source of truth) + `auction_log` (append-only, powers Undo). RPCs: `lock_squad_member`/`unlock_squad_member`/`sell_player`/`mark_player_unsold`/`apply_topup`/`undo_last_action` (all staff-gated, SECURITY DEFINER). `players_public` widened (roles + styles + stats) for the display. Realtime on `auction_state`/`franchises`/`squad_members`. Migrations `20260827000000`–`20260827040000` — **pushed**; types hand-edited. Auction economy in `league_settings` (default_purse 175000, topup_1 75000, topup_2 50000, squad_min 18, squad_max 25, retention_base_price). **Admin sets the per-category retention prices from the setup page UI** (`RetentionPricePanel` → direct `league_settings` update, admin RLS). Console has **Reopen** (completed→in_progress) and a confirm-gated **Reset auction** (`reset_auction()` RPC: wipes squad_members + auction_log, restores purses to default_purse, clears top-ups → setup) for re-runs. **Security:** `is_auction_staff()` coalesces to `false` for anon (a NULL role previously slipped past `if not is_auction_staff()` since `not null` is null, and SECURITY DEFINER would then bypass RLS — fixed in `20260827040000`).
-- [ ] Franchise & squad public pages
+- [x] Franchise & squad public pages (`/franchises` shows each team's full squad, no prices)
 - [ ] Fixtures & scheduling + points table
 - [ ] Live match scoring console + public live scorecard
 - [ ] Social/content hub (auto-generated shareable graphics)
 - [ ] Deployed to production
+
+### Recent updates (as of 2026-10-04) — post-auction
+
+- **Registration closed.** New `league_settings.registration_open` bool
+  (`20261004000000`, default true, set false now; admin-editable). `/register`
+  hides the form and shows a "Registrations Closed → View the Squads" state when
+  closed; `submitRegistration` hard-guards direct POSTs. (Aadhaar-attach flow for
+  existing registrants is left open.)
+- **Home page post-auction.** Removed the Registration-Closes + Auction-Day (and
+  Season-Starts) countdowns and the "Registration is open" CTA section. Hero badge
+  → "Season 2 · Squads Announced", primary CTA → "View the Squads" (`/franchises`),
+  and a new "Squads Are Out" section with a season-start teaser
+  (`season_starts_note`). Marketing ticker copy updated (`app/(marketing)/layout.tsx`).
+  Removed unused `StatusBadge`/`Countdown` imports.
+- **Public squads** (`/franchises`). `getPublicFranchises` now returns each team's
+  full `squad: {name, category, type}[]` (owners/legend/retention first, then auction
+  buys) from `squad_members` + `players_public` — **no prices**. Each card shows a
+  scrollable "Squad N" list with a type/category tag. Closing CTA re-pointed to sponsors.
+- **Admin all-squads view** `/admin/squads` (new, nav link added). Every franchise
+  with its squad (player, category, type, **bid amount**), per-team **spent /
+  remaining / purse / top-ups used**, league totals, plus an **Unsold Players**
+  section (approved players not in any squad, with contact numbers). Admin RLS.
+- **Franchise portal: contact numbers in My Squad.** New SECURITY DEFINER RPC
+  `my_squad_contacts()` (`20261004010000`) returns the caller's own squad players'
+  phone (derives franchise from `profiles.franchise_id`; never exposes the wider
+  pool). `getSquad` merges it; `SquadEntry.phone` added; My Squad gains a **Contact**
+  column (tel: link). "Player Pool" tab renamed **"Unsold Players"**.
+- `database.types.ts` hand-edited (`registration_open`, `my_squad_contacts`). All
+  migrations pushed; `tsc` + `eslint` clean; public pages verified in-browser.
 
 ### Recent updates (as of 2026-10-03)
 

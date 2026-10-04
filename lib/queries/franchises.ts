@@ -1,6 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { toTitleCase } from "@/lib/registration";
 
+export type PublicSquadPlayer = {
+  name: string;
+  category: string | null;
+  /** owner | retention | legend | auction (display_as_owner collapses to owner). */
+  type: string;
+};
+
 export type PublicFranchise = {
   id: string;
   name: string;
@@ -8,6 +15,16 @@ export type PublicFranchise = {
   owner_name: string | null;
   /** Names of the franchise's owners (the setup "owner" locks), in lock order. */
   owners: string[];
+  /** The full published squad (no prices), owners/retentions first. */
+  squad: PublicSquadPlayer[];
+};
+
+// Display order for squad grouping: setup locks first, then auction buys.
+const TYPE_RANK: Record<string, number> = {
+  owner: 0,
+  legend: 1,
+  retention: 2,
+  auction: 3,
 };
 
 /**
@@ -23,7 +40,7 @@ export type PublicFranchise = {
 export async function getPublicFranchises(): Promise<PublicFranchise[]> {
   const supabase = await createClient();
 
-  const [{ data: franchises, error: fErr }, { data: owners, error: oErr }] =
+  const [{ data: franchises, error: fErr }, { data: members, error: mErr }] =
     await Promise.all([
       supabase
         .from("franchises")
@@ -31,10 +48,9 @@ export async function getPublicFranchises(): Promise<PublicFranchise[]> {
         .order("name"),
       supabase
         .from("squad_members")
-        // Owner locks, plus any member an admin flagged "display as owner"
-        // (e.g. an owner who was locked in the Legend slot).
-        .select("franchise_id, player_id, created_at, acquisition_type, display_as_owner")
-        .or("acquisition_type.eq.owner,display_as_owner.eq.true")
+        .select(
+          "franchise_id, player_id, created_at, acquisition_type, display_as_owner, category_at_acquisition",
+        )
         .order("created_at", { ascending: true }),
     ]);
 
@@ -42,41 +58,64 @@ export async function getPublicFranchises(): Promise<PublicFranchise[]> {
     console.error("getPublicFranchises:", fErr.message);
     return [];
   }
-  if (oErr) {
-    // Non-fatal — fall back to no owner locks, we can still render franchises.
-    console.error("getPublicFranchises (owners):", oErr.message);
+  if (mErr) {
+    // Non-fatal — fall back to no squads, we can still render franchises.
+    console.error("getPublicFranchises (members):", mErr.message);
   }
 
-  // Resolve owner player names via the public view (no PII beyond full_name).
-  // A legend flagged "display as owner" leads the list; the query already
-  // orders within each group by created_at (stable sort preserves that).
-  const ownerRows = [...(owners ?? [])].sort((a, b) => {
-    const aLead = a.display_as_owner && a.acquisition_type !== "owner" ? 0 : 1;
-    const bLead = b.display_as_owner && b.acquisition_type !== "owner" ? 0 : 1;
-    return aLead - bLead;
-  });
-  const playerIds = [...new Set(ownerRows.map((o) => o.player_id))];
+  const memberRows = members ?? [];
+
+  // Resolve player names + categories via the public view (no PII beyond name).
+  const playerIds = [...new Set(memberRows.map((m) => m.player_id))];
   const nameById = new Map<string, string>();
+  const catById = new Map<string, string | null>();
   if (playerIds.length > 0) {
     const { data: people, error: pErr } = await supabase
       .from("players_public")
-      .select("id, full_name")
+      .select("id, full_name, assigned_category")
       .in("id", playerIds);
     if (pErr) {
-      console.error("getPublicFranchises (owner names):", pErr.message);
+      console.error("getPublicFranchises (player names):", pErr.message);
     }
     for (const p of people ?? []) {
-      if (p.id && p.full_name) nameById.set(p.id, toTitleCase(p.full_name));
+      if (!p.id) continue;
+      if (p.full_name) nameById.set(p.id, toTitleCase(p.full_name));
+      catById.set(p.id, p.assigned_category ?? null);
     }
   }
 
+  // Treat a member flagged "display as owner" (e.g. an owner locked in the Legend
+  // slot) as an owner for both the owners list and the squad type tag.
+  const effectiveType = (m: (typeof memberRows)[number]) =>
+    m.display_as_owner ? "owner" : m.acquisition_type;
+
   const ownersByFranchise = new Map<string, string[]>();
-  for (const o of ownerRows) {
-    const name = nameById.get(o.player_id);
+  const squadByFranchise = new Map<string, PublicSquadPlayer[]>();
+  for (const m of memberRows) {
+    const name = nameById.get(m.player_id);
     if (!name) continue;
-    const list = ownersByFranchise.get(o.franchise_id) ?? [];
-    list.push(name);
-    ownersByFranchise.set(o.franchise_id, list);
+    const type = effectiveType(m);
+    const squad = squadByFranchise.get(m.franchise_id) ?? [];
+    squad.push({
+      name,
+      category: m.category_at_acquisition ?? catById.get(m.player_id) ?? null,
+      type,
+    });
+    squadByFranchise.set(m.franchise_id, squad);
+    if (type === "owner") {
+      const list = ownersByFranchise.get(m.franchise_id) ?? [];
+      list.push(name);
+      ownersByFranchise.set(m.franchise_id, list);
+    }
+  }
+
+  // Sort each squad: setup locks first (owner → legend → retention), then auction
+  // buys, each group alphabetical by name.
+  for (const squad of squadByFranchise.values()) {
+    squad.sort((a, b) => {
+      const r = (TYPE_RANK[a.type] ?? 9) - (TYPE_RANK[b.type] ?? 9);
+      return r !== 0 ? r : a.name.localeCompare(b.name);
+    });
   }
 
   return (franchises ?? []).map((f) => {
@@ -94,6 +133,7 @@ export async function getPublicFranchises(): Promise<PublicFranchise[]> {
       short_code: f.short_code,
       owner_name: f.owner_name,
       owners: ownerList,
+      squad: squadByFranchise.get(f.id) ?? [],
     };
   });
 }

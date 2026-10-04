@@ -9,6 +9,7 @@ const adminNav = [
   { label: "Franchises", href: "/admin/franchises" },
   { label: "Auction Setup", href: "/admin/auction-setup" },
   { label: "Auction", href: "/admin/auction" },
+  { label: "Squads", href: "/admin/squads" },
   { label: "Pools", href: "/pools/edit" },
   { label: "Exports", href: "/admin/exports" },
   { label: "Fixtures", href: "/admin/fixtures", soon: true },

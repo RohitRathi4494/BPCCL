@@ -152,6 +152,39 @@ export default async function FranchisesPage() {
                           </ul>
                         </div>
                       )}
+
+                      {/* Published squad (no prices) */}
+                      <div className="mt-3 border-t border-border/60 pt-3">
+                        <p className="text-[10px] font-medium tracking-[0.18em] text-muted-foreground/60 uppercase">
+                          Squad{" "}
+                          <span className="text-foreground/70">
+                            {f.squad.length}
+                          </span>
+                        </p>
+                        {f.squad.length === 0 ? (
+                          <p className="mt-1.5 text-xs text-muted-foreground">
+                            To be announced.
+                          </p>
+                        ) : (
+                          <ul className="mt-2 max-h-60 space-y-1 overflow-y-auto pr-1">
+                            {f.squad.map((p, i) => (
+                              <li
+                                key={`${p.name}-${i}`}
+                                className="flex items-center justify-between gap-2 text-xs"
+                              >
+                                <span className="truncate text-foreground/90">
+                                  {p.name}
+                                </span>
+                                <span className="shrink-0 font-mono text-[10px] tracking-wider text-muted-foreground/70 uppercase">
+                                  {p.type === "auction"
+                                    ? (p.category ?? "—")
+                                    : p.type}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
                     </div>
                   </article>
                 );
@@ -166,18 +199,18 @@ export default async function FranchisesPage() {
         <div className="mx-auto flex max-w-6xl flex-col items-start gap-6 px-5 py-16 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground uppercase sm:text-3xl">
-              Want to play for one of these teams?
+              The squads are locked in
             </h2>
             <p className="mt-2 max-w-xl text-muted-foreground">
-              Register your profile and enter the auction pool — franchises pick
-              their squads from the approved players.
+              The auction is complete. Next up: the season at {site.venue.full}.
+              Want your brand on it?
             </p>
           </div>
           <Link
-            href="/register"
+            href="/sponsors"
             className="inline-flex shrink-0 items-center gap-2 rounded-sm bg-primary px-6 py-3 font-heading text-sm font-bold tracking-wide text-primary-foreground uppercase shadow-[0_0_20px_rgba(61,123,239,0.3)] transition-shadow hover:shadow-[0_0_28px_rgba(61,123,239,0.5)]"
           >
-            Register to Play <ArrowRight className="size-4" />
+            Become a Sponsor <ArrowRight className="size-4" />
           </Link>
         </div>
       </section>

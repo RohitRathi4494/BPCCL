@@ -14,8 +14,8 @@ export default async function MarketingLayout({
     `${site.shortName} ${site.season}`,
     site.venue.full.toUpperCase(),
     settings ? `${settings.franchise_count} Franchises` : "16 Franchises",
-    "Player Registration Open",
-    "Live Auction · Mock Purse",
+    "Squads Announced",
+    "Season Coming Soon",
     categories.length ? categories.join(" · ") : site.tagline,
     site.tagline,
   ];

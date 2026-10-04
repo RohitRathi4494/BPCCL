@@ -7,6 +7,8 @@ export type SquadEntry = {
   sold_price: number;
   acquisition_type: string;
   display_as_owner: boolean;
+  /** The player's contact number — owner-scoped via the my_squad_contacts RPC. */
+  phone: string | null;
   player: PoolPlayer | null;
 };
 
@@ -73,12 +75,23 @@ export async function getSquad(
     console.error("getSquad:", error.message);
     return [];
   }
+
+  // Contact numbers for this franchise's own squad (RLS hides phone on the pool
+  // views, so this comes from the owner-scoped my_squad_contacts RPC).
+  const phoneById = new Map<string, string | null>();
+  const { data: contacts, error: cErr } = await supabase.rpc("my_squad_contacts");
+  if (cErr) {
+    console.error("getSquad (contacts):", cErr.message);
+  }
+  for (const c of contacts ?? []) phoneById.set(c.player_id, c.phone);
+
   const byId = indexPool(pool);
   return (data ?? []).map((s) => ({
     player_id: s.player_id,
     sold_price: s.price,
     acquisition_type: s.acquisition_type,
     display_as_owner: s.display_as_owner ?? false,
+    phone: phoneById.get(s.player_id) ?? null,
     player: byId.get(s.player_id) ?? null,
   }));
 }

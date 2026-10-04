@@ -58,6 +58,21 @@ export async function submitRegistration(
   _prev: RegistrationState,
   formData: FormData,
 ): Promise<RegistrationState> {
+  const supabaseGuard = await createClient();
+  // Hard gate: refuse new registrations once the admin has closed them (the page
+  // also hides the form, but this guards direct POSTs).
+  const { data: regSettings } = await supabaseGuard
+    .from("league_settings")
+    .select("registration_open")
+    .limit(1)
+    .maybeSingle();
+  if (regSettings && regSettings.registration_open === false) {
+    return {
+      status: "error",
+      message: "Registrations are now closed. Thank you for your interest.",
+    };
+  }
+
   const get = (k: string) => String(formData.get(k) ?? "").trim();
 
   const full_name = toTitleCase(get("full_name"));

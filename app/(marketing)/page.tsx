@@ -1,8 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { MapPin, Trophy, Users, Wallet, Gavel } from "lucide-react";
-import { StatusBadge } from "@/components/site/status-badge";
-import { Countdown } from "@/components/site/countdown";
 import { SectionHeading } from "@/components/site/section-heading";
 import { SponsorCard } from "@/components/site/sponsor-card";
 import { FranchiseMarquee } from "@/components/site/franchise-marquee";
@@ -105,7 +103,10 @@ export default async function HomePage() {
         <div className="relative z-10 mx-auto max-w-6xl px-5 pt-8 pb-16 lg:pt-28">
           <div className="flex flex-col-reverse items-start gap-10 lg:flex-row lg:items-center lg:justify-between">
             <div className="w-full lg:flex-1">
-              <StatusBadge status="open" />
+              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--lime)]/50 bg-[var(--lime)]/10 px-3 py-1 font-mono text-[11px] font-medium tracking-[0.18em] text-[var(--lime)] uppercase backdrop-blur">
+                <span className="size-2 rounded-full bg-[var(--lime)] shadow-[0_0_12px_var(--lime)]" aria-hidden />
+                {site.season} · Squads Announced
+              </span>
 
               <h1 className="mt-6 font-heading text-5xl font-extrabold tracking-tight text-foreground uppercase sm:text-7xl">
                 Urban Sports
@@ -125,10 +126,10 @@ export default async function HomePage() {
 
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
-              href="/register"
+              href="/franchises"
               className="inline-flex items-center rounded-sm bg-primary px-6 py-3 font-heading text-sm font-bold tracking-wide text-primary-foreground uppercase shadow-[0_0_24px_rgba(61,123,239,0.35)] transition-shadow hover:shadow-[0_0_34px_rgba(61,123,239,0.6)]"
             >
-              Register to Play
+              View the Squads
             </Link>
             <Link
               href="/sponsors"
@@ -138,24 +139,6 @@ export default async function HomePage() {
             </Link>
           </div>
             </div>
-          </div>
-
-          {/* Countdowns — key season dates from league_settings (admin-editable).
-              Season start may be a window (a note) rather than an exact date. */}
-          <div className="mt-14 grid gap-8 sm:grid-cols-3">
-            <Countdown
-              target={settings?.registration_closes_at ?? null}
-              title="Registration Closes"
-            />
-            <Countdown
-              target={settings?.auction_day_at ?? null}
-              title="Auction Day"
-            />
-            <Countdown
-              target={settings?.season_starts_at ?? null}
-              title="Season Starts"
-              placeholder={settings?.season_starts_note ?? "To be announced"}
-            />
           </div>
         </div>
       </section>
@@ -180,31 +163,28 @@ export default async function HomePage() {
         </Reveal>
       </section>
 
-      {/* ================= REGISTRATION ================= */}
-      <section id="register" className="scroll-mt-24">
+      {/* ================= SQUADS ANNOUNCED ================= */}
+      <section id="squads" className="scroll-mt-24">
         <div className="mx-auto max-w-6xl px-5 py-20">
-          <SectionHeading kicker="Step 01" title="Player Registration" />
+          <SectionHeading kicker="The Auction Is Done" title="Squads Are Out" />
           <div className="mt-8 grid gap-8 md:grid-cols-2">
             <p className="text-lg leading-relaxed text-foreground/85">
-              Any player can enter the pool. Submit your details and your
-              CricHeroes profile — our reviewers assign you a category
-              {categories.length ? ` (${categories.join(", ")})` : ""} ahead of
-              the live auction, where all {settings?.franchise_count ?? 16}{" "}
-              franchises bid to build their squads.
+              All {settings?.franchise_count ?? 14} franchises have built their
+              squads at the live auction. Explore every team&apos;s line-up — then
+              it&apos;s on to the season at {site.venue.full}.
             </p>
             <div className="card-glow flex flex-col justify-center gap-4 rounded-lg border border-primary/50 bg-card p-8">
               <p className="font-mono text-xs tracking-[0.2em] text-primary uppercase">
-                Registration is open
+                Season Starts
               </p>
-              <p className="text-sm text-muted-foreground">
-                No account needed — it&apos;s a quick public form. Open to
-                players aged 30 and above.
+              <p className="font-heading text-2xl font-bold tracking-tight text-foreground uppercase">
+                {settings?.season_starts_note ?? "To be announced"}
               </p>
               <Link
-                href="/register"
+                href="/franchises"
                 className="inline-flex w-fit items-center rounded-sm bg-primary px-5 py-2.5 font-heading text-sm font-bold tracking-wide text-primary-foreground uppercase shadow-[0_0_20px_rgba(61,123,239,0.3)] transition-shadow hover:shadow-[0_0_28px_rgba(61,123,239,0.5)]"
               >
-                Register Now
+                View the Squads
               </Link>
             </div>
           </div>
