@@ -786,6 +786,7 @@ export type Database = {
           category_at_acquisition: string | null
           created_at: string
           display_as_owner: boolean
+          display_order: number | null
           franchise_id: string
           id: string
           player_id: string
@@ -796,6 +797,7 @@ export type Database = {
           category_at_acquisition?: string | null
           created_at?: string
           display_as_owner?: boolean
+          display_order?: number | null
           franchise_id: string
           id?: string
           player_id: string
@@ -806,6 +808,7 @@ export type Database = {
           category_at_acquisition?: string | null
           created_at?: string
           display_as_owner?: boolean
+          display_order?: number | null
           franchise_id?: string
           id?: string
           player_id?: string

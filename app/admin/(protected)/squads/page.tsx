@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { SquadOrderInput } from "@/components/admin/squad-order-input";
 
 export const metadata: Metadata = {
   title: "All Squads",
@@ -19,6 +20,7 @@ type MemberRow = {
   player_id: string;
   acquisition_type: string;
   display_as_owner: boolean | null;
+  display_order: number | null;
   category_at_acquisition: string | null;
   price: number;
   players: PlayerLite | null;
@@ -54,7 +56,7 @@ export default async function AdminSquadsPage() {
     supabase
       .from("squad_members")
       .select(
-        "franchise_id, player_id, acquisition_type, display_as_owner, category_at_acquisition, price, players(full_name, assigned_category, phone)",
+        "franchise_id, player_id, acquisition_type, display_as_owner, display_order, category_at_acquisition, price, players(full_name, assigned_category, phone)",
       ),
     supabase
       .from("players")
@@ -99,11 +101,22 @@ export default async function AdminSquadsPage() {
           {franchises.length} teams · {totalPlayers} players · ₹{inr(totalSpent)}{" "}
           total spent.
         </p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Set a number in the <span className="font-mono">Seq</span> column to
+          arrange the order players appear in (lower first — use it to sequence
+          owners &amp; legends). Leave it blank to use the default order. Saves
+          automatically and updates the public squads page.
+        </p>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
         {franchises.map((f) => {
           const squad = (byFranchise.get(f.id) ?? []).slice().sort((a, b) => {
+            // Manual sequence wins (lower first); unset members fall back to the
+            // default ordering (type rank → bid desc).
+            const oa = a.display_order ?? Number.POSITIVE_INFINITY;
+            const ob = b.display_order ?? Number.POSITIVE_INFINITY;
+            if (oa !== ob) return oa - ob;
             const r = (TYPE_RANK[effType(a)] ?? 9) - (TYPE_RANK[effType(b)] ?? 9);
             return r !== 0 ? r : b.price - a.price;
           });
@@ -146,7 +159,7 @@ export default async function AdminSquadsPage() {
                   <table className="w-full min-w-[420px] text-sm">
                     <thead>
                       <tr className="border-y border-border bg-background/50 text-left">
-                        {["Player", "Category", "Type", "Bid"].map((h) => (
+                        {["Seq", "Player", "Category", "Type", "Bid"].map((h) => (
                           <th
                             key={h}
                             className="px-4 py-2 font-mono text-[10px] tracking-[0.16em] text-muted-foreground uppercase"
@@ -162,6 +175,12 @@ export default async function AdminSquadsPage() {
                           key={m.player_id}
                           className="border-b border-border/50 last:border-0"
                         >
+                          <td className="px-4 py-2">
+                            <SquadOrderInput
+                              playerId={m.player_id}
+                              value={m.display_order}
+                            />
+                          </td>
                           <td className="px-4 py-2 font-medium text-foreground">
                             {m.players?.full_name ?? "—"}
                           </td>

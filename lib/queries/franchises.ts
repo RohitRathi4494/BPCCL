@@ -49,7 +49,7 @@ export async function getPublicFranchises(): Promise<PublicFranchise[]> {
       supabase
         .from("squad_members")
         .select(
-          "franchise_id, player_id, created_at, acquisition_type, display_as_owner, category_at_acquisition",
+          "franchise_id, player_id, created_at, acquisition_type, display_as_owner, display_order, category_at_acquisition",
         )
         .order("created_at", { ascending: true }),
     ]);
@@ -89,37 +89,47 @@ export async function getPublicFranchises(): Promise<PublicFranchise[]> {
   const effectiveType = (m: (typeof memberRows)[number]) =>
     m.display_as_owner ? "owner" : m.acquisition_type;
 
-  const ownersByFranchise = new Map<string, string[]>();
-  const squadByFranchise = new Map<string, PublicSquadPlayer[]>();
+  const ownersByFranchise = new Map<string, { name: string; order: number }[]>();
+  const squadByFranchise = new Map<string, (PublicSquadPlayer & { order: number })[]>();
   for (const m of memberRows) {
     const name = nameById.get(m.player_id);
     if (!name) continue;
     const type = effectiveType(m);
+    const order = m.display_order ?? Number.POSITIVE_INFINITY;
     const squad = squadByFranchise.get(m.franchise_id) ?? [];
     squad.push({
       name,
       category: m.category_at_acquisition ?? catById.get(m.player_id) ?? null,
       type,
+      order,
     });
     squadByFranchise.set(m.franchise_id, squad);
     if (type === "owner") {
       const list = ownersByFranchise.get(m.franchise_id) ?? [];
-      list.push(name);
+      list.push({ name, order });
       ownersByFranchise.set(m.franchise_id, list);
     }
   }
 
-  // Sort each squad: setup locks first (owner → legend → retention), then auction
-  // buys, each group alphabetical by name.
+  // Sort each squad: a manual sequence (display_order, lower first) wins; members
+  // without one fall back to setup locks first (owner → legend → retention), then
+  // auction buys, each group alphabetical by name.
   for (const squad of squadByFranchise.values()) {
     squad.sort((a, b) => {
+      if (a.order !== b.order) return a.order - b.order;
       const r = (TYPE_RANK[a.type] ?? 9) - (TYPE_RANK[b.type] ?? 9);
       return r !== 0 ? r : a.name.localeCompare(b.name);
     });
   }
+  // Owners list honours the same manual sequence (lower first), then name.
+  for (const list of ownersByFranchise.values()) {
+    list.sort((a, b) =>
+      a.order !== b.order ? a.order - b.order : a.name.localeCompare(b.name),
+    );
+  }
 
   return (franchises ?? []).map((f) => {
-    const locked = ownersByFranchise.get(f.id) ?? [];
+    const locked = (ownersByFranchise.get(f.id) ?? []).map((o) => o.name);
     // Fall back to the single owner_name text field if no owner locks exist.
     const ownerList =
       locked.length > 0
@@ -127,13 +137,17 @@ export async function getPublicFranchises(): Promise<PublicFranchise[]> {
         : f.owner_name
           ? [toTitleCase(f.owner_name)]
           : [];
+    // Strip the internal `order` sort key before returning the public shape.
+    const squad: PublicSquadPlayer[] = (squadByFranchise.get(f.id) ?? []).map(
+      ({ name, category, type }) => ({ name, category, type }),
+    );
     return {
       id: f.id,
       name: f.name,
       short_code: f.short_code,
       owner_name: f.owner_name,
       owners: ownerList,
-      squad: squadByFranchise.get(f.id) ?? [],
+      squad,
     };
   });
 }
