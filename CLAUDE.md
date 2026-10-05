@@ -138,6 +138,33 @@ separate auth systems per role.
 
 ### Recent updates (as of 2026-10-05) — post-auction
 
+- **Admin "Notify Players" — composable email to sold players**
+  (`/admin/announcements`, new nav link). Emails selected squad members a
+  personalised message (their franchise + congrats + the ₹`registration_fee`
+  reminder to pay the owner) **without hardcoding the copy** — the admin writes
+  the subject / heading / body with `{{placeholders}}` that are substituted
+  per-recipient and wrapped in the branded email shell. **No migration / no new
+  table** (reuses `squad_members` + `players` + `league_settings`).
+  - **Placeholders:** `{{player_name}}`, `{{franchise_name}}`,
+    `{{franchise_code}}`, `{{category}}`, `{{price}}`, `{{registration_fee}}`
+    (from `league_settings.registration_fee`, default 3000),
+    `{{registration_code}}`. Shared client+server helper
+    `lib/email/announcement.ts` (`ANNOUNCEMENT_PLACEHOLDERS`, `fillPlaceholders`,
+    `buildAnnouncementVars`, `DEFAULT_ANNOUNCEMENT`).
+  - **UI** (`components/admin/announcement-composer.tsx`, client): recipient
+    picker grouped by franchise (players with no email flagged + unselectable),
+    editable subject/heading/body pre-filled from the default template, clickable
+    placeholder chips that insert at the body caret, a **live preview** rendered
+    as a sample recipient, and a two-step **Review & send** confirm. Warns when
+    SMTP isn't configured.
+  - **Send:** `sendAnnouncement` server action (`.../announcements/actions.ts`)
+    re-fetches authoritative recipient data via `getSquadRecipients`
+    (`lib/queries/announcements.ts`) — never trusts client-sent names —
+    substitutes, sends in batches of 8 via `sendEmail`, and reports
+    sent/skipped/failed/no-email counts. `renderAnnouncementHtml` in
+    `templates.ts` escapes everything (no injection) and turns blank lines into
+    paragraphs. `tsc` + `eslint` clean; route 307→login (compiles).
+
 - **Manual squad display sequence.** The admin can now hand-order players within
   a squad (esp. owners & legends) on the public `/franchises` page + the admin
   `/admin/squads` view. New nullable `squad_members.display_order int` (migration
