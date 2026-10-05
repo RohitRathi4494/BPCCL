@@ -204,6 +204,76 @@ export function approvalEmail(
   };
 }
 
+/**
+ * Sent to every approved player when the live auction begins, with the YouTube
+ * live-stream link so they can watch franchises bid for them in real time.
+ */
+export function auctionLiveEmail(
+  fullName: string,
+  youtubeUrl: string,
+): { subject: string; html: string } {
+  return {
+    subject: `🔴 The USCL ${site.season} Auction is LIVE — watch now`,
+    html: shell(
+      "The auction is live",
+      `<p style="margin:0 0 14px;">Hi ${escapeHtml(fullName)},</p>
+       <p style="margin:0 0 14px;">The moment you registered for is here &mdash; the
+       <strong>${site.name} ${site.season}</strong> player auction is
+       <strong style="color:${GOLD};">LIVE now</strong>. All 14 franchises are at the table,
+       bidding to draft players into their squads.</p>
+       <p style="margin:0 0 22px;">Tune in to watch it unfold in real time &mdash; and see your name go up for grabs.</p>
+       <p style="margin:0 0 22px;text-align:center;">
+         <a href="${escapeHtml(youtubeUrl)}" style="display:inline-block;padding:14px 30px;background:${GOLD};color:${NAVY};font-weight:700;text-decoration:none;border-radius:6px;letter-spacing:0.5px;font-size:16px;">▶  Watch the Auction Live</a>
+       </p>
+       <div style="margin:0 0 20px;padding:14px 18px;background:${NAVY_SOFT};border-left:3px solid ${GOLD};border-radius:6px;">
+         <span style="color:${SLATE};font-size:12px;letter-spacing:1px;text-transform:uppercase;">Live stream link</span><br/>
+         <a href="${escapeHtml(youtubeUrl)}" style="color:${CREAM};font-size:14px;word-break:break-all;">${escapeHtml(youtubeUrl)}</a>
+       </div>
+       <p style="margin:0 0 14px;">If you're picked by a franchise, we'll be in touch about next steps and the
+       registration fee you agreed to on the form.</p>
+       <p style="margin:0;color:${SLATE};">Best of luck &mdash; see you on the pitch at ${site.venue.name}, ${site.venue.city}.</p>`,
+      {
+        preview: `The ${site.shortName} ${site.season} auction is live now — watch franchises bid in real time.`,
+      },
+    ),
+  };
+}
+
+/**
+ * Turn an admin-authored plain-text body into safe, nicely spaced HTML:
+ * everything is HTML-escaped (no injection from the template or substituted
+ * values), blank lines become paragraphs, and single newlines become <br/>.
+ */
+function formatBodyText(text: string): string {
+  const paragraphs = text
+    .replace(/\r\n/g, "\n")
+    .split(/\n{2,}/)
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
+  return paragraphs
+    .map(
+      (p) =>
+        `<p style="margin:0 0 14px;">${escapeHtml(p).replace(/\n/g, "<br/>")}</p>`,
+    )
+    .join("");
+}
+
+/**
+ * Wrap an admin-composed announcement (custom heading + body) in the standard
+ * branded email shell. Heading and body are plain text with {{placeholders}}
+ * already substituted by the caller; both are escaped here. Used by the admin
+ * "Notify Players" composer so admins control the copy without touching code.
+ */
+export function renderAnnouncementHtml(opts: {
+  heading: string;
+  bodyText: string;
+  preview?: string;
+}): string {
+  return shell(escapeHtml(opts.heading), formatBodyText(opts.bodyText), {
+    preview: opts.preview,
+  });
+}
+
 export function rejectionEmail(
   fullName: string,
   reason: string,

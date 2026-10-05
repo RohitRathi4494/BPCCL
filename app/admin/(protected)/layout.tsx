@@ -10,6 +10,7 @@ const adminNav = [
   { label: "Auction Setup", href: "/admin/auction-setup" },
   { label: "Auction", href: "/admin/auction" },
   { label: "Squads", href: "/admin/squads" },
+  { label: "Notify Players", href: "/admin/announcements" },
   { label: "Pools", href: "/pools/edit" },
   { label: "Exports", href: "/admin/exports" },
   { label: "Fixtures", href: "/admin/fixtures", soon: true },
