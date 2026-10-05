@@ -136,6 +136,20 @@ separate auth systems per role.
 - [ ] Social/content hub (auto-generated shareable graphics)
 - [ ] Deployed to production
 
+### Recent updates (as of 2026-10-05) — post-auction
+
+- **Manual squad display sequence.** The admin can now hand-order players within
+  a squad (esp. owners & legends) on the public `/franchises` page + the admin
+  `/admin/squads` view. New nullable `squad_members.display_order int` (migration
+  `20261005000000`, **pushed**; admin writes via the existing "squad_members staff
+  write" RLS policy — no RPC). `/admin/squads` gains a **"Seq" column** with an
+  inline number input (`components/admin/squad-order-input.tsx`, saves via the new
+  `setSquadOrder` server action in `app/admin/(protected)/squads/actions.ts`,
+  revalidates `/admin/squads` + `/franchises`). **Lower numbers sort first; blank
+  = default order** (type rank → bid/name). `getPublicFranchises` sorts both the
+  squad list and the owners list by `display_order` first, then the old fallback.
+  `database.types.ts` hand-edited. `tsc` + `eslint` clean; `/franchises` 200.
+
 ### Recent updates (as of 2026-10-04) — post-auction
 
 - **Registration closed.** New `league_settings.registration_open` bool
