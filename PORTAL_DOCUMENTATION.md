@@ -392,10 +392,23 @@ lock `auction_state`/`franchises` rows with `for update`.
   player must sit in an `acquisition_type='auction'` slot (owner/retention/legend rejected).
   Computes `floor(price*0.7)`, deletes the member (player returns to the derived pool), adds refund
   to `purse_remaining`, logs `released`. **Not reversible.** Returns `{ok,refund,price_paid}`.
+- **`post_release_player(p_player uuid) → jsonb`** — post-auction release of an auction pick.
+  Staff-gated, **not** status-gated. Deletes the member, **refunds the full price** to
+  `purse_remaining`, logs `post_released`. (Contrast `release_player`'s in-auction 70% penalty.)
+- **`post_add_player(p_franchise uuid, p_player uuid) → jsonb`** — post-auction add of an unsold
+  approved player at their **category base price** (`base_price[assigned_category]`). Requires the
+  player not already in a squad, `squadCount < squad_max`, and `purse_remaining >= base_price`.
+  Inserts `squad_members(acquisition_type='auction', price=base_price)`, decrements purse, logs
+  `post_added`.
+- **`post_replace_player(p_franchise uuid, p_out_player uuid, p_in_player uuid) → jsonb`** —
+  post-auction swap. Validates the outgoing player is an `auction` pick on that franchise and the
+  incoming player is approved + unsold. The incoming player **inherits the outgoing price** (spend +
+  squad size unchanged). Logs `post_replaced`.
 - **`undo_last_action() → jsonb`** — reverses the most recent not-yet-undone action in
   `('sold','sold_rtm','unsold','owner_locked','retention_locked','legend_locked','topup_applied')`.
-  **Release boundary guard**: if the newest live action is `released`, it refuses ("cannot be
-  undone") rather than skipping past it. Reversals: sold/locks → delete member + restore purse
+  **Boundary guard**: if the newest live action is `released` or any post-auction edit
+  (`post_released`/`post_added`/`post_replaced`), it refuses ("cannot be undone") rather than skipping
+  past it. Reversals: sold/locks → delete member + restore purse
   (+ clear on-block result if current); sold_rtm → also `rtm_used-1` and primary's
   `rtm_against_count-1`; topup_applied → subtract from both purses + clear used flag; unsold →
   clear the on-block result. Marks the original row `undone_at=now()` and appends an `undo` row.
@@ -474,7 +487,7 @@ Published tables: `auction_state`, `bids`, `innings`, `balls` (initial), `franch
 - `squad_members.acquisition_type`: `owner | retention | legend | auction`
 - `auction_state.status`: `setup | in_progress | paused | completed`
 - `auction_state.current_result`: NULL or `sold | unsold`
-- `auction_log.action`: `sold | sold_rtm | unsold | topup_applied | retention_locked | owner_locked | legend_locked | released | undo`
+- `auction_log.action`: `sold | sold_rtm | unsold | topup_applied | retention_locked | owner_locked | legend_locked | released | post_released | post_added | post_replaced | undo`
 - `sponsors.tier`: `Title | Co-title | Associate | Ground Partner | Media Partner | Statistics Partner | Healthcare Partner`
 - `sponsor_enquiries.status`: `new | contacted | closed`
 - `matches.status`: `scheduled | live | completed | abandoned`
@@ -533,6 +546,7 @@ Published tables: `auction_state`, `bids`, `innings`, `balls` (initial), `franch
 | `20261004000000_registration_open_flag` | +registration_open (set false) |
 | `20261004010000_my_squad_contacts` | my_squad_contacts() RPC (owner-scoped phones) |
 | `20261005000000_squad_member_display_order` | +squad_members.display_order (manual squad ordering) |
+| `20261006000000_post_auction_squad_edits` | log +post_released/post_added/post_replaced; post_release_player/post_add_player/post_replace_player RPCs; undo boundary guard widened |
 
 ---
 
@@ -937,6 +951,31 @@ once and caches it as an inline attachment with cid `uscl-logo`; templates refer
   players when the auction begins).
 - **`renderAnnouncementHtml({heading, bodyText, preview})`** — wraps an admin-composed announcement;
   `formatBodyText` turns blank lines → `<p>`, single newlines → `<br/>`, all HTML-escaped.
+
+### 7.9 Post-Auction Squad Edits (`/admin/post-auction`)
+
+After the auction concludes, the admin fixes up squads on each franchise's behalf. Page →
+`PostAuctionManager` (client, `useAuction` live snapshot + the approved pool from `players`). A
+franchise selector opens a per-team panel (spend / remaining / purse, squad n/max, below-min flag).
+Three operations, **auction-bought players only** (owner/retention/legend setup locks are protected):
+
+- **Replace (swap)** — a per-row **Replace** button opens a searchable unsold picker; choosing a
+  player calls **`post_replace_player(franchise, out_player, in_player)`**. The incoming player
+  **inherits the outgoing player's exact price**, so the team's spend and squad size are unchanged.
+- **Add (net addition)** — the **Add player** picker shows each unsold player's category **base
+  price** + affordability; choosing one calls **`post_add_player(franchise, player)`**, which charges
+  `league_settings.base_price[category]`, requires `purse_remaining >= base` and `squadCount < squad_max`.
+- **Release (net removal)** — a per-row **Release** button (two-step confirm) calls
+  **`post_release_player(player)`**, which **refunds the full price paid** (a clean post-auction
+  correction, NOT the in-auction 70% penalty of `release_player`).
+
+RPCs are called from the browser client (the admin is `is_auction_staff()`), then `refetch()`
+updates the live view. They are **not status-gated** (run while the auction is `completed`) and are
+**non-undoable** — `undo_last_action()` treats `post_released`/`post_added`/`post_replaced` as
+boundaries (reverse a change by making the opposite edit). See §5.2 for the RPC definitions.
+
+> Design defaults: standalone Release refunds the **full** price (not a penalty); Add uses the
+> category **base price** (0 for any category still seeded 0 — set real values in Auction Setup first).
 
 ---
 

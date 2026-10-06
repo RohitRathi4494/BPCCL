@@ -136,6 +136,43 @@ separate auth systems per role.
 - [ ] Social/content hub (auto-generated shareable graphics)
 - [ ] Deployed to production
 
+### Recent updates (as of 2026-10-06) — post-auction
+
+- **Post-auction squad edits (admin) — release / add / replace.** New admin page
+  `/admin/post-auction` (+ nav link "Post-Auction") to fix up squads on a
+  franchise's behalf after the auction. Three operations, **auction-bought
+  players only** (owners/retentions/legends are locked):
+  - **Replace (swap)** — release a squad player + bring in an unsold player; the
+    team's **spend is unchanged** (the incoming player inherits the outgoing
+    player's exact price; squad size + purse unchanged).
+  - **Add (net)** — bring in an unsold player at their **category base price**
+    (`league_settings.base_price[category]`); requires `purse_remaining >= base`
+    and `squadCount < squad_max`.
+  - **Release (net)** — drop an auction pick; **full price refunded** to the
+    purse (clean post-auction correction, NOT the in-auction 70% penalty of
+    `release_player`).
+  - **Migration `20261006000000_post_auction_squad_edits.sql`** (**pushed**):
+    `auction_log.action` check widened with `post_released`/`post_added`/
+    `post_replaced`; RPCs **`post_release_player(p_player)`**,
+    **`post_add_player(p_franchise, p_player)`**,
+    **`post_replace_player(p_franchise, p_out_player, p_in_player)`** (all
+    SECURITY DEFINER, `is_auction_staff()`-gated, additive — don't touch
+    `sell_player`/`apply_topup`/`release_player`). **Not status-gated** (run
+    post-auction while `completed`). `undo_last_action()` recreated with the
+    boundary guard widened so the three new actions are **non-undoable
+    boundaries** (reverse by making the opposite edit). `database.types.ts`
+    hand-edited.
+  - **UI:** `components/admin/post-auction-manager.tsx` (client, `useAuction`
+    live snapshot): franchise selector → per-team panel (spend/remaining/purse,
+    squad n/max, below-min flag) with an **Add player** picker and per-row
+    **Replace** / **Release** controls; a shared searchable `UnsoldPicker`
+    (shows base price + affordability for Add). Calls the RPCs from the browser
+    client + `refetch()`. `tsc` + `eslint` clean; route 307→login (compiles).
+  - **NOTE:** the standalone **Release refunds the full price** (not a penalty) —
+    this was a sensible default for a post-auction correction; flag if a penalty
+    is wanted. Adding at base price uses `base_price[category]` (0 for any
+    category still seeded 0 — set real values in Auction Setup first).
+
 ### Recent updates (as of 2026-10-05) — post-auction
 
 - **Admin "Notify Players" — composable email to sold players**

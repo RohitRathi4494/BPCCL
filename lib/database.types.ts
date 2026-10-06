@@ -1037,6 +1037,15 @@ export type Database = {
         Returns: { player_id: string; phone: string | null }[]
       }
       release_player: { Args: { p_player: string }; Returns: Json }
+      post_release_player: { Args: { p_player: string }; Returns: Json }
+      post_add_player: {
+        Args: { p_franchise: string; p_player: string }
+        Returns: Json
+      }
+      post_replace_player: {
+        Args: { p_franchise: string; p_out_player: string; p_in_player: string }
+        Returns: Json
+      }
       reset_auction: { Args: never; Returns: Json }
       unlock_squad_member: { Args: { p_player: string }; Returns: Json }
       sell_player: {
