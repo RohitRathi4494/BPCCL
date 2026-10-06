@@ -136,6 +136,29 @@ separate auth systems per role.
 - [ ] Social/content hub (auto-generated shareable graphics)
 - [ ] Deployed to production
 
+### Recent updates (as of 2026-10-07) — post-auction
+
+- **Squad views now show a player's CURRENT category (live), not the one frozen
+  at acquisition.** Problem: `squad_members.category_at_acquisition` captured the
+  category when a player was sold/locked/added, and every squad display preferred
+  it — so changing a player's `assigned_category` in admin review did **not** show
+  up in the admin all-squads page or the public `/franchises` page. Fix: flipped
+  the precedence to **`players.assigned_category ?? category_at_acquisition`**
+  (live first, acquisition value as fallback) in all five squad readers:
+  `app/admin/(protected)/squads/page.tsx`, `lib/queries/franchises.ts`
+  (public squads), `lib/auction/snapshot.ts` (`SquadEntry.category` → uses the
+  `players_public` join's `assigned_category`; feeds the big screen/console/owner
+  My Squad), `lib/exports/workbook.ts` (setup/results sheets), and
+  `lib/queries/announcements.ts` (`{{category}}` email placeholder). **No
+  migration / no schema change** — `category_at_acquisition` is still stored for
+  audit, just no longer the display source of truth.
+  - **Auto-refresh:** the three admin actions that change `assigned_category`
+    (`reviewPlayer`, `bulkApprovePlayers`, `autoAssignCategories` in
+    `registrations/actions.ts`) now also `revalidatePath("/admin/squads")` +
+    `revalidatePath("/franchises")`, so those pages pick up the new category
+    without a manual cache bust. (The franchise-owner My Squad already read live
+    category via `players_pool`.) `tsc` + `eslint` clean; `/franchises` 200.
+
 ### Recent updates (as of 2026-10-06) — post-auction
 
 - **Post-auction squad edits (admin) — release / add / replace.** New admin page

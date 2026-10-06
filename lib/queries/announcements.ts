@@ -65,7 +65,7 @@ export async function getSquadRecipients(
     name: m.players?.full_name ? toTitleCase(m.players.full_name) : "—",
     email: m.players?.email ?? null,
     registration_code: m.players?.registration_code ?? null,
-    category: m.category_at_acquisition ?? m.players?.assigned_category ?? null,
+    category: m.players?.assigned_category ?? m.category_at_acquisition ?? null,
     price: m.price ?? 0,
     acquisition_type: m.acquisition_type,
     display_as_owner: Boolean(m.display_as_owner),

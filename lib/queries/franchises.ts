@@ -99,7 +99,8 @@ export async function getPublicFranchises(): Promise<PublicFranchise[]> {
     const squad = squadByFranchise.get(m.franchise_id) ?? [];
     squad.push({
       name,
-      category: m.category_at_acquisition ?? catById.get(m.player_id) ?? null,
+      // Prefer the player's current category so admin category edits show live.
+      category: catById.get(m.player_id) ?? m.category_at_acquisition ?? null,
       type,
       order,
     });

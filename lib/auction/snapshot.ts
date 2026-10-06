@@ -214,7 +214,10 @@ export async function fetchAuctionSnapshot(
         full_name: byId.get(m.player_id)?.full_name ?? "Player",
         price: m.price,
         acquisition_type: m.acquisition_type as SquadEntry["acquisition_type"],
-        category: m.category_at_acquisition,
+        // Prefer the player's CURRENT category so admin category edits flow
+        // through live; fall back to the category captured at acquisition.
+        category:
+          byId.get(m.player_id)?.assigned_category ?? m.category_at_acquisition,
         display_as_owner: m.display_as_owner ?? false,
       }));
     return {

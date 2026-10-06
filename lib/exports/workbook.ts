@@ -315,7 +315,7 @@ function squadRows(members: SquadMemberRow[]) {
     franchise: asText(m.franchises?.name),
     player: asText(m.players?.full_name),
     reg_id: asText(m.players?.registration_code),
-    category: asText(m.category_at_acquisition ?? m.players?.assigned_category),
+    category: asText(m.players?.assigned_category ?? m.category_at_acquisition),
     // A member flagged "display as owner" (e.g. an owner locked in the Legend
     // slot) is reported as an owner here too.
     acquisition_type: asText(m.display_as_owner ? "owner" : m.acquisition_type),

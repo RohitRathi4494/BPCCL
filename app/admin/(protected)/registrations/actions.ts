@@ -207,6 +207,9 @@ export async function bulkApprovePlayers(
   }
 
   revalidatePath("/admin/registrations");
+  // Category/approval changes can affect what the squad pages display.
+  revalidatePath("/admin/squads");
+  revalidatePath("/franchises");
   return { approved: newlyApproved.length };
 }
 
@@ -371,6 +374,9 @@ export async function reviewPlayer(
 
   revalidatePath("/admin/registrations");
   revalidatePath(`/admin/registrations/${playerId}`);
+  // A category change here must flow through to the squad displays.
+  revalidatePath("/admin/squads");
+  revalidatePath("/franchises");
   redirect(`/admin/registrations?reviewed=1`);
 }
 
@@ -506,6 +512,8 @@ export async function autoAssignCategories(): Promise<AutoAssignState> {
   }
 
   revalidatePath("/admin/registrations");
+  revalidatePath("/admin/squads");
+  revalidatePath("/franchises");
   return { assigned };
 }
 
