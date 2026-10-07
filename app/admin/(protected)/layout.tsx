@@ -2,20 +2,40 @@ import { LogOut } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { signOut } from "@/app/admin/auth-actions";
 import { BrandMark } from "@/components/site/brand-mark";
-import { AdminNav } from "@/components/admin/admin-nav";
+import { AdminNav, type AdminNavGroup } from "@/components/admin/admin-nav";
 
-const adminNav = [
-  { label: "Registrations", href: "/admin/registrations" },
-  { label: "Franchises", href: "/admin/franchises" },
-  { label: "Auction Setup", href: "/admin/auction-setup" },
-  { label: "Auction", href: "/admin/auction" },
-  { label: "Squads", href: "/admin/squads" },
-  { label: "Post-Auction", href: "/admin/post-auction" },
-  { label: "Notify Players", href: "/admin/announcements" },
-  { label: "Pools", href: "/pools/edit" },
+const adminNav: AdminNavGroup[] = [
+  {
+    label: "Players",
+    children: [
+      { label: "Registrations", href: "/admin/registrations" },
+      { label: "Notify Players", href: "/admin/announcements" },
+    ],
+  },
+  {
+    label: "Auction",
+    children: [
+      { label: "Auction Setup", href: "/admin/auction-setup" },
+      { label: "Auction", href: "/admin/auction" },
+      { label: "Squads", href: "/admin/squads" },
+      { label: "Post-Auction", href: "/admin/post-auction" },
+    ],
+  },
+  {
+    label: "Teams",
+    children: [
+      { label: "Franchises", href: "/admin/franchises" },
+      { label: "Pools", href: "/pools/edit" },
+    ],
+  },
   { label: "Exports", href: "/admin/exports" },
-  { label: "Fixtures", href: "/admin/fixtures", soon: true },
-  { label: "Scoring", href: "/admin/scoring", soon: true },
+  {
+    label: "Season",
+    children: [
+      { label: "Fixtures", href: "/admin/fixtures", soon: true },
+      { label: "Scoring", href: "/admin/scoring", soon: true },
+    ],
+  },
 ];
 
 export default async function AdminLayout({
