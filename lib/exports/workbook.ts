@@ -107,6 +107,10 @@ type SquadMemberRow = {
     registration_code: string | null;
     assigned_category: string | null;
     phone: string | null;
+    jersey_number: string | null;
+    jersey_name: string | null;
+    tshirt_size: string | null;
+    lower_size: string | null;
   } | null;
 };
 
@@ -116,7 +120,8 @@ async function fetchSquadMembers(supabase: AnyClient): Promise<SquadMemberRow[]>
     .select(
       "acquisition_type, display_as_owner, category_at_acquisition, price, created_at, " +
         "franchises(name, short_code), " +
-        "players(full_name, registration_code, assigned_category, phone)",
+        "players(full_name, registration_code, assigned_category, phone, " +
+        "jersey_number, jersey_name, tshirt_size, lower_size)",
     )
     .order("created_at", { ascending: true });
   if (error) throw new Error(error.message);
@@ -321,9 +326,22 @@ function squadRows(members: SquadMemberRow[]) {
     acquisition_type: asText(m.display_as_owner ? "owner" : m.acquisition_type),
     price: m.price,
     phone: asText(m.players?.phone),
+    // Jersey/kit details the player entered at registration.
+    jersey_number: asText(m.players?.jersey_number),
+    jersey_name: asText(m.players?.jersey_name),
+    tshirt_size: asText(m.players?.tshirt_size),
+    lower_size: asText(m.players?.lower_size),
     locked_at: asText(m.created_at),
   }));
 }
+
+/** Jersey/kit columns the player entered at registration (appended to results). */
+const JERSEY_COLUMNS: ColumnDef[] = [
+  { header: "Jersey No.", key: "jersey_number", width: 10 },
+  { header: "Jersey Name", key: "jersey_name", width: 18 },
+  { header: "T-Shirt", key: "tshirt_size", width: 10 },
+  { header: "Lower", key: "lower_size", width: 10 },
+];
 
 const SQUAD_COLUMNS: ColumnDef[] = [
   { header: "Code", key: "franchise_code", width: 10 },
@@ -350,7 +368,10 @@ async function addAuctionSetupSheet(wb: ExcelJS.Workbook, supabase: AnyClient) {
 
 async function addAuctionResultsSheet(wb: ExcelJS.Workbook, supabase: AnyClient) {
   const members = await fetchSquadMembers(supabase);
-  addSheet(wb, "Auction Results", SQUAD_COLUMNS, squadRows(members));
+  // Auction Results carries the jersey/kit details (for kit ordering) on top of
+  // the shared squad columns; Auction Setup keeps the leaner column set.
+  const columns = [...SQUAD_COLUMNS, ...JERSEY_COLUMNS];
+  addSheet(wb, "Auction Results", columns, squadRows(members));
 }
 
 // ---------------------------------------------------------------------------
