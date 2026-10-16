@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
     "/**": ["./public/uscl-logo.png"],
   },
   images: {
+    // Disable Vercel's on-demand Image Optimization so the project stays within
+    // the Hobby (free) plan. next/image still works — it serves the original
+    // source file without any server-side resize/quality transformation.
+    unoptimized: true,
     remotePatterns: [
       {
         // Supabase Storage (sponsor logos, player photos, match media).
