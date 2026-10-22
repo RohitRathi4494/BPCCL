@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { ShoppingBag } from "lucide-react";
-import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Shop",
-  description: `The ${site.shortName} Urban Sports Shop is coming soon — official merchandise and more.`,
+  description:
+    "The Urban Sports Shop is coming soon — your complete cricket equipment store.",
 };
 
 export default function ShopPage() {
@@ -24,8 +24,9 @@ export default function ShopPage() {
         </h1>
 
         <p className="mt-5 max-w-xl text-lg text-foreground/85">
-          Our shop is coming soon. It is currently under development — check back
-          here for official {site.shortName} merchandise.
+          Your complete cricket equipment store is coming soon. From bats, balls
+          and pads to gloves, kit bags and apparel — it&apos;s all on the way.
+          The shop is currently under development, so check back shortly.
         </p>
 
         <span className="mt-8 inline-flex items-center rounded-sm border border-border bg-muted px-4 py-2 font-mono text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
