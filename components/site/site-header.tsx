@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Menu, X, Shield, Users } from "lucide-react";
+import { Menu, X, Shield, Users, ShoppingBag } from "lucide-react";
 import { BrandMark } from "@/components/site/brand-mark";
 import { navLinks } from "@/lib/site";
 import { cn } from "@/lib/utils";
@@ -84,10 +84,11 @@ export function SiteHeader() {
         <div className="hidden items-center gap-2.5 xl:flex">
           <LoginItems />
           <Link
-            href="/register"
-            className="inline-flex items-center rounded-sm bg-primary px-4 py-2 font-heading text-sm font-bold tracking-wide text-primary-foreground uppercase shadow-[0_0_20px_rgba(61,123,239,0.3)] transition-shadow hover:shadow-[0_0_28px_rgba(61,123,239,0.5)]"
+            href="/shop"
+            className="inline-flex items-center gap-1.5 rounded-sm bg-primary px-4 py-2 font-heading text-sm font-bold tracking-wide text-primary-foreground uppercase shadow-[0_0_20px_rgba(61,123,239,0.3)] transition-shadow hover:shadow-[0_0_28px_rgba(61,123,239,0.5)]"
           >
-            Register to Play
+            <ShoppingBag className="size-4" />
+            Shop
           </Link>
         </div>
 
@@ -117,11 +118,12 @@ export function SiteHeader() {
               className="justify-center"
             />
             <Link
-              href="/register"
+              href="/shop"
               onClick={() => setOpen(false)}
-              className="inline-flex items-center justify-center rounded-sm bg-primary px-4 py-2.5 font-heading text-sm font-bold tracking-wide text-primary-foreground uppercase"
+              className="inline-flex items-center justify-center gap-1.5 rounded-sm bg-primary px-4 py-2.5 font-heading text-sm font-bold tracking-wide text-primary-foreground uppercase"
             >
-              Register to Play
+              <ShoppingBag className="size-4" />
+              Shop
             </Link>
           </div>
         </nav>
