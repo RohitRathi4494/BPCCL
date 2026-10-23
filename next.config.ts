@@ -1,5 +1,40 @@
 import type { NextConfig } from "next";
 
+type RemotePattern = NonNullable<
+  NonNullable<NextConfig["images"]>["remotePatterns"]
+>[number];
+
+// Allowed external image hosts. `unoptimized: true` serves images as-is (no
+// optimizer), but we still list hosts to match the repo convention and keep
+// next/image happy. This does NOT touch any redirect/canonicalization config.
+const remotePatterns: RemotePattern[] = [
+  {
+    // Supabase Storage (sponsor logos, legacy/fallback player photos, media).
+    protocol: "https",
+    hostname: "*.supabase.co",
+    pathname: "/storage/v1/object/public/**",
+  },
+  {
+    // Cloudflare R2 default public bucket domain (pub-xxxx.r2.dev).
+    protocol: "https",
+    hostname: "**.r2.dev",
+    pathname: "/**",
+  },
+];
+
+// If a custom R2 public domain is configured, allow it too.
+try {
+  if (process.env.R2_PUBLIC_URL) {
+    const host = new URL(process.env.R2_PUBLIC_URL).hostname;
+    if (!remotePatterns.some((p) => p.hostname === host)) {
+      remotePatterns.push({ protocol: "https", hostname: host, pathname: "/**" });
+    }
+  }
+} catch {
+  // Ignore an unparseable R2_PUBLIC_URL — the r2.dev pattern above still covers
+  // the default public bucket domain.
+}
+
 const nextConfig: NextConfig = {
   // Ensure the brand logo ships with the serverless functions so transactional
   // emails can embed it as an inline (CID) attachment at runtime.
@@ -11,14 +46,7 @@ const nextConfig: NextConfig = {
     // the Hobby (free) plan. next/image still works — it serves the original
     // source file without any server-side resize/quality transformation.
     unoptimized: true,
-    remotePatterns: [
-      {
-        // Supabase Storage (sponsor logos, player photos, match media).
-        protocol: "https",
-        hostname: "*.supabase.co",
-        pathname: "/storage/v1/object/public/**",
-      },
-    ],
+    remotePatterns,
   },
   // NOTE: www <-> non-www and http -> https canonicalization are intentionally
   // NOT handled here. Vercel does this at the edge based on which domain is set

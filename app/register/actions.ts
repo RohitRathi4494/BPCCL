@@ -82,7 +82,6 @@ export async function submitRegistration(
   const company = get("company");
   const work_email = get("work_email");
   const photo_url = get("photo_url");
-  const aadhaar_path = get("aadhaar_path");
   const cricheroesRaw = get("cricheroes_url");
   const linkedinRaw = get("linkedin_url");
   const jersey_number = get("jersey_number");
@@ -125,8 +124,6 @@ export async function submitRegistration(
     errors.work_email = "Enter a valid email address.";
 
   if (!photo_url) errors.photo_url = "Please upload a player photo.";
-
-  if (!aadhaar_path) errors.aadhaar_path = "Please upload your Aadhaar card.";
 
   const cricheroes_url = normalizeUrl(cricheroesRaw);
   if (!cricheroesRaw) errors.cricheroes_url = "A CricHeroes profile link is required.";
@@ -200,7 +197,6 @@ export async function submitRegistration(
     company,
     work_email,
     photo_url,
-    aadhaar_path,
     cricheroes_url,
     linkedin_url,
     tshirt_size: tshirt.value,

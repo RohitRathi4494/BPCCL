@@ -72,14 +72,14 @@ export function RegistrationsFilters({
       </select>
 
       <select
-        aria-label="Filter by Aadhaar"
+        aria-label="Filter by Aadhaar verification"
         value={params.get("aadhaar") ?? ""}
         onChange={(e) => setParam("aadhaar", e.target.value)}
         className={selectClass}
       >
         <option value="">Aadhaar: any</option>
-        <option value="missing">Aadhaar missing</option>
-        <option value="uploaded">Aadhaar uploaded</option>
+        <option value="unverified">Aadhaar unverified</option>
+        <option value="verified">Aadhaar verified</option>
       </select>
 
       <select

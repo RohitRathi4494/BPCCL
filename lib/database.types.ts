@@ -492,8 +492,10 @@ export type Database = {
       }
       players: {
         Row: {
+          aadhaar_last4: string | null
           aadhaar_path: string | null
           aadhaar_reminded_at: string | null
+          aadhaar_verified: boolean
           achievements: string | null
           age: number
           assigned_category: string | null
@@ -535,8 +537,10 @@ export type Database = {
           work_email: string | null
         }
         Insert: {
+          aadhaar_last4?: string | null
           aadhaar_path?: string | null
           aadhaar_reminded_at?: string | null
+          aadhaar_verified?: boolean
           achievements?: string | null
           age: number
           assigned_category?: string | null
@@ -578,8 +582,10 @@ export type Database = {
           work_email?: string | null
         }
         Update: {
+          aadhaar_last4?: string | null
           aadhaar_path?: string | null
           aadhaar_reminded_at?: string | null
+          aadhaar_verified?: boolean
           achievements?: string | null
           age?: number
           assigned_category?: string | null
@@ -1019,10 +1025,6 @@ export type Database = {
     }
     Functions: {
       apply_topup: { Args: { p_franchise: string; p_which: number }; Returns: Json }
-      attach_aadhaar: {
-        Args: { p_code: string; p_phone: string; p_path: string }
-        Returns: Json
-      }
       check_phone_registered: { Args: { p_phone: string }; Returns: number }
       current_app_role: { Args: never; Returns: string }
       current_franchise_id: { Args: never; Returns: string }

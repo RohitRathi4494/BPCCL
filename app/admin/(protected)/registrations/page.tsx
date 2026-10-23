@@ -12,7 +12,6 @@ import { RegistrationsSearch } from "@/components/admin/registrations-search";
 import { RegistrationsFilters } from "@/components/admin/registrations-filters";
 import { RegistrationsTable } from "@/components/admin/registrations-table";
 import { AutoAssignButton } from "@/components/admin/auto-assign-button";
-import { AadhaarReminderButton } from "@/components/admin/aadhaar-reminder-button";
 import { PageSizeSelect } from "@/components/admin/page-size-select";
 
 const PAGE_SIZES = [25, 50, 100];
@@ -92,7 +91,6 @@ export default async function RegistrationsPage({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <AadhaarReminderButton />
           <AutoAssignButton />
         </div>
       </div>

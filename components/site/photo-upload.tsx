@@ -2,17 +2,16 @@
 
 import { useRef, useState } from "react";
 import { ImagePlus, Loader2, X } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import {
-  PHOTO_BUCKET,
-  PHOTO_MAX_BYTES,
-  PHOTO_MIME_TYPES,
-} from "@/lib/registration";
+import { PHOTO_MAX_BYTES, PHOTO_MIME_TYPES } from "@/lib/registration";
+import { compressImage } from "@/lib/images/compress";
+import { uploadPhoto } from "@/app/register/photo-actions";
 
 /**
- * Player photo upload. Uploads to the public `player-photos` Storage bucket
- * from the browser (anon), then reports the public URL to the parent form via
- * `onUploaded` (which stores it and submits it as `photo_url`).
+ * Player photo upload. Compresses the chosen image in the browser (resize to
+ * ~500px longest edge + re-encode to ~120 KB) and hands the small blob to the
+ * `uploadPhoto` server action, which stores it via the storage abstraction
+ * (Cloudflare R2, or Supabase as fallback) and returns a public URL. That URL is
+ * reported to the parent form via `onUploaded` (submitted as `photo_url`).
  */
 export function PhotoUpload({
   value,
@@ -42,22 +41,29 @@ export function PhotoUpload({
     setPreview(URL.createObjectURL(file));
     setUploading(true);
 
-    const supabase = createClient();
-    const ext = file.name.split(".").pop() || "jpg";
-    const path = `${crypto.randomUUID()}.${ext}`;
-    const { error: upErr } = await supabase.storage
-      .from(PHOTO_BUCKET)
-      .upload(path, file, { cacheControl: "3600", upsert: false });
+    try {
+      // Shrink the full-res phone photo to a small WebP/JPEG before it leaves
+      // the device — nothing multi-MB is ever uploaded or stored.
+      const { blob, type } = await compressImage(file);
+      const ext = type === "image/webp" ? "webp" : "jpg";
+      const fd = new FormData();
+      fd.append("file", blob, `photo.${ext}`);
 
-    setUploading(false);
-    if (upErr) {
-      console.error("photo upload:", upErr.message);
-      setLocalError("Upload failed — please try again.");
+      const result = await uploadPhoto(fd);
+      setUploading(false);
+      if (result.error || !result.url) {
+        console.error("photo upload:", result.error);
+        setLocalError(result.error ?? "Upload failed — please try again.");
+        setPreview(null);
+        return;
+      }
+      onUploaded(result.url);
+    } catch (e) {
+      console.error("photo upload:", e);
+      setUploading(false);
+      setLocalError("Couldn't process that image — please try another.");
       setPreview(null);
-      return;
     }
-    const { data } = supabase.storage.from(PHOTO_BUCKET).getPublicUrl(path);
-    onUploaded(data.publicUrl);
   }
 
   function clear() {

@@ -6,13 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getLeagueSettings, settingsCategories } from "@/lib/queries/settings";
 import { computeCategory } from "@/lib/categorization";
 import { STAT_FIELDS, type StatKey } from "@/lib/registration";
-import { getSiteUrl } from "@/lib/site";
 import { sendEmail } from "@/lib/email/send";
-import {
-  approvalEmail,
-  rejectionEmail,
-  aadhaarReminderEmail,
-} from "@/lib/email/templates";
+import { approvalEmail, rejectionEmail } from "@/lib/email/templates";
 
 export type ReviewState = { error?: string };
 export type EditStatsState = { error?: string; saved?: boolean };
@@ -21,87 +16,7 @@ export type ResetState = { error?: string };
 export type DeleteState = { error?: string };
 export type BulkState = { error?: string; approved?: number };
 export type AutoAssignState = { error?: string; assigned?: number };
-export type ReminderState = {
-  error?: string;
-  sent?: number;
-  skipped?: number;
-  failed?: number;
-  /** Selected players that couldn't be emailed (already uploaded / rejected / no email). */
-  ineligible?: number;
-};
-
-type DbClient = Awaited<ReturnType<typeof createClient>>;
-
-type ReminderTarget = {
-  id: string;
-  full_name: string;
-  email: string | null;
-  registration_code: string | null;
-};
-
-/**
- * Shared Aadhaar-reminder sender. Emails each target the self-service link in
- * small concurrent batches (best-effort per email), then stamps
- * `aadhaar_reminded_at` on the ones that actually went out so re-runs behave.
- * Callers are responsible for deciding *who* the targets are.
- */
-async function sendAadhaarReminders(
-  supabase: DbClient,
-  targets: ReminderTarget[],
-): Promise<{ sent: number; skipped: number; failed: number }> {
-  const url = `${getSiteUrl()}/register/aadhaar`;
-  const sentIds: string[] = [];
-  let sent = 0;
-  let skipped = 0;
-  let failed = 0;
-
-  const BATCH = 8;
-  for (let i = 0; i < targets.length; i += BATCH) {
-    const batch = targets.slice(i, i + BATCH);
-    const results = await Promise.all(
-      batch.map(async (p) => {
-        try {
-          const mail = aadhaarReminderEmail(
-            p.full_name,
-            p.registration_code,
-            url,
-          );
-          const r = await sendEmail({
-            to: p.email!,
-            subject: mail.subject,
-            html: mail.html,
-          });
-          return {
-            id: p.id,
-            outcome: r.skipped ? "skipped" : r.ok ? "sent" : "failed",
-          };
-        } catch (e) {
-          console.error("aadhaar reminder email:", e);
-          return { id: p.id, outcome: "failed" as const };
-        }
-      }),
-    );
-    for (const { id, outcome } of results) {
-      if (outcome === "sent") {
-        sent++;
-        sentIds.push(id);
-      } else if (outcome === "skipped") skipped++;
-      else failed++;
-    }
-  }
-
-  // Stamp only the players we actually emailed, so a re-run skips them but still
-  // picks up anyone that was skipped (e.g. SMTP not configured) or failed.
-  if (sentIds.length > 0) {
-    const { error: stampErr } = await supabase
-      .from("players")
-      .update({ aadhaar_reminded_at: new Date().toISOString() })
-      .in("id", sentIds);
-    if (stampErr) console.error("aadhaar reminder stamp:", stampErr.message);
-  }
-
-  return { sent, skipped, failed };
-}
+export type AadhaarVerifyState = { error?: string; saved?: boolean };
 
 // Columns the auto-categoriser needs.
 const STAT_COLS =
@@ -518,59 +433,28 @@ export async function autoAssignCategories(): Promise<AutoAssignState> {
 }
 
 /**
- * Email every non-rejected player who hasn't uploaded an Aadhaar yet, with their
- * registration ID and the self-service link. Best-effort per email; sent in
- * small concurrent batches. Re-runnable (will re-email anyone still missing it).
+ * Record the admin's Aadhaar *identity verification* for one player. We no longer
+ * store the Aadhaar image (legal/liability — see migration 20261023000000); the
+ * admin checks the physical/presented card once and sets `aadhaar_verified`, and
+ * may optionally keep only the last 4 digits (`aadhaar_last4`) as a reference.
+ * Admin-only via RLS ("players admin update").
  */
-export async function emailAadhaarReminders(): Promise<ReminderState> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Your session expired — please sign in again." };
-
-  // Only players who still have no Aadhaar AND haven't been reminded yet.
-  const { data: players, error } = await supabase
-    .from("players")
-    .select("id, full_name, email, registration_code")
-    .is("aadhaar_path", null)
-    .is("aadhaar_reminded_at", null)
-    .neq("status", "rejected")
-    .not("email", "is", null);
-  if (error) {
-    console.error("emailAadhaarReminders fetch:", error.message);
-    return { error: "Could not load players. Please try again." };
-  }
-
-  const targets = (players ?? []).filter((p) => p.email);
-  if (targets.length === 0) return { sent: 0, skipped: 0, failed: 0 };
-
-  const { sent, skipped, failed } = await sendAadhaarReminders(supabase, targets);
-
-  revalidatePath("/admin/registrations");
-  return { sent, skipped, failed };
-}
-
-/**
- * Email Aadhaar reminders to a *specific selection* of players (chosen via the
- * checkboxes on the registrations list). Unlike the bulk-all sender, this
- * re-sends even to players already reminded — the admin picked them on purpose.
- * Players in the selection who already uploaded an Aadhaar, are rejected, or
- * have no email on file are counted as `ineligible` and silently skipped.
- */
-export async function emailAadhaarRemindersToSelected(
-  _prev: ReminderState,
+export async function setAadhaarVerification(
+  _prev: AadhaarVerifyState,
   formData: FormData,
-): Promise<ReminderState> {
-  const ids = [
-    ...new Set(
-      formData
-        .getAll("player_ids")
-        .map((v) => String(v))
-        .filter((v) => UUID_RE.test(v)),
-    ),
-  ];
-  if (ids.length === 0) return { error: "Select at least one registration." };
+): Promise<AadhaarVerifyState> {
+  const playerId = String(formData.get("player_id") ?? "");
+  if (!UUID_RE.test(playerId)) return { error: "Missing or invalid player." };
+
+  const verified = formData.get("aadhaar_verified") === "on";
+
+  // Last 4 digits only, and only kept when the box has exactly 4 digits. Any
+  // other input is treated as "no reference" rather than storing partial/garbage.
+  const last4Raw = String(formData.get("aadhaar_last4") ?? "").trim();
+  if (last4Raw && !/^\d{4}$/.test(last4Raw)) {
+    return { error: "Last 4 digits must be exactly 4 numbers (or leave blank)." };
+  }
+  const aadhaar_last4 = last4Raw ? last4Raw : null;
 
   const supabase = await createClient();
   const {
@@ -578,27 +462,16 @@ export async function emailAadhaarRemindersToSelected(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Your session expired — please sign in again." };
 
-  // Of the selected ids, keep only those still eligible for an Aadhaar reminder.
-  const { data: players, error } = await supabase
+  const { error } = await supabase
     .from("players")
-    .select("id, full_name, email, registration_code")
-    .in("id", ids)
-    .is("aadhaar_path", null)
-    .neq("status", "rejected")
-    .not("email", "is", null);
+    .update({ aadhaar_verified: verified, aadhaar_last4 })
+    .eq("id", playerId);
   if (error) {
-    console.error("emailAadhaarRemindersToSelected fetch:", error.message);
-    return { error: "Could not load the selected players. Please try again." };
+    console.error("setAadhaarVerification:", error.message);
+    return { error: "Could not save the verification. Please try again." };
   }
-
-  const targets = (players ?? []).filter((p) => p.email);
-  const ineligible = ids.length - targets.length;
-  if (targets.length === 0) {
-    return { sent: 0, skipped: 0, failed: 0, ineligible };
-  }
-
-  const { sent, skipped, failed } = await sendAadhaarReminders(supabase, targets);
 
   revalidatePath("/admin/registrations");
-  return { sent, skipped, failed, ineligible };
+  revalidatePath(`/admin/registrations/${playerId}`);
+  return { saved: true };
 }

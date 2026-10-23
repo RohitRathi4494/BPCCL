@@ -21,7 +21,7 @@ export type RegistrationQuery = {
   category?: string;
   role?: string; // a ROLE_GROUPS label (Batting / Bowling / All Rounder / Wicket Keeper)
   stats?: string; // "na" = has NA/blank in any stat, "complete" = all filled
-  aadhaar?: string; // "missing" | "uploaded"
+  aadhaar?: string; // "verified" | "unverified" (admin identity check)
   age?: string; // an AGE_BUCKETS key ("u35" = 30–<35, "o35" = 35+)
   sort?: string; // a RegistrationSort ("newest" | "age_asc" | "age_desc")
   pageSize?: number;
@@ -88,10 +88,10 @@ export async function getRegistrations(
     }
   }
 
-  if (query.aadhaar === "missing") {
-    q = q.is("aadhaar_path", null);
-  } else if (query.aadhaar === "uploaded") {
-    q = q.not("aadhaar_path", "is", null);
+  if (query.aadhaar === "unverified") {
+    q = q.eq("aadhaar_verified", false);
+  } else if (query.aadhaar === "verified") {
+    q = q.eq("aadhaar_verified", true);
   }
 
   if (query.age) {

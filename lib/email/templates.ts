@@ -91,48 +91,6 @@ export function confirmationEmail(
 }
 
 /**
- * Reminder to a player who registered before the Aadhaar upload was required,
- * with their registration ID and a link to add it self-service.
- */
-export function aadhaarReminderEmail(
-  fullName: string,
-  registrationCode: string | null,
-  url: string,
-): { subject: string; html: string } {
-  return {
-    subject: `Action needed: add your Aadhaar card — USCL ${site.season}`,
-    html: shell(
-      "Add your Aadhaar card",
-      `<p style="margin:0 0 14px;">Hi ${escapeHtml(fullName)},</p>
-       <p style="margin:0 0 14px;">To complete your <strong>${site.name} ${site.season}</strong>
-       registration, we now need a photo of your <strong>Aadhaar card</strong> to verify your identity
-       for the league. It takes under a minute and no login is required.</p>
-       ${
-         registrationCode
-           ? `<div style="margin:0 0 18px;padding:14px 18px;background:${NAVY_SOFT};border-left:3px solid ${GOLD};border-radius:6px;">
-                <span style="color:${SLATE};font-size:12px;letter-spacing:1px;text-transform:uppercase;">Your registration ID</span><br/>
-                <strong style="color:${CREAM};font-size:20px;letter-spacing:2px;">${escapeHtml(
-                  registrationCode,
-                )}</strong><br/>
-                <span style="color:${SLATE};font-size:12px;">You'll need this and your registered phone number.</span>
-              </div>`
-           : ""
-       }
-       <p style="margin:0 0 22px;">
-         <a href="${escapeHtml(url)}" style="display:inline-block;padding:12px 22px;background:${GOLD};color:${NAVY};font-weight:700;text-decoration:none;border-radius:6px;letter-spacing:0.5px;">Add your Aadhaar card</a>
-       </p>
-       <p style="margin:0 0 14px;color:${SLATE};font-size:13px;">Or paste this link into your browser:<br/>
-       <span style="color:${CREAM};">${escapeHtml(url)}</span></p>
-       <p style="margin:0;color:${SLATE};">Your Aadhaar is used only for identity verification, stored securely,
-       and visible only to league admins.</p>`,
-      {
-        preview: `Add your Aadhaar card to complete your ${site.shortName} ${site.season} registration.`,
-      },
-    ),
-  };
-}
-
-/**
  * Internal notification sent to the partnerships inbox when a sponsor submits
  * the enquiry form. Reply-to is set to the sponsor's email by the caller, so a
  * reply goes straight back to them.
