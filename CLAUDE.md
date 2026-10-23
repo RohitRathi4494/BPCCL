@@ -136,6 +136,65 @@ separate auth systems per role.
 - [ ] Social/content hub (auto-generated shareable graphics)
 - [ ] Deployed to production
 
+### Recent updates (as of 2026-10-23) — storage: drop Aadhaar images, photos → R2
+
+- **Aadhaar images are no longer stored — identity is admin-verified instead.**
+  Retaining Aadhaar scans is a legal/liability risk (Aadhaar Act + DPDP Act
+  2023) and we only ever needed to verify identity/age once. Migration
+  `20261023000000_aadhaar_verification.sql` (**pushed**) adds
+  `players.aadhaar_verified bool not null default false` + `aadhaar_last4 text`,
+  backfills `aadhaar_verified = true` for everyone who had an Aadhaar on file
+  (they were already reviewed), and **drops the `attach_aadhaar()` RPC**.
+  - **Registration** (`/register`) no longer collects/uploads Aadhaar — the
+    `AadhaarUpload` field, hidden `aadhaar_path`, and its validation are gone, so
+    no image is ever written to storage.
+  - **Removed the whole self-service upload flow**: `app/register/aadhaar/`
+    (page/form/action), `components/site/aadhaar-upload.tsx`,
+    `aadhaar-attach-form.tsx`, the admin `AadhaarReminderButton` + bulk "Email
+    Aadhaar reminder", the `emailAadhaarReminders*` actions, and the
+    `aadhaarReminderEmail` template.
+  - **Admin review** (`/admin/registrations/[id]`): the "View Aadhaar"
+    signed-URL link is replaced by `components/admin/aadhaar-verification.tsx` — a
+    **verified** toggle + optional **last-4** input saved by the new
+    `setAadhaarVerification` action (admin RLS). The list filter changed from
+    "Aadhaar uploaded/missing" → **"verified/unverified"** (reads
+    `aadhaar_verified`).
+  - **Existing files deleted.** `scripts/aadhaar-storage-cleanup.mts` (dry-run by
+    default, `--go` to delete) removed **all 625** objects from the private
+    `player-aadhaar` bucket and nulled `aadhaar_path` on the 392 rows that had it.
+    The `aadhaar_path` / `aadhaar_reminded_at` columns are **kept but emptied**
+    (no drop migration), `aadhaar_verified` / `aadhaar_last4` are the live fields.
+
+- **Player photos moved off Supabase onto Cloudflare R2 (10 GB free, no egress).**
+  Supabase Storage was at ~85% of the 1 GB free cap; photos now serve from R2.
+  - **Compression (all new uploads):** `lib/images/compress.ts` (browser Canvas,
+    no dep) resizes to ≤500px longest edge and re-encodes to WebP (~120 KB)
+    **before** upload — full-res phone photos never leave the device.
+  - **Storage abstraction:** `lib/storage/` (`uploadPlayerPhoto({bytes,contentType,
+    ext}) → {url}`) picks **R2** when configured (`lib/storage/r2.ts`, `@aws-sdk/
+    client-s3` → `https://<account>.r2.cloudflarestorage.com`) else **Supabase
+    fallback**. The browser `PhotoUpload` compresses then calls the
+    `uploadPhoto` server action (`app/register/photo-actions.ts`); the returned
+    public URL is stored in the existing `players.photo_url`.
+  - **`next.config.ts`:** added `**.r2.dev` (+ env-driven custom host from
+    `R2_PUBLIC_URL`) to `images.remotePatterns`; `unoptimized:true` unchanged;
+    **the redirect/canonicalization block was NOT touched** (per the documented
+    outage). Added `@aws-sdk/client-s3`.
+  - **Env vars (in `.env.local`, gitignored):** `R2_ACCOUNT_ID`,
+    `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` (= `uscl-player-photos`),
+    `R2_PUBLIC_URL` (= `https://pub-…r2.dev`). Optional override
+    `PHOTO_STORAGE_PROVIDER=r2|supabase`. R2 bucket + public r2.dev domain were
+    created via the Cloudflare MCP; the S3 API token is dashboard-created.
+  - **One-time migration of existing photos** (`scripts/migrate-photos-to-r2.mts`,
+    idempotent/resumable, manifest-backed): downloaded all **482** referenced
+    photos, compressed (**571 MB → 12 MB**, ~98% smaller), uploaded to R2,
+    repointed `photo_url`, verified, then (gated `delete-originals
+    --confirm-r2-verified`) deleted the 482 Supabase originals. Then
+    `scripts/purge-orphan-photos.mts` removed **230 orphan** files (unreferenced
+    uploads). Net: Supabase `player-photos` **877.6 MB → ~0**; R2 holds ~12 MB.
+  - `tsc --noEmit` + `eslint` clean. Scope was **new uploads + a one-time
+    migration**; the `player-photos` bucket + Supabase fallback remain available.
+
 ### Recent updates (as of 2026-10-07) — post-auction
 
 - **Squad views now show a player's CURRENT category (live), not the one frozen

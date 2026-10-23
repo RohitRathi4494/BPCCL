@@ -237,8 +237,11 @@ Seeded with `generate_series(1, franchise_count)` as "Franchise N"/"FN"; two tea
 | `registration_fee_agreed` | boolean | NOT NULL, `false` | Mandatory fee-agreement checkbox |
 | `registration_code` | text | nullable, UNIQUE | `USCL2-XXXXXX` code |
 | `matches_played`, `runs_scored`, `batting_average`, `batting_strike_rate`, `wickets_taken`, `bowling_strike_rate`, `economy` | text (×7) | nullable | Self-reported career stats stored as **text** (allows "NA"); admin-editable |
-| `aadhaar_path` | text | nullable | Storage object **path** in private `player-aadhaar` bucket (never a URL) |
-| `aadhaar_reminded_at` | timestamptz | nullable | When an Aadhaar reminder email was sent (one per player) |
+| `photo_url` | text | nullable | Player photo **public URL**. **Now served from Cloudflare R2** (`pub-…r2.dev`); Supabase `player-photos` is the fallback target only. (Listed earlier among v2 fields.) |
+| `aadhaar_verified` | boolean | NOT NULL, `false` | **Admin identity-verification flag** (replaces storing the Aadhaar image). Backfilled `true` for prior uploaders. |
+| `aadhaar_last4` | text | nullable | Optional last-4-digits reference (admin-entered); the image is never stored. |
+| `aadhaar_path` | text | nullable | **Deprecated/emptied.** Was the object path in the private `player-aadhaar` bucket; all values nulled + files deleted (2026-10-23). Column kept, no longer written. |
+| `aadhaar_reminded_at` | timestamptz | nullable | **Deprecated.** Legacy reminder-sent stamp; the reminder flow was removed. |
 | `submitted_at` | timestamptz | NOT NULL, `now()` | — |
 | `reviewed_at` | timestamptz | nullable | — |
 | `reviewed_by` | uuid | nullable → `profiles(id)` SET NULL | Reviewing admin |
@@ -419,9 +422,10 @@ lock `auction_state`/`franchises` rows with `for update`.
   members' price)`, clears top-up flags + RTM counters; resets `auction_state` to `setup` and
   clears on-block + live-bid columns. All bulk statements carry explicit `where ...`/`where true`
   to satisfy Supabase's safe-update (supautils) guard.
-- **`attach_aadhaar(p_code text, p_phone text, p_path text) → jsonb`** — self-service Aadhaar
-  attach for pre-existing registrants (no account). Matches `upper(registration_code)=upper(trim(p_code))
-  and phone=p_phone`; sets `aadhaar_path`. Granted `anon, authenticated`. Returns `{ok,name}`.
+- **`attach_aadhaar(...)`** — **DROPPED** (migration `20261023000000`). Was the self-service
+  Aadhaar-image attach RPC; Aadhaar images are no longer stored. Identity is now recorded by admins
+  via `players.aadhaar_verified` + `aadhaar_last4` (written through the normal admin `players` update
+  RLS, no RPC).
 - **`my_squad_contacts() → table(player_id uuid, phone text)`** — derives the caller's `franchise_id`
   from `profiles`; returns only that franchise's squad members' phones. `revoke from public,anon` +
   grant `authenticated`. Lets owners see their own players' phones without exposing the pool.
@@ -454,11 +458,17 @@ Default-deny (RLS on, no matching policy → denied). Pattern per table:
 > Because the public has no SELECT on `players`/`sponsor_enquiries`, the insert forms must
 > insert **without** `.select()` (a returning insert would be blocked).
 
-**Storage buckets:**
+**Storage (as of 2026-10-23 — player photos now on Cloudflare R2):**
 
-- `player-photos` — **public**, 5 MB, `image/jpeg|png|webp`. Public read; anon+auth upload.
-- `player-aadhaar` — **private**, 5 MB, `image/jpeg|png|webp + application/pdf`. Anon+auth upload
-  (write-only); **admin-only read** (signed URLs). App stores the object path, never a public URL.
+- **Cloudflare R2** `uscl-player-photos` — **primary store for player photos.** S3-compatible
+  (AWS SDK → `https://<account>.r2.cloudflarestorage.com`); public read via the r2.dev managed
+  domain (`R2_PUBLIC_URL`, e.g. `https://pub-…r2.dev`). Uploads go through the `uploadPhoto`
+  server action + `lib/storage` abstraction; `players.photo_url` holds the resulting public URL.
+  10 GB free, no egress fees. Env: `R2_ACCOUNT_ID/ACCESS_KEY_ID/SECRET_ACCESS_KEY/BUCKET/PUBLIC_URL`.
+- `player-photos` (Supabase) — **public bucket, now the FALLBACK only** (used when R2 isn't
+  configured). Emptied of player photos on 2026-10-23 (482 migrated to R2 + 230 orphans purged).
+- `player-aadhaar` (Supabase) — **private bucket, no longer used.** All 625 objects deleted
+  (2026-10-23); registration no longer uploads here. Kept but empty.
 
 ### 5.4 Realtime (publication `supabase_realtime`)
 
@@ -547,6 +557,7 @@ Published tables: `auction_state`, `bids`, `innings`, `balls` (initial), `franch
 | `20261004010000_my_squad_contacts` | my_squad_contacts() RPC (owner-scoped phones) |
 | `20261005000000_squad_member_display_order` | +squad_members.display_order (manual squad ordering) |
 | `20261006000000_post_auction_squad_edits` | log +post_released/post_added/post_replaced; post_release_player/post_add_player/post_replace_player RPCs; undo boundary guard widened |
+| `20261023000000_aadhaar_verification` | +aadhaar_verified (bool, default false) +aadhaar_last4 (text); backfill verified=true where aadhaar_path set; **drop attach_aadhaar() RPC**. (Stop storing Aadhaar images; identity is admin-verified. Existing Aadhaar files + aadhaar_path nulled via a cleanup script, not this migration.) |
 
 ---
 
@@ -573,7 +584,6 @@ All public pages are **async server components** reading from Supabase via `lib/
 | `/franchises` | `(marketing)/franchises/page.tsx` | Grid of all franchises with crest, owners, and published squad (no prices) | `getPublicFranchises`, `getLeagueSettings`, `FRANCHISE_META` |
 | `/sponsors` | `(marketing)/sponsors/page.tsx` | Sponsor tiers + enquiry form | `getSponsorsByTier`, `getLeagueSettings` |
 | `/register` | `register/page.tsx` | Registration form **or** closed-state notice (gated on `registration_open`) | `getLeagueSettings` |
-| `/register/aadhaar` | `register/aadhaar/page.tsx` | Self-service Aadhaar attach (noindex) | none (form only) |
 
 `navLinks` also references `/fixtures` as `soon: true` (muted, not a live route); the footer also
 links `/live` (soon).
@@ -601,8 +611,8 @@ links `/live` (soon).
 
 **Gate:** `registrationOpen = settings?.registration_open !== false`. When open: hero + 3 step
 cards + `RegistrationForm` + fee footnote. When closed: "Registrations Closed" hero + a "The
-squads are out" section + "View the Squads" link; the form is **not rendered**. A link "Already
-registered? Add your Aadhaar card" → `/register/aadhaar` is always shown. The server action
+squads are out" section + "View the Squads" link; the form is **not rendered**. (The old "Add your
+Aadhaar card" link was removed with the Aadhaar-image flow — 2026-10-23.) The server action
 **also hard-gates**, so a direct POST while closed is refused.
 
 The form (`components/site/registration-form.tsx`, client, `useActionState(submitRegistration)`)
@@ -622,10 +632,12 @@ Work Email, Player Photo, Aadhaar, and 7 Career Stats are all present and requir
   company-domain helper `isWorkEmail()` exists but is **not** enforced).
 - **CricHeroes Profile Link** `cricheroes_url` * — normalized URL.
 - **LinkedIn Profile Link** `linkedin_url` * — normalized URL.
-- **Player Photo** `photo_url` * — `PhotoUpload` client-uploads to the **public** `player-photos`
-  bucket; the public URL is written into a hidden field.
-- **Aadhaar Card** `aadhaar_path` * — `AadhaarUpload` client-uploads to the **private**
-  `player-aadhaar` bucket; the object **path** is written into a hidden field.
+- **Player Photo** `photo_url` * — `PhotoUpload` **compresses in the browser** (≤500px, WebP,
+  ~120 KB via `lib/images/compress.ts`) then calls the `uploadPhoto` server action, which stores it
+  via `lib/storage` on **Cloudflare R2** (Supabase fallback). The returned public URL goes into a
+  hidden field. Full-res originals are never uploaded.
+- **Aadhaar Card** — **REMOVED (2026-10-23).** Registration no longer collects or uploads an Aadhaar
+  image. Identity is verified later by an admin (`aadhaar_verified` + optional `aadhaar_last4`).
 
 *Playing Profile:*
 - **Playing Role** `roles` (multi) * — from `ROLE_GROUPS` (Batting / Bowling / All Rounder /
@@ -689,17 +701,21 @@ match `league_settings.categories` exactly.
 > and a concise skill (All Rounder / Wicket Keeper / Bowler / Batsman), used by the auction big
 > screen because `batting_style`/`bowling_style` are empty for every registrant.
 
-### 6.5 Aadhaar flow
+### 6.5 Aadhaar identity verification (image no longer stored — 2026-10-23)
 
-Both entry points use `components/site/aadhaar-upload.tsx`, uploading **client-side** to the
-**private `player-aadhaar` bucket** (anon may write; only admins read via signed URLs). Accepts
-JPG/PNG/WebP/PDF, max 5 MB. File named `${uuid}.${ext}`; the returned **object path** (not a URL)
-is reported.
+Aadhaar **images are no longer collected or stored** anywhere (legal/liability under the Aadhaar Act
++ DPDP Act 2023; we only need to verify identity/age once). The old upload flow — `/register/aadhaar`,
+`aadhaar-upload.tsx`, `aadhaar-attach-form.tsx`, the `attach_aadhaar()` RPC, and the admin reminder
+emails — is **removed**, and the 625 previously-stored files were deleted.
 
-1. **At registration** — embedded; path submitted as `aadhaar_path`, required.
-2. **Self-service** (`/register/aadhaar`, `AadhaarAttachForm` → `attachAadhaar` action) for players
-   who registered before Aadhaar was required. Fields: Registration ID, Registered Phone, the upload.
-   Verified server-side by `attach_aadhaar(p_code, p_phone, p_path)`; success greets by name.
+Instead, an admin verifies the player's presented Aadhaar on the review page
+(`/admin/registrations/[id]` → `components/admin/aadhaar-verification.tsx`) and records:
+- `players.aadhaar_verified` (boolean), and optionally
+- `players.aadhaar_last4` (text) — last 4 digits only, as a reference.
+
+Saved via the `setAadhaarVerification` server action (admin `players`-update RLS). The registrations
+list filters on verified/unverified. The legacy `aadhaar_path` / `aadhaar_reminded_at` columns remain
+but are empty and unwritten.
 
 ### 6.6 Sponsors page (`/sponsors`)
 
@@ -807,11 +823,11 @@ sort, size` (25/50/100, default 25), `page`. Fetches `getRegistrationCounts()`, 
 `getLeagueSettings()` in parallel.
 
 - **Status tabs**: All / Pending / Approved / Rejected with live counts.
-- **Header actions**: `AadhaarReminderButton`, `AutoAssignButton`.
+- **Header actions**: `AutoAssignButton`. (The `AadhaarReminderButton` was removed — 2026-10-23.)
 - **Search** (`RegistrationsSearch`) — debounced 350 ms, writes `?q=`, resets to page 1 (name/phone/email).
 - **Filters** (`RegistrationsFilters`): Category (from settings), Role (`ROLE_GROUPS` label),
-  Stats ("Has NA stats" / "All stats filled"), Aadhaar (missing / uploaded), Age (`u35` / `o35`),
-  Sort (Newest / Age asc / Age desc).
+  Stats ("Has NA stats" / "All stats filled"), Aadhaar (**verified / unverified** — reads
+  `aadhaar_verified`), Age (`u35` / `o35`), Sort (Newest / Age asc / Age desc).
 - **Pagination** (`PageSizeSelect` + pager) with sticky URLs via `buildHref()`.
 
 **`getRegistrations`** (`lib/queries/players.ts`, admin-only) builds a `players` select with
@@ -824,13 +840,14 @@ Returns `{rows,total,page,pageSize,pageCount}`. `getRegistrationCounts` = head c
 **Registrations table** (`registrations-table.tsx`, client): columns checkbox / Player (expand +
 "CH" CricHeroes link) / Contact / Email / Age / Submitted / Status badge / Category / actions
 (Review link + delete). Review links carry the list querystring. Row expansion reveals full
-`PlayerDetails`. Multi-select bulk bar: "Approve N selected" (`bulkApprovePlayers`) + "Email Aadhaar
-reminder" (`emailAadhaarRemindersToSelected`).
+`PlayerDetails`. Multi-select bulk bar: "Approve N selected" (`bulkApprovePlayers`). (The "Email
+Aadhaar reminder" bulk action was removed — 2026-10-23.)
 
 **Detail page `/admin/registrations/[id]`**: `getPlayer` + `getLeagueSettings`; computes
-`suggestedCategory = computeCategory(player)` + a signed Aadhaar URL (300 s TTL). Left column:
+`suggestedCategory = computeCategory(player)`. Left column:
 profile + details grid with an **inline age editor** (`EditAgeForm`), **editable career stats**
-(`EditStatsForm`), links, Aadhaar view. Right column (sticky): `ReviewForm` (approve/reject/assign
+(`EditStatsForm`), links, and the **Aadhaar verification control** (`AadhaarVerification` — verified
+toggle + optional last-4). Right column (sticky): `ReviewForm` (approve/reject/assign
 category), "Move back to pending" (`ResetStatusButton`), and a delete danger zone.
 
 **Server actions (`registrations/actions.ts`)** — all re-check `getUser()`; IDs validated against
@@ -846,11 +863,10 @@ category), "Move back to pending" (`ResetStatusButton`), and a delete danger zon
 - **`editPlayerStats`** — whitelists only `STAT_FIELDS`; empty → NULL.
 - **`editPlayerAge`** — validates whole number 1–120; updates **only** `players.age` (DOB untouched).
 - **`autoAssignCategories`** — categorizes all players lacking a category (manual ones untouched).
-- **`emailAadhaarReminders`** — targets players with no aadhaar + not-yet-reminded + not-rejected +
-  has email; re-runnable.
-- **`emailAadhaarRemindersToSelected`** — from checkboxes; re-sends even to already-reminded.
-- **`sendAadhaarReminders(supabase, targets)`** (helper) — emails `aadhaarReminderEmail` in batches
-  of 8 to `${getSiteUrl()}/register/aadhaar`, then stamps `aadhaar_reminded_at` only on those that sent.
+- **`setAadhaarVerification`** — records the admin's Aadhaar identity check: sets `aadhaar_verified`
+  (bool) + optional `aadhaar_last4` (exactly 4 digits or blank). The image is never stored.
+  (Replaced the removed `emailAadhaarReminders` / `emailAadhaarRemindersToSelected` /
+  `sendAadhaarReminders` + `aadhaarReminderEmail` — 2026-10-23.)
 
 ### 7.4 Franchises management (`/admin/franchises`)
 
@@ -942,7 +958,7 @@ once and caches it as an inline attachment with cid `uscl-logo`; templates refer
 - **`shell(heading, bodyHtml, {preview})`** — the branded wrapper (hidden preheader, logo+USCL+season
   header, gold rule, body, footer). All headings/values HTML-escaped via `escapeHtml`.
 - **`confirmationEmail(fullName, registrationCode?)`** — registration received, with ID callout.
-- **`aadhaarReminderEmail(fullName, registrationCode, url)`** — "Add your Aadhaar card" CTA.
+- *(`aadhaarReminderEmail` removed — 2026-10-23, with the Aadhaar-image flow.)*
 - **`sponsorEnquiryEmail(data)`** — internal notification to the partnerships inbox; caller sets
   reply-to = sponsor.
 - **`approvalEmail(fullName, category)`** — "You're in the auction pool" + category callout.
@@ -1377,7 +1393,12 @@ default/outline/secondary/ghost/destructive/link; sizes default/xs/sm/lg/icon*).
 
 - **`outputFileTracingIncludes`**: `{ "/**": ["./public/uscl-logo.png"] }` — ships the crest PNG with
   serverless functions so emails can embed it as an inline CID.
-- **`images.remotePatterns`**: allows `https://*.supabase.co/storage/v1/object/public/**`.
+- **`images.remotePatterns`**: allows `https://*.supabase.co/storage/v1/object/public/**`,
+  `https://**.r2.dev/**` (player photos on R2), and the custom `R2_PUBLIC_URL` host if set.
+  `unoptimized: true` (images served as-is; no Vercel optimizer).
+- **R2 env** (`.env.local`): `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`,
+  `R2_BUCKET`, `R2_PUBLIC_URL` (+ optional `PHOTO_STORAGE_PROVIDER=r2|supabase`) drive
+  `lib/storage` photo uploads. Dep: `@aws-sdk/client-s3`.
 - **No redirects/headers.** www↔non-www and http→https canonicalization is intentionally **NOT** handled
   here (doing so caused an `ERR_TOO_MANY_REDIRECTS` outage). Canonicalization lives **only** in Vercel →
   Project Settings → Domains. The Vercel primary domain is the **www** host
