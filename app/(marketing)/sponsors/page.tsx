@@ -15,6 +15,7 @@ const TIER_BLURB: Record<string, string> = {
   Title: "The marquee partner — top billing across the league.",
   "Co-title": "Shared headline presence across the season.",
   Associate: "Prominent brand presence at matches and online.",
+  "Style Partner": "Dressing the league in signature style.",
   "Statistics Partner": "Powers the numbers behind every match.",
   "Healthcare Partner": "Keeping our players match-fit all season.",
   "Media Partner": "Bringing the league to screens everywhere.",

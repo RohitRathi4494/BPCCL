@@ -22,7 +22,12 @@ export default async function HomePage() {
   const associatePartners = sponsors.filter((s) => s.tier === "Associate");
   // Single-logo partner rows (statistics / healthcare / media), in order.
   const otherPartners = (
-    ["Statistics Partner", "Healthcare Partner", "Media Partner"] as const
+    [
+      "Style Partner",
+      "Statistics Partner",
+      "Healthcare Partner",
+      "Media Partner",
+    ] as const
   )
     .map((tier) => ({
       label: tier,

@@ -136,6 +136,22 @@ separate auth systems per role.
 - [ ] Social/content hub (auto-generated shareable graphics)
 - [ ] Deployed to production
 
+### Recent updates (as of 2026-11-10) — sponsors + franchise logo
+
+- **New sponsor tier "Style Partner" + QUE Universe seeded.** Added `'Style
+  Partner'` to `SPONSOR_TIERS` (`lib/site.ts`) and the `sponsors_tier_check`
+  constraint (migration `20261110000000_add_style_partner_que_universe.sql`,
+  **pushed**), seeding **QUE Universe** (`/sponsors/que-universe.png`,
+  `display_order` 25). Wired into the home partner groups
+  (`app/(marketing)/page.tsx`), the `/sponsors` tier blurbs, and the big-screen
+  sponsor strip (`components/auction/auction-display.tsx`). No `database.types.ts`
+  change (`sponsors.tier` is plain text). Verified live on `/` and `/sponsors`.
+- **Lucknow Lagers crest updated + white background removed.** Replaced the old
+  `public/franchises/ll.png` with the new logo and stripped the solid
+  white/grey-shadow background to transparency via an edge flood-fill (preserves
+  the enclosed white cricket ball). `FRANCHISE_META.LL.logo` already pointed at
+  `/franchises/ll.png`; the uploaded `ll.jpeg` was removed. `tsc` + `eslint` clean.
+
 ### Recent updates (as of 2026-10-23) — storage: drop Aadhaar images, photos → R2
 
 - **Aadhaar images are no longer stored — identity is admin-verified instead.**

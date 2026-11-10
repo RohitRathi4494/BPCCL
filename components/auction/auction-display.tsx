@@ -57,6 +57,7 @@ export function AuctionDisplay({
   // Bottom strip: just the logos (no tier labels), in display order.
   const STRIP_TIERS = [
     "Associate",
+    "Style Partner",
     "Statistics Partner",
     "Healthcare Partner",
     "Media Partner",

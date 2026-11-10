@@ -67,6 +67,7 @@ export const SPONSOR_TIERS = [
   "Title",
   "Co-title",
   "Associate",
+  "Style Partner",
   "Statistics Partner",
   "Healthcare Partner",
   "Media Partner",
