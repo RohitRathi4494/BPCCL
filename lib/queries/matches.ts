@@ -2,6 +2,41 @@ import { createClient } from "@/lib/supabase/server";
 import type { Fixture, FixtureTeam, MatchStatus, ResultType } from "@/lib/fixtures";
 
 /**
+ * Every franchise's group assignment (`franchises.pool`), split into the two
+ * groups. Powers the points table (all teams show, even before they play) and
+ * the fixture-group auto-fill. Unassigned teams are returned separately.
+ */
+export async function getFranchiseGroups(): Promise<{
+  A: FixtureTeam[];
+  B: FixtureTeam[];
+  unassigned: FixtureTeam[];
+}> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("franchises")
+    .select("id, name, short_code, pool")
+    .order("name");
+  if (error) {
+    console.error("getFranchiseGroups:", error.message);
+    return { A: [], B: [], unassigned: [] };
+  }
+  const A: FixtureTeam[] = [];
+  const B: FixtureTeam[] = [];
+  const unassigned: FixtureTeam[] = [];
+  for (const f of data ?? []) {
+    const team: FixtureTeam = {
+      id: f.id,
+      name: f.name,
+      short_code: f.short_code,
+    };
+    if (f.pool === "A") A.push(team);
+    else if (f.pool === "B") B.push(team);
+    else unassigned.push(team);
+  }
+  return { A, B, unassigned };
+}
+
+/**
  * All fixtures, resolved with each team's name + short_code, ordered by kickoff.
  *
  * `matches` and `franchises` are both anon-readable, but embedding two FKs to

@@ -247,6 +247,7 @@ export type Database = {
           name: string
           owner_name: string | null
           played_season_1: boolean
+          pool: string | null
           purse_remaining: number
           purse_total: number
           rtm_against_count: number
@@ -262,6 +263,7 @@ export type Database = {
           name: string
           owner_name?: string | null
           played_season_1?: boolean
+          pool?: string | null
           purse_remaining: number
           purse_total: number
           rtm_against_count?: number
@@ -277,6 +279,7 @@ export type Database = {
           name?: string
           owner_name?: string | null
           played_season_1?: boolean
+          pool?: string | null
           purse_remaining?: number
           purse_total?: number
           rtm_against_count?: number

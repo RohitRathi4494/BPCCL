@@ -138,6 +138,22 @@ separate auth systems per role.
 
 ### Recent updates (as of 2026-11-10) — fixtures & points table
 
+- **Follow-ups (same day):** (1) the public fixture card&apos;s **"vs" is now
+  centered between the two stacked teams** (hairline rules either side), not off to
+  the right. (2) **Persistent team→group assignment** — migration
+  `20261110030000_franchise_group.sql` (**pushed**) adds **`franchises.pool`**
+  (`'A'`/`'B'`, nullable; `database.types.ts` hand-edited). New admin **Team
+  Groups** panel (`components/admin/team-groups-panel.tsx` +
+  `setFranchiseGroup` action) on `/admin/fixtures` assigns each team to
+  Boundary/Wicket (auto-saves). (3) The **points table now lists ALL teams in a
+  group** (from `franchises.pool`) whether or not a match is scheduled —
+  `computeStandings(fixtures, roster)` now takes the group roster
+  (`getFranchiseGroups()` in `lib/queries/matches.ts`) and tallies only matches
+  between two roster teams. (4) The admin add/edit form **auto-fills a fixture&apos;s
+  group** when both chosen teams share one (still overridable). NOTE: the two
+  Season-2 teams were removed earlier so there are **14 teams** — a 7/7 split is
+  expected.
+
 - **Fixtures module shipped (admin upload + public display + points table).**
   Built on the **pre-existing `matches` table** (initial schema already had teams,
   `scheduled_at`, `ground`, `status`, `winner_id`, `result_note` + admin-write

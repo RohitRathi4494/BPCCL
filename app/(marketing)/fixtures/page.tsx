@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { Reveal } from "@/components/site/reveal";
-import { getFixtures } from "@/lib/queries/matches";
+import { getFixtures, getFranchiseGroups } from "@/lib/queries/matches";
 import {
   computeStandings,
   groupByDay,
@@ -103,14 +103,16 @@ function FixtureCard({ f }: { f: Fixture }) {
         )}
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="flex flex-1 flex-col gap-2.5">
-          <TeamRow team={f.teamA} isWinner={f.winner_id === f.teamA.id} />
-          <TeamRow team={f.teamB} isWinner={f.winner_id === f.teamB.id} />
+      <div className="flex flex-col gap-2.5">
+        <TeamRow team={f.teamA} isWinner={f.winner_id === f.teamA.id} />
+        <div className="flex items-center gap-3">
+          <span className="h-px flex-1 bg-border" />
+          <span className="font-heading text-xs font-bold tracking-widest text-muted-foreground uppercase">
+            vs
+          </span>
+          <span className="h-px flex-1 bg-border" />
         </div>
-        <span className="font-heading text-xs font-bold tracking-widest text-muted-foreground uppercase">
-          vs
-        </span>
+        <TeamRow team={f.teamB} isWinner={f.winner_id === f.teamB.id} />
       </div>
 
       <div className="mt-4 border-t border-border pt-3">
@@ -206,10 +208,13 @@ function StandingsTable({
 }
 
 export default async function FixturesPage() {
-  const fixtures = await getFixtures();
+  const [fixtures, groups] = await Promise.all([
+    getFixtures(),
+    getFranchiseGroups(),
+  ]);
   const days = groupByDay(fixtures);
-  const standingsA = computeStandings(fixtures, "A");
-  const standingsB = computeStandings(fixtures, "B");
+  const standingsA = computeStandings(fixtures, groups.A);
+  const standingsB = computeStandings(fixtures, groups.B);
   const hasStandings = standingsA.length > 0 || standingsB.length > 0;
 
   return (

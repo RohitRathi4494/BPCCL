@@ -207,6 +207,33 @@ export async function setResult(
   return { ok: true };
 }
 
+/** Assign a franchise to a group (pool). value: 'A' | 'B' | '' (unassign). */
+export async function setFranchiseGroup(
+  _prev: FixtureState,
+  formData: FormData,
+): Promise<FixtureState> {
+  const authErr = await ensureAdmin();
+  if (authErr) return { error: authErr };
+
+  const id = String(formData.get("franchise_id") ?? "");
+  if (!UUID_RE.test(id)) return { error: "Invalid team." };
+  const raw = String(formData.get("pool") ?? "").trim();
+  const pool = raw === "A" || raw === "B" ? raw : null;
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("franchises")
+    .update({ pool })
+    .eq("id", id);
+  if (error) {
+    console.error("setFranchiseGroup:", error.message);
+    return { error: "Could not save the group. Please try again." };
+  }
+  revalidatePath("/admin/fixtures");
+  revalidatePath("/fixtures");
+  return { ok: true };
+}
+
 /** Delete a fixture. */
 export async function deleteMatch(
   _prev: FixtureState,

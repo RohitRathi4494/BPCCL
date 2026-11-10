@@ -173,39 +173,36 @@ export const POINTS_WIN = 2;
 export const POINTS_TIE = 1; // tie / no result / abandoned
 
 /**
- * Points table for one pool. Every team that appears in a pool fixture is
- * listed; tallies count only decided matches (completed/abandoned). Win = 2,
- * tie / no-result / abandoned = 1 each, loss = 0. Ordered by points, then wins,
- * then name. (No NRR — we only capture the winning margin, not full scores.)
+ * Points table for one group. `roster` is every team assigned to the group
+ * (from `franchises.pool`), so all teams appear even before a match is
+ * scheduled. Tallies count only decided matches (completed/abandoned) played
+ * between two roster teams. Win = 2, tie / no-result / abandoned = 1 each,
+ * loss = 0. Ordered by points, then wins, then name. (No NRR — we only capture
+ * the winning margin, not full scores.)
  */
 export function computeStandings(
   fixtures: Fixture[],
-  pool: "A" | "B",
+  roster: FixtureTeam[],
 ): Standing[] {
   const table = new Map<string, Standing>();
-  const ensure = (t: FixtureTeam) => {
-    let s = table.get(t.id);
-    if (!s) {
-      s = {
-        franchiseId: t.id,
-        name: t.name,
-        short_code: t.short_code,
-        played: 0,
-        won: 0,
-        lost: 0,
-        tied: 0,
-        points: 0,
-      };
-      table.set(t.id, s);
-    }
-    return s;
-  };
+  for (const t of roster) {
+    table.set(t.id, {
+      franchiseId: t.id,
+      name: t.name,
+      short_code: t.short_code,
+      played: 0,
+      won: 0,
+      lost: 0,
+      tied: 0,
+      points: 0,
+    });
+  }
 
   for (const f of fixtures) {
-    if (f.pool !== pool) continue;
-    // List every team in the pool even before they've played.
-    const a = ensure(f.teamA);
-    const b = ensure(f.teamB);
+    const a = table.get(f.teamA.id);
+    const b = table.get(f.teamB.id);
+    // Only count matches between two teams of this group.
+    if (!a || !b) continue;
 
     const decided = f.status === "completed" || f.status === "abandoned";
     if (!decided) continue;

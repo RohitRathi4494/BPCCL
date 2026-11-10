@@ -22,7 +22,12 @@ import {
   type Fixture,
 } from "@/lib/fixtures";
 
-type Team = { id: string; name: string; short_code: string | null };
+type Team = {
+  id: string;
+  name: string;
+  short_code: string | null;
+  pool?: string | null;
+};
 
 const fieldClass =
   "w-full rounded-sm border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary";
@@ -43,6 +48,24 @@ function StateMsg({ state }: { state: FixtureState }) {
 
 /** Shared fixture fields (teams / group / schedule). `f` pre-fills for edit. */
 function FixtureFields({ teams, f }: { teams: Team[]; f?: Fixture }) {
+  const poolOf = (id: string) =>
+    teams.find((t) => t.id === id)?.pool ?? null;
+
+  const [teamA, setTeamA] = useState(f?.teamA.id ?? "");
+  const [teamB, setTeamB] = useState(f?.teamB.id ?? "");
+  const [pool, setPool] = useState<string>(f?.pool ?? "");
+
+  // Auto-fill the group when both teams share one (admin can still override).
+  function onTeam(which: "A" | "B", id: string) {
+    const a = which === "A" ? id : teamA;
+    const b = which === "B" ? id : teamB;
+    if (which === "A") setTeamA(id);
+    else setTeamB(id);
+    const pa = poolOf(a);
+    const pb = poolOf(b);
+    if (a && b && pa && pa === pb) setPool(pa);
+  }
+
   return (
     <>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -50,7 +73,8 @@ function FixtureFields({ teams, f }: { teams: Team[]; f?: Fixture }) {
           <span className={labelClass}>Team A</span>
           <select
             name="franchise_a_id"
-            defaultValue={f?.teamA.id ?? ""}
+            value={teamA}
+            onChange={(e) => onTeam("A", e.target.value)}
             className={fieldClass}
           >
             <option value="">Select team…</option>
@@ -65,7 +89,8 @@ function FixtureFields({ teams, f }: { teams: Team[]; f?: Fixture }) {
           <span className={labelClass}>Team B</span>
           <select
             name="franchise_b_id"
-            defaultValue={f?.teamB.id ?? ""}
+            value={teamB}
+            onChange={(e) => onTeam("B", e.target.value)}
             className={fieldClass}
           >
             <option value="">Select team…</option>
@@ -81,7 +106,12 @@ function FixtureFields({ teams, f }: { teams: Team[]; f?: Fixture }) {
       <div className="grid gap-3 sm:grid-cols-3">
         <label className="flex flex-col gap-1">
           <span className={labelClass}>Group</span>
-          <select name="pool" defaultValue={f?.pool ?? ""} className={fieldClass}>
+          <select
+            name="pool"
+            value={pool}
+            onChange={(e) => setPool(e.target.value)}
+            className={fieldClass}
+          >
             <option value="">— (knockout)</option>
             <option value="A">Boundary (Group A)</option>
             <option value="B">Wicket (Group B)</option>

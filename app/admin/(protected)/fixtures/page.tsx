@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/auth";
 import { getFixtures } from "@/lib/queries/matches";
 import { createClient } from "@/lib/supabase/server";
 import { FixturesManager } from "@/components/admin/fixtures-manager";
+import { TeamGroupsPanel } from "@/components/admin/team-groups-panel";
 
 export const metadata: Metadata = {
   title: "Fixtures",
@@ -15,8 +16,12 @@ export default async function AdminFixturesPage() {
 
   const [fixtures, { data: franchises }] = await Promise.all([
     getFixtures(),
-    supabase.from("franchises").select("id, name, short_code").order("name"),
+    supabase
+      .from("franchises")
+      .select("id, name, short_code, pool")
+      .order("name"),
   ]);
+  const teams = franchises ?? [];
 
   return (
     <div className="flex flex-col gap-6">
@@ -33,7 +38,9 @@ export default async function AdminFixturesPage() {
         </p>
       </div>
 
-      <FixturesManager fixtures={fixtures} teams={franchises ?? []} />
+      <TeamGroupsPanel teams={teams} />
+
+      <FixturesManager fixtures={fixtures} teams={teams} />
     </div>
   );
 }
