@@ -274,7 +274,11 @@ export default async function HomePage() {
                   </p>
                   <Reveal className="mx-auto mt-4 grid max-w-3xl grid-cols-1 gap-5">
                     {titlePartners.map((s) => (
-                      <SponsorCard key={s.id} sponsor={s} featured />
+                      <SponsorCard
+                        key={s.id}
+                        sponsor={s}
+                        variant="spotlight"
+                      />
                     ))}
                   </Reveal>
                 </div>

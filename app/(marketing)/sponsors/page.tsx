@@ -4,7 +4,8 @@ import { SponsorCard } from "@/components/site/sponsor-card";
 import { SponsorEnquiryForm } from "@/components/site/sponsor-enquiry-form";
 import { getSponsorsByTier } from "@/lib/queries/sponsors";
 import { getLeagueSettings } from "@/lib/queries/settings";
-import { site } from "@/lib/site";
+import { site, SPONSOR_TIERS, type SponsorTier } from "@/lib/site";
+import type { Sponsor } from "@/lib/types";
 
 export const metadata: Metadata = {
   title: "Sponsors",
@@ -27,7 +28,18 @@ export default async function SponsorsPage() {
     getSponsorsByTier(),
     getLeagueSettings(),
   ]);
-  const hasAny = grouped.some((g) => g.sponsors.length > 0);
+
+  // Marquee tiers get the wide spotlight; everyone else lands in one organised
+  // "Our Partners" wall with a tier chip on each card.
+  const marqueeTiers = new Set(["Title", "Co-title"]);
+  const spotlights = grouped
+    .filter((g) => marqueeTiers.has(g.tier) && g.sponsors.length > 0)
+    .flatMap((g) => g.sponsors.map((s) => ({ sponsor: s, tier: g.tier })));
+  const partners = grouped
+    .filter((g) => !marqueeTiers.has(g.tier) && g.sponsors.length > 0)
+    .flatMap((g) => g.sponsors.map((s) => ({ sponsor: s, tier: g.tier })));
+
+  const total = spotlights.length + partners.length;
 
   return (
     <>
@@ -49,56 +61,55 @@ export default async function SponsorsPage() {
         </div>
       </section>
 
-      {/* Tiers */}
+      {/* Partner line-up */}
       <section className="border-t border-border">
-        <div className="mx-auto max-w-6xl space-y-14 px-5 py-16">
-          {grouped
-            .filter(({ sponsors }) => sponsors.length > 0)
-            .map(({ tier, sponsors }) => {
-              const featured = tier === "Title" || tier === "Co-title";
-              // "… Partner" tiers already read as a full label; only the
-              // Title/Co-title/Associate tiers take the "Sponsor(s)" suffix.
-              const isPartnerTier = tier.endsWith("Partner");
-              return (
-                <div key={tier}>
-                  <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground uppercase">
-                      {tier}
-                      {!isPartnerTier && (
-                        <>
-                          {" "}
-                          <span className="text-primary">
-                            Sponsor{sponsors.length === 1 ? "" : "s"}
-                          </span>
-                        </>
-                      )}
-                    </h2>
-                    <span className="font-mono text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
-                      {TIER_BLURB[tier]}
-                    </span>
-                  </div>
-                  <hr className="crease-rule mt-3 mb-6 w-full" />
+        <div className="mx-auto max-w-6xl space-y-12 px-5 py-16">
+          {/* Marquee spotlight(s) */}
+          {spotlights.length > 0 && (
+            <div className="space-y-5">
+              {spotlights.map(({ sponsor, tier }) => (
+                <SponsorCard
+                  key={sponsor.id}
+                  sponsor={sponsor}
+                  variant="spotlight"
+                  tierLabel={tier === "Title" ? "Title Partner" : tier}
+                />
+              ))}
+            </div>
+          )}
 
-                  <div
-                    className={
-                      featured
-                        ? "grid grid-cols-1 gap-5 sm:grid-cols-2"
-                        : "grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4"
-                    }
-                  >
-                    {sponsors.map((s) => (
-                      <SponsorCard key={s.id} sponsor={s} featured={featured} />
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
+          {/* Everyone else — one tidy wall, each card chipped with its tier. */}
+          {partners.length > 0 && (
+            <div>
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground uppercase">
+                  Our <span className="text-primary">Partners</span>
+                </h2>
+                <span className="font-mono text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
+                  The brands powering the season
+                </span>
+              </div>
+              <hr className="crease-rule mt-3 mb-6 w-full" />
+              <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
+                {partners.map(({ sponsor, tier }) => (
+                  <SponsorCard
+                    key={sponsor.id}
+                    sponsor={sponsor}
+                    tierLabel={tier}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
-          {!hasAny && (
+          {total === 0 && (
             <p className="text-center text-sm text-muted-foreground">
               Partner line-up will be announced soon. Be the first — get in touch.
             </p>
           )}
+
+          {/* Open slots — what's still available to sponsor. */}
+          <OpenSlots taken={grouped.filter((g) => g.sponsors.length > 0)} />
         </div>
       </section>
 
@@ -120,5 +131,50 @@ export default async function SponsorsPage() {
         </div>
       </section>
     </>
+  );
+}
+
+/**
+ * The tiers that still have no sponsor — shown as a tidy "available" row so the
+ * page doubles as a clear pitch for what's left to claim.
+ */
+function OpenSlots({
+  taken,
+}: {
+  taken: { tier: SponsorTier; sponsors: Sponsor[] }[];
+}) {
+  const takenTiers = new Set(taken.map((g) => g.tier));
+  const open = SPONSOR_TIERS.filter((t) => !takenTiers.has(t));
+  if (open.length === 0) return null;
+
+  return (
+    <div className="rounded-xl border border-dashed border-primary/30 bg-card/40 p-6 sm:p-8">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 className="font-heading text-xl font-bold tracking-tight text-foreground uppercase">
+          Open <span className="text-accent">slots</span>
+        </h3>
+        <span className="font-mono text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
+          Available to sponsor
+        </span>
+      </div>
+      <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {open.map((tier) => (
+          <div
+            key={tier}
+            className="flex items-start gap-3 rounded-lg border border-border/70 bg-background/30 p-4"
+          >
+            <span className="mt-0.5 size-2 shrink-0 rounded-full bg-accent" />
+            <div>
+              <p className="font-heading text-sm font-bold tracking-wide text-foreground uppercase">
+                {tier}
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {TIER_BLURB[tier]}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
