@@ -32,7 +32,7 @@ const adminNav: AdminNavGroup[] = [
   {
     label: "Season",
     children: [
-      { label: "Fixtures", href: "/admin/fixtures", soon: true },
+      { label: "Fixtures", href: "/admin/fixtures" },
       { label: "Scoring", href: "/admin/scoring", soon: true },
     ],
   },

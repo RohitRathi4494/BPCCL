@@ -429,8 +429,12 @@ export type Database = {
           ground: string | null
           id: string
           match_number: number | null
+          pool: string | null
+          result_margin: number | null
           result_note: string | null
+          result_type: string | null
           scheduled_at: string
+          stage: string
           status: string
           toss_winner_id: string | null
           winner_id: string | null
@@ -441,8 +445,12 @@ export type Database = {
           ground?: string | null
           id?: string
           match_number?: number | null
+          pool?: string | null
+          result_margin?: number | null
           result_note?: string | null
+          result_type?: string | null
           scheduled_at: string
+          stage?: string
           status?: string
           toss_winner_id?: string | null
           winner_id?: string | null
@@ -453,8 +461,12 @@ export type Database = {
           ground?: string | null
           id?: string
           match_number?: number | null
+          pool?: string | null
+          result_margin?: number | null
           result_note?: string | null
+          result_type?: string | null
           scheduled_at?: string
+          stage?: string
           status?: string
           toss_winner_id?: string | null
           winner_id?: string | null

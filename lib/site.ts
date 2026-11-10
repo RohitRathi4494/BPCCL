@@ -22,7 +22,7 @@ export const navLinks = [
   { label: "Venue", href: "/#venue" },
   { label: "Sponsors", href: "/sponsors" },
   { label: "Franchises", href: "/franchises" },
-  { label: "Fixtures", href: "/fixtures", soon: true },
+  { label: "Fixtures", href: "/fixtures" },
 ] as const;
 
 /**

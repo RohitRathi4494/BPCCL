@@ -131,10 +131,57 @@ separate auth systems per role.
 - [x] Admin registration review dashboard — Supabase Auth email/password login (`/admin/login`), admin-role guard in `app/admin/(protected)/layout.tsx`. `/admin/registrations`: status tabs + counts, debounced search, server-side pagination (25/page); detail page `/admin/registrations/[id]` with photo/links/notes + approve/reject + assign-category (categories from `league_settings`; see Recent updates for the Grade→Category rename). Admin account must be created manually (see setup note below / README).
 - [x] Auction room — **rebuilt as admin-driven (v2)**. Bidding happens verbally in the room; the software is the system of record + projector display, **not** a click-to-bid engine. **No per-franchise bidding console** (`/auction/[franchiseId]` + `place_bid()`/`sell_current_player()` removed). Three views: **`/admin/auction-setup`** (lock up to 3 owners + 2 retentions + 1 legend per franchise, deducting `owner_base_price` / `retention_base_price` / `legend_base_price` `[category]`), **`/admin/auction`** (category flow Legend→A+→A→B, pull a player onto the block, type sold amount + pick winning franchise, mark unsold, per-franchise top-ups, Undo, pause/resume/complete, purse+squad-max guardrails), and public **`/auction/display`** (70/30 big screen: current player + SOLD/UNSOLD/ON-THE-BLOCK/PAUSED left, 16-franchise purse board right — all live). New tables `squad_members` (owner/retention/legend/auction, single source of truth) + `auction_log` (append-only, powers Undo). RPCs: `lock_squad_member`/`unlock_squad_member`/`sell_player`/`mark_player_unsold`/`apply_topup`/`undo_last_action` (all staff-gated, SECURITY DEFINER). `players_public` widened (roles + styles + stats) for the display. Realtime on `auction_state`/`franchises`/`squad_members`. Migrations `20260827000000`–`20260827040000` — **pushed**; types hand-edited. Auction economy in `league_settings` (default_purse 175000, topup_1 75000, topup_2 50000, squad_min 18, squad_max 25, retention_base_price). **Admin sets the per-category retention prices from the setup page UI** (`RetentionPricePanel` → direct `league_settings` update, admin RLS). Console has **Reopen** (completed→in_progress) and a confirm-gated **Reset auction** (`reset_auction()` RPC: wipes squad_members + auction_log, restores purses to default_purse, clears top-ups → setup) for re-runs. **Security:** `is_auction_staff()` coalesces to `false` for anon (a NULL role previously slipped past `if not is_auction_staff()` since `not null` is null, and SECURITY DEFINER would then bypass RLS — fixed in `20260827040000`).
 - [x] Franchise & squad public pages (`/franchises` shows each team's full squad, no prices)
-- [ ] Fixtures & scheduling + points table
+- [x] Fixtures & scheduling + points table — admin CRUD (`/admin/fixtures`) + public `/fixtures` (schedule by day + per-group points table). See Recent updates 2026-11-10 (fixtures).
 - [ ] Live match scoring console + public live scorecard
 - [ ] Social/content hub (auto-generated shareable graphics)
 - [ ] Deployed to production
+
+### Recent updates (as of 2026-11-10) — fixtures & points table
+
+- **Fixtures module shipped (admin upload + public display + points table).**
+  Built on the **pre-existing `matches` table** (initial schema already had teams,
+  `scheduled_at`, `ground`, `status`, `winner_id`, `result_note` + admin-write
+  RLS — so no new table, no new RLS). Migration
+  `20261110020000_fixtures_match_fields.sql` (**pushed**) adds to `matches`:
+  `pool text check in ('A','B')` (group; NULL for knockouts), `stage text default
+  'League'` (round), `result_margin int`, `result_type text check in
+  ('runs','wickets')`, plus a `scheduled_at` index. `database.types.ts`
+  hand-edited.
+  - **Groups are "Boundary" (A) / "Wicket" (B)** — reuses `POOL_LABELS` from
+    `lib/pools/shared.ts` (the same names as the Pools screen; this is the
+    user's "boundary of wicket"). Group membership lives per-match on
+    `matches.pool` (the pools drag-screen is still ephemeral; fixtures don't
+    depend on it).
+  - **Shared helpers** `lib/fixtures.ts`: `Fixture`/`FixtureTeam`/`Standing`
+    types, IST date/time formatters (`fmtDay/fmtDate/fmtTime`, `dayKey`,
+    `istDateInput/istTimeInput`), `poolLabel`, `resultText` (e.g. "X won by 24
+    runs"), `groupByDay`, and `computeStandings(fixtures, pool)` — **win = 2,
+    tie/no-result/abandoned = 1 each, loss = 0**, ordered by pts→wins→name. **No
+    NRR** (we only capture the winning margin, not full scores). Query:
+    `lib/queries/matches.ts` `getFixtures()` (joins `franchises` in JS; both
+    tables anon-readable).
+  - **Admin** `/admin/fixtures` (nav "Season → Fixtures", un-`soon`ed):
+    `app/admin/(protected)/fixtures/{page.tsx,actions.ts}` +
+    `components/admin/fixtures-manager.tsx` (client). Add-fixture form (teams,
+    group, round, match no., date, **time entered as IST** → stored
+    `${date}T${time}:00+05:30`, venue, status), an editable list, per-fixture
+    **result entry** (A won / B won + margin+runs|wickets / Tie / Abandoned /
+    Clear), and delete (confirm). Actions `createMatch`/`updateMatch`/`setResult`/
+    `deleteMatch` — all `ensureAdmin()` + RLS-respecting `createClient()` write +
+    `revalidatePath('/admin/fixtures','/fixtures')`. No RPC/service-role needed
+    (the `matches` "admin write" policy covers it).
+  - **Public** `/fixtures` at `app/(marketing)/fixtures/page.tsx` (marketing
+    chrome; removed the empty root `app/fixtures/` dir to avoid a route clash;
+    nav link un-`soon`ed in `lib/site.ts`): hero → **Points Table** (two cards,
+    Boundary + Wicket, P/W/L/T-NR/Pts with crests) → **Match Schedule** grouped
+    by day (weekday + date headers), each fixture card showing both **team crests**
+    (via `FRANCHISE_META[short_code].logo`, initials fallback), group/stage
+    badges, time, venue, and the result (winner highlighted gold; "● Live now"
+    while live).
+  - Verified end-to-end in the browser with 4 seeded test matches (service-role
+    script, since there's no local admin session) — points table + schedule +
+    crests + results all correct — then the test data was deleted. `tsc` +
+    `eslint` clean; `/fixtures` 200, `/admin/fixtures` 307→login.
 
 ### Recent updates (as of 2026-11-10) — sponsors + franchise logo
 
