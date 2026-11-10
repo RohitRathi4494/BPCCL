@@ -158,6 +158,9 @@ export function groupByDay(
     }));
 }
 
+/** A group roster team — identity plus its manually-entered NRR. */
+export type RosterTeam = FixtureTeam & { nrr: number | null };
+
 export type Standing = {
   franchiseId: string;
   name: string;
@@ -167,7 +170,14 @@ export type Standing = {
   lost: number;
   tied: number;
   points: number;
+  nrr: number | null;
 };
+
+/** Signed NRR for display, e.g. "+1.250" / "-0.480" / "—" when unset. */
+export function formatNrr(n: number | null | undefined): string {
+  if (n === null || n === undefined) return "—";
+  return (n > 0 ? "+" : "") + n.toFixed(3);
+}
 
 export const POINTS_WIN = 2;
 export const POINTS_TIE = 1; // tie / no result / abandoned
@@ -182,7 +192,7 @@ export const POINTS_TIE = 1; // tie / no result / abandoned
  */
 export function computeStandings(
   fixtures: Fixture[],
-  roster: FixtureTeam[],
+  roster: RosterTeam[],
 ): Standing[] {
   const table = new Map<string, Standing>();
   for (const t of roster) {
@@ -195,6 +205,7 @@ export function computeStandings(
       lost: 0,
       tied: 0,
       points: 0,
+      nrr: t.nrr,
     });
   }
 
@@ -225,8 +236,12 @@ export function computeStandings(
     }
   }
 
+  const nrrOf = (s: Standing) => s.nrr ?? Number.NEGATIVE_INFINITY;
   return [...table.values()].sort(
     (x, y) =>
-      y.points - x.points || y.won - x.won || x.name.localeCompare(y.name),
+      y.points - x.points ||
+      y.won - x.won ||
+      nrrOf(y) - nrrOf(x) ||
+      x.name.localeCompare(y.name),
   );
 }

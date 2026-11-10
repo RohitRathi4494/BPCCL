@@ -245,6 +245,7 @@ export type Database = {
           id: string
           logo_url: string | null
           name: string
+          nrr: number | null
           owner_name: string | null
           played_season_1: boolean
           pool: string | null
@@ -261,6 +262,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name: string
+          nrr?: number | null
           owner_name?: string | null
           played_season_1?: boolean
           pool?: string | null
@@ -277,6 +279,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
+          nrr?: number | null
           owner_name?: string | null
           played_season_1?: boolean
           pool?: string | null

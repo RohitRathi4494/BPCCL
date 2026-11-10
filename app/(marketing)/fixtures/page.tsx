@@ -4,6 +4,7 @@ import { Reveal } from "@/components/site/reveal";
 import { getFixtures, getFranchiseGroups } from "@/lib/queries/matches";
 import {
   computeStandings,
+  formatNrr,
   groupByDay,
   poolLabel,
   resultText,
@@ -156,6 +157,7 @@ function StandingsTable({
               <th className="px-2 py-2.5 text-center font-medium">W</th>
               <th className="px-2 py-2.5 text-center font-medium">L</th>
               <th className="px-2 py-2.5 text-center font-medium">T/NR</th>
+              <th className="px-2 py-2.5 text-center font-medium">NRR</th>
               <th className="px-4 py-2.5 text-center font-medium">Pts</th>
             </tr>
           </thead>
@@ -194,6 +196,9 @@ function StandingsTable({
                 </td>
                 <td className="px-2 py-2.5 text-center tabular-nums text-foreground/85">
                   {s.tied}
+                </td>
+                <td className="px-2 py-2.5 text-center tabular-nums text-foreground/70">
+                  {formatNrr(s.nrr)}
                 </td>
                 <td className="px-4 py-2.5 text-center font-heading text-base font-bold tabular-nums text-accent">
                   {s.points}

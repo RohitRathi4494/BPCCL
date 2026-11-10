@@ -18,7 +18,7 @@ export default async function AdminFixturesPage() {
     getFixtures(),
     supabase
       .from("franchises")
-      .select("id, name, short_code, pool")
+      .select("id, name, short_code, pool, nrr")
       .order("name"),
   ]);
   const teams = franchises ?? [];

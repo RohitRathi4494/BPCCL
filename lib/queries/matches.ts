@@ -1,33 +1,40 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Fixture, FixtureTeam, MatchStatus, ResultType } from "@/lib/fixtures";
+import type {
+  Fixture,
+  FixtureTeam,
+  MatchStatus,
+  ResultType,
+  RosterTeam,
+} from "@/lib/fixtures";
 
 /**
- * Every franchise's group assignment (`franchises.pool`), split into the two
- * groups. Powers the points table (all teams show, even before they play) and
- * the fixture-group auto-fill. Unassigned teams are returned separately.
+ * Every franchise's group assignment (`franchises.pool`) + manual NRR, split
+ * into the two groups. Powers the points table (all teams show, even before they
+ * play) and the fixture-group auto-fill. Unassigned teams are returned separately.
  */
 export async function getFranchiseGroups(): Promise<{
-  A: FixtureTeam[];
-  B: FixtureTeam[];
-  unassigned: FixtureTeam[];
+  A: RosterTeam[];
+  B: RosterTeam[];
+  unassigned: RosterTeam[];
 }> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("franchises")
-    .select("id, name, short_code, pool")
+    .select("id, name, short_code, pool, nrr")
     .order("name");
   if (error) {
     console.error("getFranchiseGroups:", error.message);
     return { A: [], B: [], unassigned: [] };
   }
-  const A: FixtureTeam[] = [];
-  const B: FixtureTeam[] = [];
-  const unassigned: FixtureTeam[] = [];
+  const A: RosterTeam[] = [];
+  const B: RosterTeam[] = [];
+  const unassigned: RosterTeam[] = [];
   for (const f of data ?? []) {
-    const team: FixtureTeam = {
+    const team: RosterTeam = {
       id: f.id,
       name: f.name,
       short_code: f.short_code,
+      nrr: f.nrr,
     };
     if (f.pool === "A") A.push(team);
     else if (f.pool === "B") B.push(team);

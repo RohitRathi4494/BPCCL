@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { Check, Loader2, Users } from "lucide-react";
 import {
   setFranchiseGroup,
+  setFranchiseNrr,
   type FixtureState,
 } from "@/app/admin/(protected)/fixtures/actions";
 import { POOL_LABELS } from "@/lib/pools/shared";
@@ -13,24 +14,44 @@ export type GroupTeam = {
   name: string;
   short_code: string | null;
   pool: string | null;
+  nrr: number | null;
 };
 
 const fieldClass =
   "rounded-sm border border-input bg-background px-2.5 py-1.5 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary";
 
+function StatusDot({ state, pending }: { state: FixtureState; pending: boolean }) {
+  if (pending)
+    return <Loader2 className="size-3.5 animate-spin text-muted-foreground" />;
+  if (state.ok) return <Check className="size-3.5 text-accent" />;
+  if (state.error) return <span className="text-[10px] text-[var(--closed)]">!</span>;
+  return null;
+}
+
 function TeamRow({ t }: { t: GroupTeam }) {
-  const [state, action, pending] = useActionState<FixtureState, FormData>(
+  const [gState, gAction, gPending] = useActionState<FixtureState, FormData>(
     setFranchiseGroup,
+    {},
+  );
+  const [nState, nAction, nPending] = useActionState<FixtureState, FormData>(
+    setFranchiseNrr,
     {},
   );
   const [pool, setPool] = useState(t.pool ?? "");
 
-  function change(value: string) {
+  function changeGroup(value: string) {
     setPool(value);
     const fd = new FormData();
     fd.set("franchise_id", t.id);
     fd.set("pool", value);
-    action(fd);
+    gAction(fd);
+  }
+
+  function saveNrr(value: string) {
+    const fd = new FormData();
+    fd.set("franchise_id", t.id);
+    fd.set("nrr", value.trim());
+    nAction(fd);
   }
 
   return (
@@ -39,22 +60,31 @@ function TeamRow({ t }: { t: GroupTeam }) {
         {t.name}
       </span>
       <div className="flex shrink-0 items-center gap-2">
-        {pending ? (
-          <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
-        ) : state.ok ? (
-          <Check className="size-3.5 text-accent" />
-        ) : state.error ? (
-          <span className="text-[10px] text-[var(--closed)]">!</span>
-        ) : null}
+        <StatusDot state={gState} pending={gPending} />
         <select
           value={pool}
-          onChange={(e) => change(e.target.value)}
+          onChange={(e) => changeGroup(e.target.value)}
           className={fieldClass}
+          title="Group"
         >
           <option value="">— Unassigned</option>
           <option value="A">{POOL_LABELS.A} (A)</option>
           <option value="B">{POOL_LABELS.B} (B)</option>
         </select>
+
+        <StatusDot state={nState} pending={nPending} />
+        <input
+          type="number"
+          step="0.001"
+          defaultValue={t.nrr ?? ""}
+          placeholder="NRR"
+          title="Net Run Rate (manual, e.g. 1.25 or -0.48)"
+          onBlur={(e) => {
+            const v = e.target.value.trim();
+            if (v !== (t.nrr != null ? String(t.nrr) : "")) saveNrr(v);
+          }}
+          className={`${fieldClass} w-20`}
+        />
       </div>
     </div>
   );
@@ -77,9 +107,12 @@ export function TeamGroupsPanel({ teams }: { teams: GroupTeam[] }) {
         </span>
       </div>
       <p className="mt-1 text-xs text-muted-foreground">
-        Assign each team to a group. This drives the points table (every team
-        shows in its group) and auto-fills a fixture&apos;s group when you pick
-        two teams from the same group.
+        Assign each team to a group and enter its{" "}
+        <span className="text-foreground/80">NRR</span> (net run rate, e.g.{" "}
+        <span className="font-mono">1.25</span> or{" "}
+        <span className="font-mono">-0.48</span>). Groups drive the points table
+        and auto-fill a fixture&apos;s group; NRR shows in the table and breaks
+        ties. Both save automatically.
       </p>
       <div className="mt-4 grid gap-2 sm:grid-cols-2">
         {teams.map((t) => (

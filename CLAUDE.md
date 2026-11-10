@@ -138,6 +138,17 @@ separate auth systems per role.
 
 ### Recent updates (as of 2026-11-10) — fixtures & points table
 
+- **Follow-up — manual NRR (same day).** NRR can&apos;t be derived (the result
+  model stores only "won by N runs/wickets", not innings runs+overs), so it&apos;s
+  **entered manually per team**. Migration `20261110040000_franchise_nrr.sql`
+  (**pushed**) adds **`franchises.nrr numeric`** (nullable; `database.types.ts`
+  hand-edited). Admin: an **NRR number input per team** in the Team Groups panel
+  (`setFranchiseNrr` action, saves on blur). Public points table gains an **NRR
+  column** (`formatNrr` → signed 3dp, "—" when unset) and NRR is a **tiebreaker**
+  (points → wins → NRR → name) in `computeStandings`. `RosterTeam = FixtureTeam &
+  {nrr}` carried via `getFranchiseGroups`. If auto-NRR is ever wanted, we&apos;d
+  need to capture each innings&apos; runs+overs on the match result.
+
 - **Follow-ups (same day):** (1) the public fixture card&apos;s **"vs" is now
   centered between the two stacked teams** (hairline rules either side), not off to
   the right. (2) **Persistent team→group assignment** — migration

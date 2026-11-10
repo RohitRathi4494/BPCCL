@@ -234,6 +234,38 @@ export async function setFranchiseGroup(
   return { ok: true };
 }
 
+/** Set a franchise's manual NRR. Blank clears it (NULL). */
+export async function setFranchiseNrr(
+  _prev: FixtureState,
+  formData: FormData,
+): Promise<FixtureState> {
+  const authErr = await ensureAdmin();
+  if (authErr) return { error: authErr };
+
+  const id = String(formData.get("franchise_id") ?? "");
+  if (!UUID_RE.test(id)) return { error: "Invalid team." };
+
+  const raw = String(formData.get("nrr") ?? "").trim();
+  let nrr: number | null = null;
+  if (raw) {
+    nrr = Number(raw);
+    if (!Number.isFinite(nrr)) return { error: "NRR must be a number." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("franchises")
+    .update({ nrr })
+    .eq("id", id);
+  if (error) {
+    console.error("setFranchiseNrr:", error.message);
+    return { error: "Could not save NRR. Please try again." };
+  }
+  revalidatePath("/admin/fixtures");
+  revalidatePath("/fixtures");
+  return { ok: true };
+}
+
 /** Delete a fixture. */
 export async function deleteMatch(
   _prev: FixtureState,
