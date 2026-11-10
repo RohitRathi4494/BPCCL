@@ -4,23 +4,11 @@ import { SponsorCard } from "@/components/site/sponsor-card";
 import { SponsorEnquiryForm } from "@/components/site/sponsor-enquiry-form";
 import { getSponsorsByTier } from "@/lib/queries/sponsors";
 import { getLeagueSettings } from "@/lib/queries/settings";
-import { site, SPONSOR_TIERS, type SponsorTier } from "@/lib/site";
-import type { Sponsor } from "@/lib/types";
+import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Sponsors",
   description: `Partner with ${site.name} ${site.season} — Title, Co-title, Associate and Ground Partner opportunities.`,
-};
-
-const TIER_BLURB: Record<string, string> = {
-  Title: "The marquee partner — top billing across the league.",
-  "Co-title": "Shared headline presence across the season.",
-  Associate: "Prominent brand presence at matches and online.",
-  "Style Partner": "Dressing the league in signature style.",
-  "Statistics Partner": "Powers the numbers behind every match.",
-  "Healthcare Partner": "Keeping our players match-fit all season.",
-  "Media Partner": "Bringing the league to screens everywhere.",
-  "Ground Partner": "On-ground visibility at Champions Den.",
 };
 
 export default async function SponsorsPage() {
@@ -72,7 +60,7 @@ export default async function SponsorsPage() {
                   key={sponsor.id}
                   sponsor={sponsor}
                   variant="spotlight"
-                  tierLabel={tier === "Title" ? "Title Partner" : tier}
+                  tierLabel={tier === "Title" ? "Title Sponsor" : tier}
                 />
               ))}
             </div>
@@ -107,9 +95,6 @@ export default async function SponsorsPage() {
               Partner line-up will be announced soon. Be the first — get in touch.
             </p>
           )}
-
-          {/* Open slots — what's still available to sponsor. */}
-          <OpenSlots taken={grouped.filter((g) => g.sponsors.length > 0)} />
         </div>
       </section>
 
@@ -131,50 +116,5 @@ export default async function SponsorsPage() {
         </div>
       </section>
     </>
-  );
-}
-
-/**
- * The tiers that still have no sponsor — shown as a tidy "available" row so the
- * page doubles as a clear pitch for what's left to claim.
- */
-function OpenSlots({
-  taken,
-}: {
-  taken: { tier: SponsorTier; sponsors: Sponsor[] }[];
-}) {
-  const takenTiers = new Set(taken.map((g) => g.tier));
-  const open = SPONSOR_TIERS.filter((t) => !takenTiers.has(t));
-  if (open.length === 0) return null;
-
-  return (
-    <div className="rounded-xl border border-dashed border-primary/30 bg-card/40 p-6 sm:p-8">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 className="font-heading text-xl font-bold tracking-tight text-foreground uppercase">
-          Open <span className="text-accent">slots</span>
-        </h3>
-        <span className="font-mono text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
-          Available to sponsor
-        </span>
-      </div>
-      <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {open.map((tier) => (
-          <div
-            key={tier}
-            className="flex items-start gap-3 rounded-lg border border-border/70 bg-background/30 p-4"
-          >
-            <span className="mt-0.5 size-2 shrink-0 rounded-full bg-accent" />
-            <div>
-              <p className="font-heading text-sm font-bold tracking-wide text-foreground uppercase">
-                {tier}
-              </p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {TIER_BLURB[tier]}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
   );
 }

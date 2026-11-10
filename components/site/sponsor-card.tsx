@@ -66,17 +66,12 @@ export function SponsorCard({
               "radial-gradient(60% 80% at 85% 0%, rgba(244,179,36,0.14) 0%, transparent 60%)",
           }}
         />
-        <div className="relative flex flex-col items-center gap-6 text-center md:flex-row md:items-center md:gap-10 md:text-left">
-          <div className="relative flex h-28 w-full max-w-[280px] shrink-0 items-center justify-center md:h-32">
+        <div className="relative flex flex-col items-center gap-6 text-center">
+          {chip}
+          <div className="relative flex h-32 w-full max-w-[320px] items-center justify-center sm:h-40">
             {logo}
           </div>
-          <div className="flex flex-col items-center gap-2 md:items-start">
-            {chip}
-            <span className="font-heading text-2xl font-extrabold tracking-tight text-foreground uppercase sm:text-3xl">
-              {sponsor.name}
-            </span>
-            {visit}
-          </div>
+          {visit}
         </div>
       </>
     );
