@@ -8,6 +8,7 @@ import {
   Gavel,
   FileSpreadsheet,
   ListChecks,
+  ClipboardList,
 } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -85,6 +86,14 @@ export default async function AdminExportsPage() {
       count: squad,
     },
     {
+      dataset: "squad-list",
+      title: "Squad List",
+      description:
+        "A lean sheet — S.No, team, player, age category (30–below 35 / 35 & above) and category type (A+/A/B/Legend).",
+      icon: <ClipboardList className="size-5" />,
+      count: squad,
+    },
+    {
       dataset: "wishlists",
       title: "Team Wishlists",
       description:
@@ -121,8 +130,8 @@ export default async function AdminExportsPage() {
               Full export
             </span>
             <span className="text-sm text-muted-foreground">
-              One workbook, all four sheets — registrations, franchises, auction
-              setup and results.
+              One workbook — registrations, franchises, auction setup, results
+              and the squad list.
             </span>
           </div>
         </div>

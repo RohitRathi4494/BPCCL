@@ -6,6 +6,7 @@ const VALID: ExportDataset[] = [
   "franchises",
   "auction-setup",
   "auction-results",
+  "squad-list",
   "wishlists",
   "all",
 ];

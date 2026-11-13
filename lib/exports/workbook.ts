@@ -1,6 +1,7 @@
 import ExcelJS from "exceljs";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { AGE_BUCKETS, ageBucketOf } from "@/lib/registration";
 
 /** Datasets the admin can export. `all` bundles every sheet into one workbook. */
 export type ExportDataset =
@@ -8,8 +9,15 @@ export type ExportDataset =
   | "franchises"
   | "auction-setup"
   | "auction-results"
+  | "squad-list"
   | "wishlists"
   | "all";
+
+/** Human label for an age bucket (e.g. "30 – below 35"), "" if unset. */
+function ageCategoryLabel(age: number | null | undefined): string {
+  const key = ageBucketOf(age);
+  return AGE_BUCKETS.find((b) => b.key === key)?.label ?? "";
+}
 
 type ColumnDef = {
   header: string;
@@ -106,6 +114,7 @@ type SquadMemberRow = {
     full_name: string;
     registration_code: string | null;
     assigned_category: string | null;
+    age: number | null;
     phone: string | null;
     jersey_number: string | null;
     jersey_name: string | null;
@@ -120,7 +129,7 @@ async function fetchSquadMembers(supabase: AnyClient): Promise<SquadMemberRow[]>
     .select(
       "acquisition_type, display_as_owner, category_at_acquisition, price, created_at, " +
         "franchises(name, short_code), " +
-        "players(full_name, registration_code, assigned_category, phone, " +
+        "players(full_name, registration_code, assigned_category, age, phone, " +
         "jersey_number, jersey_name, tshirt_size, lower_size)",
     )
     .order("created_at", { ascending: true });
@@ -372,6 +381,46 @@ async function addAuctionResultsSheet(wb: ExcelJS.Workbook, supabase: AnyClient)
   // the shared squad columns; Auction Setup keeps the leaner column set.
   const columns = [...SQUAD_COLUMNS, ...JERSEY_COLUMNS];
   addSheet(wb, "Auction Results", columns, squadRows(members));
+}
+
+/**
+ * A lean "squad list" sheet: S.No · Team · Player · Age Category · Type.
+ * "Type" here is the player's live category (Category A+/A/B/Legend), not the
+ * acquisition type. Ordered by team (franchise order) then player name, and
+ * numbered 1..N across the whole sheet.
+ */
+async function addSquadListSheet(wb: ExcelJS.Workbook, supabase: AnyClient) {
+  const [members, franchises] = await Promise.all([
+    fetchSquadMembers(supabase),
+    fetchFranchises(supabase),
+  ]);
+  const order = new Map(franchises.map((f, i) => [f.name, i]));
+  const sorted = [...members].sort((a, b) => {
+    const ai = order.get(a.franchises?.name ?? "") ?? 999;
+    const bi = order.get(b.franchises?.name ?? "") ?? 999;
+    if (ai !== bi) return ai - bi;
+    return (a.players?.full_name ?? "").localeCompare(b.players?.full_name ?? "");
+  });
+  const rows = sorted.map((m, i) => ({
+    sno: i + 1,
+    franchise: asText(m.franchises?.name),
+    player: asText(m.players?.full_name),
+    age_category: ageCategoryLabel(m.players?.age),
+    // Live category first, falling back to the value frozen at acquisition.
+    type: asText(m.players?.assigned_category ?? m.category_at_acquisition),
+  }));
+  addSheet(
+    wb,
+    "Squad List",
+    [
+      { header: "S.No", key: "sno", width: 7 },
+      { header: "Team Name", key: "franchise", width: 26 },
+      { header: "Player Name", key: "player", width: 24 },
+      { header: "Age Category", key: "age_category", width: 16 },
+      { header: "Type", key: "type", width: 14 },
+    ],
+    rows,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -701,6 +750,7 @@ const LABELS: Record<ExportDataset, string> = {
   franchises: "Franchises",
   "auction-setup": "Auction-Setup",
   "auction-results": "Auction-Results",
+  "squad-list": "Squad-List",
   wishlists: "Wishlists",
   all: "Full-Export",
 };
@@ -724,6 +774,9 @@ export async function buildExport(
   }
   if (dataset === "auction-results" || dataset === "all") {
     await addAuctionResultsSheet(wb, supabase);
+  }
+  if (dataset === "squad-list" || dataset === "all") {
+    await addSquadListSheet(wb, supabase);
   }
   // Wishlists are a standalone export (a combined sheet + one per franchise) and
   // are deliberately NOT folded into "all" to keep the full workbook compact.
