@@ -5,4 +5,4 @@
 alter table public.league_settings
   add column if not exists registration_open boolean not null default true;
 
-update public.league_settings set registration_open = false;
+update public.league_settings set registration_open = false where true;  -- `where true` satisfies the safe-update guard on the singleton row

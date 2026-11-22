@@ -1,18 +1,27 @@
 /**
  * Static brand copy and navigation for the public marketing site.
+ *
+ * Brand *facts* (name, short name, season, tagline, venue, logos, prod URL,
+ * registration prefix, contact email) are owned by `lib/league.config.ts` —
+ * the single source of truth. This module re-exports them (and keeps its
+ * existing export shape) so the many `import { site } from "@/lib/site"` call
+ * sites keep working unchanged.
+ *
  * (League *numbers* — franchise count, categories, purse — are NOT here;
  * those live in the `league_settings` DB table per the nothing-hardcoded rule.)
  */
+import { leagueConfig } from "@/lib/league.config";
+
 export const site = {
-  name: "Urban Sports Champions League",
-  shortName: "USCL",
-  season: "Season 2",
-  tagline: "Gurugram's Finest T20 Cricket League",
+  name: leagueConfig.name,
+  shortName: leagueConfig.shortName,
+  season: leagueConfig.season,
+  tagline: leagueConfig.tagline,
   venue: {
-    name: "Champions Den",
-    area: "Bandhwari",
-    city: "Gurugram",
-    full: "Champions Den, Bandhwari, Gurugram",
+    name: leagueConfig.venue.name,
+    area: leagueConfig.venue.area,
+    city: leagueConfig.venue.city,
+    full: leagueConfig.venue.full,
   },
 } as const;
 
@@ -34,13 +43,12 @@ export const navLinks = [
  * sitemap is ignored.
  *
  * IMPORTANT: this MUST match the Vercel Production domain (Project → Settings →
- * Domains). Vercel is currently set to the www host as primary (non-www 308s to
- * www), so the canonical host is www. If you flip the Vercel primary domain to
- * the naked apex, change this to "https://urbansportsstudio.in" AND update the
- * NEXT_PUBLIC_SITE_URL env var to match — a mismatch reintroduces canonical
- * confusion for Google.
+ * Domains). It is sourced from `leagueConfig.prodSiteUrl`. If you change the
+ * canonical host (e.g. flip between the www and the naked apex), update it in
+ * `lib/league.config.ts` AND set the NEXT_PUBLIC_SITE_URL env var to match — a
+ * mismatch reintroduces canonical confusion for Google.
  */
-export const PROD_SITE_URL = "https://www.urbansportsstudio.in";
+export const PROD_SITE_URL = leagueConfig.prodSiteUrl;
 
 /**
  * Canonical, absolute base URL of the public site (no trailing slash). Used for

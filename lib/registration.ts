@@ -4,6 +4,8 @@
  * PLAYER_ROLES is the multi-select playing-role list collected at registration
  * (stored in `players.roles` as a text[]). A player may pick more than one.
  */
+import { leagueConfig } from "@/lib/league.config";
+
 export const PLAYER_ROLES = [
   "Left Hand Batsman",
   "Right Hand Batsman",
@@ -87,7 +89,7 @@ export const STAT_FIELDS = [
 ] as const;
 export type StatKey = (typeof STAT_FIELDS)[number]["key"];
 
-/** Eligibility: USCL Season 2 is open to players aged 30 and above. */
+/** Eligibility: open to players aged 30 and above. */
 export const MIN_AGE = 30;
 /** Upper bound purely to catch typos, not an eligibility rule. */
 export const MAX_AGE = 75;
@@ -183,10 +185,11 @@ export function isWorkEmail(email: string): boolean {
 }
 
 /**
- * Human-readable, collision-resistant registration code, e.g. "USCL2-7Q3K9M".
- * Crockford base32 alphabet (no I/L/O/U) so codes are unambiguous when read
- * aloud or typed. 6 chars → ~1 billion combinations; the action retries on the
- * rare collision against the UNIQUE index.
+ * Human-readable, collision-resistant registration code, e.g. "BCCL1-7Q3K9M".
+ * The prefix comes from `leagueConfig.registrationCodePrefix`. Crockford base32
+ * alphabet (no I/L/O/U) so codes are unambiguous when read aloud or typed.
+ * 6 chars → ~1 billion combinations; the action retries on the rare collision
+ * against the UNIQUE index.
  */
 const CODE_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 export function generateRegistrationCode(): string {
@@ -194,7 +197,7 @@ export function generateRegistrationCode(): string {
   crypto.getRandomValues(bytes);
   let s = "";
   for (const b of bytes) s += CODE_ALPHABET[b % 32];
-  return `USCL2-${s}`;
+  return `${leagueConfig.registrationCodePrefix}-${s}`;
 }
 
 /**
@@ -214,23 +217,19 @@ export function toTitleCase(raw: string | null | undefined): string {
 }
 
 /**
- * League rule: anyone born 1 Oct 1991 – 31 Dec 1991 counts as age 35
- * (this cohort turns 35 within the season, so they're treated as 35+ for the
- * age buckets). Returns 35 for a matching DOB, otherwise null.
+ * BPCCL age-eligibility reference date. Age is assessed **as of 1 January 2027**
+ * ("35+ as of 1 January 2027; up to 3 players per team may be aged 30–34"). This
+ * is the canonical reference so a player's age (and age bucket) doesn't drift as
+ * calendar time passes. Mirrors `league_settings.age_as_of`.
  */
-export function ageOverrideForDob(dobISO: string): number | null {
-  const day = dobISO.slice(0, 10); // normalise to YYYY-MM-DD
-  if (day >= "1991-10-01" && day <= "1991-12-31") return 35;
-  return null;
-}
+export const AGE_AS_OF = new Date("2027-01-01T00:00:00Z");
 
-/** Whole-year age from an ISO date string (YYYY-MM-DD) as of `ref`. */
-export function computeAge(dobISO: string, ref: Date = new Date()): number {
-  const override = ageOverrideForDob(dobISO);
-  if (override != null) return override;
+/** Whole-year age from an ISO date string (YYYY-MM-DD) as of `ref`
+ *  (defaults to the league's eligibility reference date, 1 Jan 2027). */
+export function computeAge(dobISO: string, ref: Date = AGE_AS_OF): number {
   const dob = new Date(dobISO);
-  let age = ref.getFullYear() - dob.getFullYear();
-  const m = ref.getMonth() - dob.getMonth();
-  if (m < 0 || (m === 0 && ref.getDate() < dob.getDate())) age -= 1;
+  let age = ref.getUTCFullYear() - dob.getUTCFullYear();
+  const m = ref.getUTCMonth() - dob.getUTCMonth();
+  if (m < 0 || (m === 0 && ref.getUTCDate() < dob.getUTCDate())) age -= 1;
   return age;
 }

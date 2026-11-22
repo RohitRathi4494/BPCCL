@@ -15,7 +15,8 @@ update public.league_settings
   set owner_base_price = coalesce(
     nullif(owner_base_price, '{}'::jsonb),
     retention_base_price
-  );
+  )
+  where true;  -- singleton row; `where true` satisfies the safe-update guard
 
 create or replace function public.lock_squad_member(
   p_franchise uuid,

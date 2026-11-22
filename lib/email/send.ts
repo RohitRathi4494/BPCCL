@@ -8,7 +8,7 @@
  *   SMTP_PORT      — default 465 (SSL)
  *   SMTP_USER      — the sending Gmail/Workspace address
  *   SMTP_PASSWORD  — a Google App Password (requires 2FA on the account)
- *   EMAIL_FROM     — display sender, e.g. "USCL <you@yourdomain.com>"
+ *   EMAIL_FROM     — display sender, e.g. "BCCL <you@yourdomain.com>"
  *                    (falls back to SMTP_USER if unset)
  *
  * Degrades gracefully: if SMTP_USER/PASSWORD aren't set it logs and returns
@@ -18,11 +18,12 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import nodemailer from "nodemailer";
+import { leagueConfig } from "@/lib/league.config";
 
 export type SendResult = { ok: boolean; skipped?: boolean; error?: string };
 
 /** CID referenced by the email templates' header (see templates.ts shell). */
-export const BRAND_LOGO_CID = "uscl-logo";
+export const BRAND_LOGO_CID = "brand-logo";
 
 let transporter: nodemailer.Transporter | null = null;
 let logoAttachment: { filename: string; content: Buffer; cid: string } | null =
@@ -32,15 +33,18 @@ let logoLoaded = false;
 /**
  * Load the brand logo once and cache it as an inline attachment. Returns null
  * if the file can't be read, so a missing logo never blocks an email — the
- * template's <img alt="USCL"> just falls back to its alt text.
+ * template's <img alt> just falls back to its alt text.
  */
 async function getLogoAttachment() {
   if (logoLoaded) return logoAttachment;
   logoLoaded = true;
   try {
-    const file = path.join(process.cwd(), "public", "uscl-logo.png");
+    // leagueConfig.logos.email is a public path (e.g. "/logo.png"); strip the
+    // leading slash to resolve it under the bundled public/ directory.
+    const rel = leagueConfig.logos.email.replace(/^\/+/, "");
+    const file = path.join(process.cwd(), "public", rel);
     logoAttachment = {
-      filename: "uscl-logo.png",
+      filename: path.basename(rel),
       content: await readFile(file),
       cid: BRAND_LOGO_CID,
     };

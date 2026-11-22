@@ -1,21 +1,30 @@
 /**
- * Storage abstraction for player photos.
+ * Storage abstraction. SERVER ONLY — imported solely from `"use server"` actions.
+ * Never import from a client component (the R2 provider pulls in the AWS SDK +
+ * secret env).
  *
- * The rest of the app calls `uploadPlayerPhoto(...)` and gets back a public URL —
- * it does NOT care whether the bytes land on Cloudflare R2 or Supabase Storage.
- * This keeps us free to switch providers without touching the upload UI.
- *
- * Provider selection:
- *   - `PHOTO_STORAGE_PROVIDER=r2|supabase` forces a provider, else
- *   - R2 is used when fully configured (see `r2Configured`), else
- *   - Supabase Storage (the legacy `player-photos` public bucket) is the fallback.
- *
- * SERVER ONLY — imported solely from `"use server"` actions. Never import from a
- * client component (the R2 provider pulls in the AWS SDK + secret env).
+ * PUBLIC photos  → `uploadPublicPhoto()` stores to R2 (public bucket) or, in dev,
+ *                  falls back to Supabase Storage. Returns a public URL.
+ * PRIVATE docs   → `createPrivateUploadUrl()` / `getPrivateViewUrl()` /
+ *                  `deletePrivateObject()`. Aadhaar + payment screenshots live in
+ *                  the private R2 bucket; the DB stores the object KEY only, never
+ *                  a URL. There is NO Supabase fallback for private docs.
  */
 import { createClient } from "@supabase/supabase-js";
 import { PHOTO_BUCKET } from "@/lib/registration";
-import { r2Configured, r2Upload } from "@/lib/storage/r2";
+import {
+  r2PublicConfigured,
+  r2PrivateConfigured,
+  r2UploadPublic,
+  r2PresignPrivatePut,
+  r2PresignPrivateGet,
+  r2DeletePrivate,
+} from "@/lib/storage/r2";
+import {
+  type DocKind,
+  isStorableDocType,
+  DOC_EXT_BY_TYPE,
+} from "@/lib/storage/docs";
 
 export type UploadResult = { url: string };
 
@@ -26,26 +35,26 @@ export type PhotoUploadInput = {
   ext: string;
 };
 
-type Provider = "r2" | "supabase";
+type PublicProvider = "r2" | "supabase";
 
-function chosenProvider(): Provider {
+function chosenPublicProvider(): PublicProvider {
   const forced = process.env.PHOTO_STORAGE_PROVIDER?.trim().toLowerCase();
   if (forced === "r2" || forced === "supabase") return forced;
-  return r2Configured() ? "r2" : "supabase";
+  return r2PublicConfigured() ? "r2" : "supabase";
 }
 
-/** Upload a (compressed) player photo and return its public URL. */
-export async function uploadPlayerPhoto(
+/** Upload a (compressed) player photo and return its PUBLIC url. */
+export async function uploadPublicPhoto(
   input: PhotoUploadInput,
 ): Promise<UploadResult> {
   const key = `players/${crypto.randomUUID()}.${input.ext}`;
 
-  if (chosenProvider() === "r2") {
-    const url = await r2Upload(key, input.bytes, input.contentType);
+  if (chosenPublicProvider() === "r2") {
+    const url = await r2UploadPublic(key, input.bytes, input.contentType);
     return { url };
   }
 
-  // Supabase fallback — anon client is enough for the public bucket's insert policy.
+  // Dev fallback only: anon client is enough for the public bucket's insert policy.
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -61,4 +70,55 @@ export async function uploadPlayerPhoto(
   if (error) throw new Error(`supabase upload: ${error.message}`);
   const { data } = supabase.storage.from(PHOTO_BUCKET).getPublicUrl(key);
   return { url: data.publicUrl };
+}
+
+/** How long a private upload / view URL stays valid (5 minutes). */
+export const PRIVATE_URL_TTL_SECONDS = 300;
+
+export type PrivateUploadTarget = { key: string; url: string };
+
+/**
+ * Create a presigned PUT target for a private doc. The KEY is generated on the
+ * server (`docs/{kind}/{uuid}.{ext}`) so the client can never choose where bytes
+ * land. Throws if the content type isn't storable for this kind, or if the
+ * private bucket isn't configured (no Supabase fallback for private docs).
+ */
+export async function createPrivateUploadUrl(
+  kind: DocKind,
+  contentType: string,
+): Promise<PrivateUploadTarget> {
+  if (!isStorableDocType(kind, contentType)) {
+    throw new Error("Unsupported file type for this document.");
+  }
+  if (!r2PrivateConfigured()) {
+    throw new Error("Private document storage (R2) is not configured.");
+  }
+  const ext = DOC_EXT_BY_TYPE[contentType];
+  if (!ext) throw new Error("Unsupported file type for this document.");
+  const key = `docs/${kind}/${crypto.randomUUID()}.${ext}`;
+  const url = await r2PresignPrivatePut(
+    key,
+    contentType,
+    PRIVATE_URL_TTL_SECONDS,
+  );
+  return { key, url };
+}
+
+/** Short-lived presigned GET URL for an admin to view a private object. */
+export async function getPrivateViewUrl(
+  key: string,
+  ttlSeconds: number = PRIVATE_URL_TTL_SECONDS,
+): Promise<string> {
+  if (!r2PrivateConfigured()) {
+    throw new Error("Private document storage (R2) is not configured.");
+  }
+  return r2PresignPrivateGet(key, ttlSeconds);
+}
+
+/** Permanently delete a private object (e.g. after Aadhaar is verified). */
+export async function deletePrivateObject(key: string): Promise<void> {
+  if (!r2PrivateConfigured()) {
+    throw new Error("Private document storage (R2) is not configured.");
+  }
+  await r2DeletePrivate(key);
 }

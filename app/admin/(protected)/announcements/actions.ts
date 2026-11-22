@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { getLeagueSettings } from "@/lib/queries/settings";
+import { site } from "@/lib/site";
 import { getSquadRecipients } from "@/lib/queries/announcements";
 import {
   buildAnnouncementVars,
@@ -94,7 +95,7 @@ export async function sendAnnouncement(
           const html = renderAnnouncementHtml({
             heading,
             bodyText,
-            preview: `${r.franchise_name} — USCL Season 2`,
+            preview: `${r.franchise_name} — ${site.name} ${site.season}`,
           });
           const res = await sendEmail({ to: r.email!, subject, html });
           return res.skipped ? "skipped" : res.ok ? "sent" : "failed";

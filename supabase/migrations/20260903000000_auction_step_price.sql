@@ -17,4 +17,5 @@ update public.league_settings
   set step_price = coalesce(
     nullif(step_price, '{}'::jsonb),
     '{"Legend":1000,"Category A+":1000,"Category A":500,"Category B":500}'::jsonb
-  );
+  )
+  where true;  -- singleton row; `where true` satisfies the safe-update guard

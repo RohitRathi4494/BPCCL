@@ -2,6 +2,11 @@ import ExcelJS from "exceljs";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { AGE_BUCKETS, ageBucketOf } from "@/lib/registration";
+import { site } from "@/lib/site";
+
+/** Brand tokens for workbook metadata + filenames (e.g. "BCCL"). */
+const WB_CREATOR = `${site.name} ${site.season}`;
+const FILE_PREFIX = site.shortName;
 
 /** Datasets the admin can export. `all` bundles every sheet into one workbook. */
 export type ExportDataset =
@@ -622,7 +627,7 @@ export async function buildWishlistExport(
   entries: WishlistExportEntry[],
 ): Promise<{ buffer: Buffer; filename: string }> {
   const wb = new ExcelJS.Workbook();
-  wb.creator = "USCL Season 2";
+  wb.creator = WB_CREATOR;
 
   const rows = entries.map((e) => ({
     player: asText(e.player?.full_name),
@@ -671,7 +676,7 @@ export async function buildWishlistExport(
       .replace(/[^a-zA-Z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "")
       .slice(0, 40) || "Franchise";
-  return { buffer, filename: `USCL2-Wishlist-${slug}.xlsx` };
+  return { buffer, filename: `${FILE_PREFIX}-Wishlist-${slug}.xlsx` };
 }
 
 // ---------------------------------------------------------------------------
@@ -699,7 +704,7 @@ export async function buildPoolExport(
   players: PoolExportPlayer[],
 ): Promise<{ buffer: Buffer; filename: string }> {
   const wb = new ExcelJS.Workbook();
-  wb.creator = "USCL Season 2";
+  wb.creator = WB_CREATOR;
 
   const rows = players.map((p) => ({
     player: asText(p.full_name),
@@ -738,7 +743,7 @@ export async function buildPoolExport(
 
   const arrayBuffer = await wb.xlsx.writeBuffer();
   const buffer = Buffer.from(arrayBuffer);
-  return { buffer, filename: "USCL2-Player-Pool.xlsx" };
+  return { buffer, filename: `${FILE_PREFIX}-Player-Pool.xlsx` };
 }
 
 // ---------------------------------------------------------------------------
@@ -761,7 +766,7 @@ export async function buildExport(
   dataset: ExportDataset,
 ): Promise<{ buffer: Buffer; filename: string }> {
   const wb = new ExcelJS.Workbook();
-  wb.creator = "USCL Season 2 Admin";
+  wb.creator = `${WB_CREATOR} Admin`;
 
   if (dataset === "registrations" || dataset === "all") {
     await addRegistrationsSheet(wb, supabase);
@@ -786,6 +791,6 @@ export async function buildExport(
 
   const arrayBuffer = await wb.xlsx.writeBuffer();
   const buffer = Buffer.from(arrayBuffer);
-  const filename = `USCL2-${LABELS[dataset]}.xlsx`;
+  const filename = `${FILE_PREFIX}-${LABELS[dataset]}.xlsx`;
   return { buffer, filename };
 }

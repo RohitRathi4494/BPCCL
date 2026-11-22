@@ -7,6 +7,7 @@ import { RegistrationForm } from "@/components/site/registration-form";
 import { getLeagueSettings } from "@/lib/queries/settings";
 import { MIN_AGE, DEFAULT_REGISTRATION_FEE } from "@/lib/registration";
 import { site } from "@/lib/site";
+import { leagueConfig } from "@/lib/league.config";
 
 export const metadata: Metadata = {
   title: "Player Registration",
@@ -31,8 +32,8 @@ export default async function RegisterPage() {
       <section className="lamp-glow">
         <div className="mx-auto max-w-4xl px-5 pt-12 pb-8 sm:pt-16">
           <Image
-            src="/uscl-logo.png"
-            alt="USCL — Urban Sports Champions Den, Season 2"
+            src={leagueConfig.logos.main}
+            alt={`${site.name} — ${site.season}`}
             width={480}
             height={600}
             priority
@@ -98,12 +99,16 @@ export default async function RegisterPage() {
           <div className="mx-auto max-w-4xl px-5 py-16">
             <SectionHeading kicker="Your Details" title="Registration Form" />
             <div className="mt-10 rounded-xl border border-border bg-card p-6 sm:p-8">
-              <RegistrationForm registrationFee={fee} />
+              <RegistrationForm
+                registrationFee={fee}
+                upiId={settings?.upi_id ?? null}
+                upiQrUrl={settings?.upi_qr_url ?? null}
+              />
             </div>
             <p className="mt-6 text-center text-xs text-muted-foreground">
-              A mandatory registration fee of ₹{feeText} applies only if you are
-              selected during the auction. Registering does not guarantee
-              selection.
+              A registration fee of ₹{feeText} is payable now via UPI to complete
+              your registration. Registering does not guarantee selection in the
+              auction.
             </p>
           </div>
         </section>

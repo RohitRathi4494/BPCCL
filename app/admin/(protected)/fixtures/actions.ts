@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { MATCH_STATUSES } from "@/lib/fixtures";
+import { site } from "@/lib/site";
 
 export type FixtureState = { error?: string; ok?: boolean };
 
@@ -69,8 +70,7 @@ function parseFixture(formData: FormData):
     return { error: "Match number must be a whole number." };
 
   const ground =
-    String(formData.get("ground") ?? "").trim() ||
-    "Champions Den, Bandhwari";
+    String(formData.get("ground") ?? "").trim() || site.venue.full;
 
   return {
     row: {

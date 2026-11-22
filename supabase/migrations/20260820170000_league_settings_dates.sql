@@ -18,4 +18,5 @@ alter table public.league_settings
 update public.league_settings
   set registration_closes_at = coalesce(registration_closes_at, '2026-09-15 23:59:00+05:30'),
       auction_day_at         = coalesce(auction_day_at,         '2026-09-26 09:00:00+05:30'),
-      season_starts_note     = coalesce(season_starts_note,     '3rd Week of October');
+      season_starts_note     = coalesce(season_starts_note,     '3rd Week of October')
+  where true;  -- singleton row; `where true` satisfies the safe-update guard

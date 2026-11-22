@@ -1,4 +1,5 @@
 import { getSiteUrl, site } from "@/lib/site";
+import { leagueConfig } from "@/lib/league.config";
 import type { LeagueSettings } from "@/lib/types";
 
 /**
@@ -7,8 +8,8 @@ import type { LeagueSettings } from "@/lib/types";
  * - OrganizationJsonLd is rendered once in the root layout so every page carries
  *   the SportsOrganization + WebSite identity.
  * - SeasonEventsJsonLd is rendered on the home page (where the season/auction
- *   dates live) so AI agents and search engines can answer "when is USCL Season
- *   2 / when's the auction / when does registration close."
+ *   dates live) so AI agents and search engines can answer "when is the season
+ *   / when's the auction / when does registration close."
  *
  * Both reference the same @id values so the graph stays cross-linked.
  */
@@ -60,14 +61,13 @@ export function OrganizationJsonLd() {
         alternateName: site.shortName,
         sport: "Cricket",
         url: base,
-        logo: `${base}/uscl-logo.png`,
-        image: `${base}/hero-champions.jpg`,
-        description:
-          "Urban Sports Champions League Season 2 — Gurugram's finest T20 cricket league. 14 franchises, live player auction, and live match scoring.",
-        email: "Urbansportsstudio@gmail.com",
+        logo: `${base}${leagueConfig.logos.main}`,
+        image: `${base}${leagueConfig.logos.hero}`,
+        description: `${site.name} ${site.season} — ${site.tagline}. A franchise cricket league with public player registration, a live player auction, and live match scoring.`,
+        email: leagueConfig.contactEmail,
         parentOrganization: {
           "@type": "Organization",
-          name: "Urban Sports Studio",
+          name: leagueConfig.operator,
         },
         location: venuePlace(),
       },
@@ -116,8 +116,7 @@ export function SeasonEventsJsonLd({
     "@type": "Event",
     "@id": registrationId,
     name: `${site.name} — Player Registration`,
-    description:
-      "Public online player registration for USCL Season 2. Open to players aged 30 and above.",
+    description: `Public online player registration for ${site.shortName} ${site.season}.`,
     url: `${base}/register`,
     ...(regCloses ? { endDate: regCloses } : {}),
     eventStatus: SCHEDULED,
@@ -133,7 +132,7 @@ export function SeasonEventsJsonLd({
     "@id": auctionId,
     name: `${site.name} ${site.season} — Player Auction`,
     description:
-      "Live player auction where all 14 franchises build their squads using mock/virtual purse currency.",
+      "Live player auction where all franchises build their squads using mock/virtual purse currency.",
     sport: "Cricket",
     ...(auctionAt ? { startDate: auctionAt } : {}),
     eventStatus: SCHEDULED,
@@ -149,11 +148,10 @@ export function SeasonEventsJsonLd({
     "@id": seasonId,
     name: `${site.name} — ${site.season}`,
     alternateName: `${site.shortName} ${site.season}`,
-    description:
-      "Urban Sports Champions League Season 2 — a T20 cricket league of 14 franchises at Champions Den, Bandhwari, Gurugram.",
+    description: `${site.name} ${site.season} — a franchise cricket league. ${site.tagline}.`,
     sport: "Cricket",
     url: base,
-    image: `${base}/hero-champions.jpg`,
+    image: `${base}${leagueConfig.logos.hero}`,
     ...(seasonStarts ? { startDate: seasonStarts } : {}),
     ...(settings?.season_starts_note
       ? { disambiguatingDescription: `Season start: ${settings.season_starts_note}` }

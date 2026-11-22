@@ -1,11 +1,11 @@
 {
   "schema_version": "1.0",
-  "name": "Urban Sports Champions League (USCL)",
-  "description": "Official site of the Urban Sports Champions League Season 2 — Gurugram's T20 cricket league at Champions Den, Bandhwari. Sponsor showcase, public player registration, franchise squads, fixtures, and live scoring.",
-  "url": "https://www.urbansportsstudio.in",
+  "name": "Ballpark Corporate Cricket League (BCCL)",
+  "description": "Official site of the Ballpark Corporate Cricket League — a franchise cricket league. Sponsor showcase, public player registration, franchise squads, fixtures, and live scoring.",
+  "url": "https://www.example.com",
   "provider": {
-    "name": "Urban Sports Studio",
-    "url": "https://www.urbansportsstudio.in"
+    "name": "Ballpark Corporate Cricket League",
+    "url": "https://www.example.com"
   },
   "capabilities": [
     "player-registration",
@@ -14,17 +14,16 @@
     "view-franchises",
     "view-live-scores"
   ],
-  "contact": "Urbansportsstudio@gmail.com",
   "endpoints": [
     {
       "name": "Player registration",
-      "description": "Public form for players to register for USCL Season 2 (age 30+).",
-      "url": "https://www.urbansportsstudio.in/register"
+      "description": "Public form for players to register for the league (age 30+).",
+      "url": "https://www.example.com/register"
     },
     {
       "name": "Sponsors",
       "description": "Sponsorship tiers and enquiry form.",
-      "url": "https://www.urbansportsstudio.in/sponsors"
+      "url": "https://www.example.com/sponsors"
     }
   ]
 }

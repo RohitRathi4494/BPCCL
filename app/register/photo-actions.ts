@@ -1,6 +1,6 @@
 "use server";
 
-import { uploadPlayerPhoto } from "@/lib/storage";
+import { uploadPublicPhoto } from "@/lib/storage";
 import { PHOTO_MIME_TYPES } from "@/lib/registration";
 
 export type PhotoUploadResult = { url?: string; error?: string };
@@ -37,7 +37,7 @@ export async function uploadPhoto(
   const ext = EXT_BY_TYPE[file.type] ?? "jpg";
 
   try {
-    const { url } = await uploadPlayerPhoto({
+    const { url } = await uploadPublicPhoto({
       bytes,
       contentType: file.type,
       ext,

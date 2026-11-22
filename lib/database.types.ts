@@ -367,6 +367,13 @@ export type Database = {
           step_price: Json
           topup_1: number
           topup_2: number
+          upi_id: string | null
+          upi_qr_url: string | null
+          matchday_size: number
+          young_player_cap: number
+          age_as_of: string
+          core_category_cap: Json
+          matchday_category_cap: Json
         }
         Insert: {
           auction_day_at?: string | null
@@ -396,6 +403,13 @@ export type Database = {
           step_price?: Json
           topup_1?: number
           topup_2?: number
+          upi_id?: string | null
+          upi_qr_url?: string | null
+          matchday_size?: number
+          young_player_cap?: number
+          age_as_of?: string
+          core_category_cap?: Json
+          matchday_category_cap?: Json
         }
         Update: {
           auction_day_at?: string | null
@@ -425,6 +439,13 @@ export type Database = {
           step_price?: Json
           topup_1?: number
           topup_2?: number
+          upi_id?: string | null
+          upi_qr_url?: string | null
+          matchday_size?: number
+          young_player_cap?: number
+          age_as_of?: string
+          core_category_cap?: Json
+          matchday_category_cap?: Json
         }
         Relationships: []
       }
@@ -510,12 +531,20 @@ export type Database = {
       }
       players: {
         Row: {
+          aadhaar_doc_key: string | null
           aadhaar_last4: string | null
           aadhaar_path: string | null
           aadhaar_reminded_at: string | null
           aadhaar_verified: boolean
           achievements: string | null
           age: number
+          consent_at: string | null
+          payment_amount: number | null
+          payment_screenshot_key: string | null
+          payment_utr: string | null
+          payment_verified: boolean
+          payment_verified_at: string | null
+          payment_verified_by: string | null
           assigned_category: string | null
           batting_average: string | null
           batting_strike_rate: string | null
@@ -557,10 +586,18 @@ export type Database = {
         Insert: {
           aadhaar_last4?: string | null
           aadhaar_path?: string | null
+          aadhaar_doc_key?: string | null
           aadhaar_reminded_at?: string | null
           aadhaar_verified?: boolean
           achievements?: string | null
           age: number
+          consent_at?: string | null
+          payment_amount?: number | null
+          payment_screenshot_key?: string | null
+          payment_utr?: string | null
+          payment_verified?: boolean
+          payment_verified_at?: string | null
+          payment_verified_by?: string | null
           assigned_category?: string | null
           batting_average?: string | null
           batting_strike_rate?: string | null
@@ -602,10 +639,18 @@ export type Database = {
         Update: {
           aadhaar_last4?: string | null
           aadhaar_path?: string | null
+          aadhaar_doc_key?: string | null
           aadhaar_reminded_at?: string | null
           aadhaar_verified?: boolean
           achievements?: string | null
           age?: number
+          consent_at?: string | null
+          payment_amount?: number | null
+          payment_screenshot_key?: string | null
+          payment_utr?: string | null
+          payment_verified?: boolean
+          payment_verified_at?: string | null
+          payment_verified_by?: string | null
           assigned_category?: string | null
           batting_average?: string | null
           batting_strike_rate?: string | null

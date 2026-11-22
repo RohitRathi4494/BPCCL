@@ -22,6 +22,7 @@ export type RegistrationQuery = {
   role?: string; // a ROLE_GROUPS label (Batting / Bowling / All Rounder / Wicket Keeper)
   stats?: string; // "na" = has NA/blank in any stat, "complete" = all filled
   aadhaar?: string; // "verified" | "unverified" (admin identity check)
+  payment?: string; // "verified" | "unverified" (admin payment check)
   age?: string; // an AGE_BUCKETS key ("u35" = 30–<35, "o35" = 35+)
   sort?: string; // a RegistrationSort ("newest" | "age_asc" | "age_desc")
   pageSize?: number;
@@ -92,6 +93,12 @@ export async function getRegistrations(
     q = q.eq("aadhaar_verified", false);
   } else if (query.aadhaar === "verified") {
     q = q.eq("aadhaar_verified", true);
+  }
+
+  if (query.payment === "unverified") {
+    q = q.eq("payment_verified", false);
+  } else if (query.payment === "verified") {
+    q = q.eq("payment_verified", true);
   }
 
   if (query.age) {

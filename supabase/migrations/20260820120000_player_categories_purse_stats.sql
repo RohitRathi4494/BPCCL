@@ -21,7 +21,8 @@ alter table public.league_settings
 update public.league_settings
 set categories = '["Grade A+","Grade A","Grade B","Legend"]'::jsonb,
     purse_per_franchise = 175000,
-    base_price = '{"Grade A+":0,"Grade A":0,"Grade B":0,"Legend":0}'::jsonb;
+    base_price = '{"Grade A+":0,"Grade A":0,"Grade B":0,"Legend":0}'::jsonb
+where true;  -- singleton row; `where true` satisfies the safe-update guard
 
 -- Bring already-seeded franchises up to the new starting purse — but only those
 -- untouched by any auction spend, so a mid-auction re-run can't reset squads.

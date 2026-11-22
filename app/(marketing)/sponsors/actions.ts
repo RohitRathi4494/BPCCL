@@ -6,9 +6,13 @@ import type { TablesInsert } from "@/lib/types";
 import { sendEmail } from "@/lib/email/send";
 import { sponsorEnquiryEmail } from "@/lib/email/templates";
 
-/** Where sponsor enquiries are sent for review (env override optional). */
-const ENQUIRY_INBOX =
-  process.env.SPONSOR_ENQUIRY_TO || "Urbansportsstudio@gmail.com";
+/**
+ * Where sponsor-enquiry notification emails are sent for review. Read from the
+ * SPONSOR_ENQUIRY_TO env var — there is deliberately NO hard-coded default, so
+ * no enquiry ever goes to a stale/foreign inbox. If it's unset, the enquiry is
+ * still stored in the DB; only the notification email is skipped.
+ */
+const ENQUIRY_INBOX = process.env.SPONSOR_ENQUIRY_TO?.trim() || "";
 
 export type EnquiryState = {
   status: "idle" | "success" | "error";
@@ -72,8 +76,19 @@ export async function submitSponsorEnquiry(
   }
 
   // Notify the partnerships inbox — never let an email failure break the
-  // submission (the enquiry is already safely stored above).
+  // submission (the enquiry is already safely stored above). Skipped entirely
+  // when SPONSOR_ENQUIRY_TO isn't configured.
   try {
+    if (!ENQUIRY_INBOX) {
+      console.warn(
+        "sponsor enquiry stored but not emailed — SPONSOR_ENQUIRY_TO is not set.",
+      );
+      return {
+        status: "success",
+        message:
+          "Thanks — your enquiry is in. Our partnerships team will be in touch shortly.",
+      };
+    }
     const { subject, html } = sponsorEnquiryEmail({
       contact_name,
       company,

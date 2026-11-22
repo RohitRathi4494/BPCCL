@@ -9,6 +9,7 @@ import {
   OTHER_SIZE,
   PLAYER_ROLES,
   STAT_FIELDS,
+  DEFAULT_REGISTRATION_FEE,
   normalizePhone,
   isValidPhone,
   computeAge,
@@ -63,7 +64,7 @@ export async function submitRegistration(
   // also hides the form, but this guards direct POSTs).
   const { data: regSettings } = await supabaseGuard
     .from("league_settings")
-    .select("registration_open")
+    .select("registration_open, registration_fee")
     .limit(1)
     .maybeSingle();
   if (regSettings && regSettings.registration_open === false) {
@@ -86,7 +87,11 @@ export async function submitRegistration(
   const linkedinRaw = get("linkedin_url");
   const jersey_number = get("jersey_number");
   const jersey_name = get("jersey_name");
-  const consent = formData.get("consent") === "on";
+  // Private document R2 object keys (uploaded by the browser before submit).
+  const aadhaar_doc_key = get("aadhaar_doc_key");
+  const payment_screenshot_key = get("payment_screenshot_key");
+  const payment_utr = get("payment_utr");
+  const data_consent = formData.get("data_consent") === "on";
   const confirmDuplicate = formData.get("confirm_duplicate") === "true";
 
   const errors: Record<string, string> = {};
@@ -103,7 +108,7 @@ export async function submitRegistration(
       errors.dob = "Enter a valid date of birth.";
     } else {
       age = computeAge(dob);
-      if (age < MIN_AGE) errors.dob = `USCL is open to players aged ${MIN_AGE} and above.`;
+      if (age < MIN_AGE) errors.dob = `Registration is open to players aged ${MIN_AGE} and above.`;
       else if (age > MAX_AGE) errors.dob = "Please double-check your date of birth.";
     }
   }
@@ -163,8 +168,19 @@ export async function submitRegistration(
     else stats[f.key] = v;
   }
 
-  if (!consent)
-    errors.consent = "You must agree to the registration fee to register.";
+  // Private documents (stored as R2 object keys, uploaded before submit).
+  if (!aadhaar_doc_key) errors.aadhaar_doc_key = "Please upload your masked Aadhaar.";
+  if (!payment_screenshot_key)
+    errors.payment_screenshot_key = "Please upload your payment screenshot.";
+
+  // UPI transaction id / UTR — exactly 12 digits.
+  if (!payment_utr) errors.payment_utr = "Enter your UPI transaction ID (UTR).";
+  else if (!/^\d{12}$/.test(payment_utr))
+    errors.payment_utr = "The UTR must be exactly 12 digits.";
+
+  if (!data_consent)
+    errors.data_consent =
+      "Please consent to the verification use of your documents to register.";
 
   if (Object.keys(errors).length > 0) {
     return { status: "error", message: "Please fix the highlighted fields.", errors };
@@ -188,6 +204,10 @@ export async function submitRegistration(
     if (rpcError) console.error("check_phone_registered:", rpcError.message);
   }
 
+  // Amount paid = the current registration fee (server-sourced, never trusted
+  // from the client). consent_at is stamped server-side when consent is given.
+  const payment_amount = regSettings?.registration_fee ?? DEFAULT_REGISTRATION_FEE;
+
   const payload: TablesInsert<"players"> = {
     full_name,
     phone,
@@ -205,6 +225,11 @@ export async function submitRegistration(
     jersey_name,
     roles,
     ...stats,
+    aadhaar_doc_key,
+    payment_screenshot_key,
+    payment_utr,
+    payment_amount,
+    consent_at: new Date().toISOString(),
     registration_fee_agreed: true,
   };
 
@@ -212,7 +237,8 @@ export async function submitRegistration(
   // (23505 = unique_violation). No .select() — RLS lets the public INSERT but
   // not SELECT the players table, so we track the code we generated ourselves.
   let registrationCode = "";
-  let insertError: { code?: string; message: string } | null = null;
+  let insertError: { code?: string; message: string; details?: string } | null =
+    null;
   for (let attempt = 0; attempt < 5; attempt++) {
     registrationCode = generateRegistrationCode();
     const { error } = await supabase
@@ -223,7 +249,21 @@ export async function submitRegistration(
       break;
     }
     insertError = error;
-    if (error.code !== "23505") break; // not a code collision — real failure
+    if (error.code !== "23505") break; // not a unique collision — real failure
+    // A 23505 on the UTR index means a reused payment reference — surface it
+    // clearly instead of retrying (retrying only re-rolls the registration code).
+    const blob = `${error.message} ${error.details ?? ""}`.toLowerCase();
+    if (blob.includes("payment_utr") || blob.includes("players_payment_utr_key")) {
+      return {
+        status: "error",
+        message: "Please fix the highlighted fields.",
+        errors: {
+          payment_utr:
+            "This UPI transaction ID has already been used. Enter the correct UTR.",
+        },
+      };
+    }
+    // Otherwise it's a registration-code collision — loop to regenerate.
   }
 
   if (insertError) {

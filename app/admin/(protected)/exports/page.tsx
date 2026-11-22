@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { DeletePaymentScreenshotsButton } from "@/components/admin/delete-payment-screenshots-button";
 
 export const metadata: Metadata = {
   title: "Exports",
@@ -65,7 +66,7 @@ export default async function AdminExportsPage() {
       dataset: "franchises",
       title: "Franchises",
       description:
-        "All 14 teams with purse spent/remaining, squad counts and owner login.",
+        "All teams with purse spent/remaining, squad counts and owner login.",
       icon: <Shield className="size-5" />,
       count: franchises,
     },
@@ -171,6 +172,22 @@ export default async function AdminExportsPage() {
             </Link>
           </div>
         ))}
+      </div>
+
+      {/* Private-doc cleanup — run once registration closes. */}
+      <div className="mt-4 flex flex-col gap-3 rounded-lg border border-[var(--closed)]/30 bg-[var(--closed)]/5 p-5">
+        <div className="flex flex-col gap-1">
+          <span className="font-heading text-sm font-bold tracking-wide text-[var(--closed)] uppercase">
+            Payment screenshot cleanup
+          </span>
+          <p className="text-xs text-muted-foreground">
+            Permanently deletes the stored payment screenshots for players whose
+            payment is already verified. The UTR and verified status are kept —
+            only the images are removed from private storage. Run this once
+            registration has closed and payments are reconciled.
+          </p>
+        </div>
+        <DeletePaymentScreenshotsButton />
       </div>
     </div>
   );

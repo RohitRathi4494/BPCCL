@@ -1,4 +1,5 @@
 import { site } from "@/lib/site";
+import { BRAND_LOGO_CID } from "@/lib/email/send";
 
 /**
  * Simple, inline-styled HTML email templates (email clients need inline CSS).
@@ -31,8 +32,8 @@ function shell(
     <div style="max-width:560px;margin:0 auto;background:${NAVY};border-radius:14px;overflow:hidden;border:1px solid #d7dee8;">
       <!-- Header / brand lockup -->
       <div style="padding:26px 32px;border-bottom:1px solid rgba(255,255,255,0.08);">
-        <img src="cid:uscl-logo" alt="USCL" height="40" style="height:40px;width:auto;vertical-align:middle;display:inline-block;" />
-        <span style="color:${CREAM};font-weight:bold;letter-spacing:2px;font-size:16px;margin-left:12px;vertical-align:middle;">USCL</span>
+        <img src="cid:${BRAND_LOGO_CID}" alt="${site.shortName}" height="40" style="height:40px;width:auto;vertical-align:middle;display:inline-block;" />
+        <span style="color:${CREAM};font-weight:bold;letter-spacing:2px;font-size:16px;margin-left:12px;vertical-align:middle;">${site.shortName}</span>
         <span style="color:${SLATE};font-size:11px;letter-spacing:2px;margin-left:8px;vertical-align:middle;">${site.season.toUpperCase()}</span>
       </div>
       <!-- Gold rule -->
@@ -62,7 +63,7 @@ export function confirmationEmail(
   html: string;
 } {
   return {
-    subject: `We've received your USCL ${site.season} registration`,
+    subject: `We've received your ${site.shortName} ${site.season} registration`,
     html: shell(
       "Registration received",
       `<p style="margin:0 0 14px;">Hi ${escapeHtml(fullName)},</p>
@@ -136,7 +137,7 @@ export function approvalEmail(
   category: string | null,
 ): { subject: string; html: string } {
   return {
-    subject: `You're approved for the USCL ${site.season} auction`,
+    subject: `You're approved for the ${site.shortName} ${site.season} auction`,
     html: shell(
       "You're in the auction pool",
       `<p style="margin:0 0 14px;">Hi ${escapeHtml(fullName)},</p>
@@ -171,7 +172,7 @@ export function auctionLiveEmail(
   youtubeUrl: string,
 ): { subject: string; html: string } {
   return {
-    subject: `🔴 The USCL ${site.season} Auction is LIVE — watch now`,
+    subject: `🔴 The ${site.shortName} ${site.season} Auction is LIVE — watch now`,
     html: shell(
       "The auction is live",
       `<p style="margin:0 0 14px;">Hi ${escapeHtml(fullName)},</p>
@@ -237,7 +238,7 @@ export function rejectionEmail(
   reason: string,
 ): { subject: string; html: string } {
   return {
-    subject: `Update on your USCL ${site.season} registration`,
+    subject: `Update on your ${site.shortName} ${site.season} registration`,
     html: shell(
       "Registration update",
       `<p style="margin:0 0 14px;">Hi ${escapeHtml(fullName)},</p>

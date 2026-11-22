@@ -2,13 +2,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { site } from "@/lib/site";
+import { leagueConfig } from "@/lib/league.config";
 
-// Logo intrinsic size (public/uscl-logo.png) — for next/image aspect ratio.
+// Logo intrinsic size (the placeholder logo) — for next/image aspect ratio.
 const LOGO_W = 480;
 const LOGO_H = 600;
 
 /**
- * USCL brand lockup: the official crest logo next to the short name + season.
+ * Brand lockup: the league crest logo next to the short name + season.
  * The logo is full-colour on transparent, so it reads on the dark theme.
  *
  * Pass `href={null}` to render a non-clickable lockup — used inside the admin
@@ -27,7 +28,7 @@ export function BrandMark({
   const inner = (
     <>
       <Image
-        src="/uscl-logo.png"
+        src={leagueConfig.logos.main}
         alt={`${site.name} logo`}
         width={LOGO_W}
         height={LOGO_H}

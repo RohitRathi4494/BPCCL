@@ -6,20 +6,24 @@ import {
   setAadhaarVerification,
   type AadhaarVerifyState,
 } from "@/app/admin/(protected)/registrations/actions";
+import { PrivateDocViewer } from "@/components/admin/private-doc-viewer";
 
 /**
- * Admin control for Aadhaar *identity verification*. We no longer store the
- * Aadhaar image (legal/liability); the admin checks the presented card once and
- * records a boolean, optionally keeping only the last 4 digits as a reference.
+ * Admin control for Aadhaar *identity verification*. The masked Aadhaar is kept
+ * in the PRIVATE bucket and viewed via a short-lived presigned URL. Marking the
+ * player verified permanently DELETES the stored image and keeps only a boolean
+ * (+ optional last 4 digits) as the record.
  */
 export function AadhaarVerification({
   playerId,
   verified,
   last4,
+  aadhaarDocKey,
 }: {
   playerId: string;
   verified: boolean;
   last4: string | null;
+  aadhaarDocKey: string | null;
 }) {
   const [state, formAction, pending] = useActionState<AadhaarVerifyState, FormData>(
     setAadhaarVerification,
@@ -27,7 +31,26 @@ export function AadhaarVerification({
   );
 
   return (
-    <form action={formAction} className="flex flex-col gap-3">
+    <form
+      action={formAction}
+      onSubmit={(e) => {
+        // If an image is on file and the admin is marking verified, warn that
+        // saving permanently deletes the stored Aadhaar image.
+        if (!aadhaarDocKey) return;
+        const checked = (
+          e.currentTarget.elements.namedItem("aadhaar_verified") as HTMLInputElement | null
+        )?.checked;
+        if (
+          checked &&
+          !window.confirm(
+            "Marking this player verified will permanently delete the uploaded Aadhaar image. Continue?",
+          )
+        ) {
+          e.preventDefault();
+        }
+      }}
+      className="flex flex-col gap-3"
+    >
       <input type="hidden" name="player_id" value={playerId} />
 
       <div className="flex items-center gap-2">
@@ -37,6 +60,16 @@ export function AadhaarVerification({
         </span>
       </div>
 
+      {aadhaarDocKey ? (
+        <PrivateDocViewer playerId={playerId} kind="aadhaar" label="View Aadhaar" />
+      ) : (
+        <span className="text-xs text-muted-foreground">
+          {verified
+            ? "Verified — the Aadhaar image was deleted."
+            : "No Aadhaar image on file."}
+        </span>
+      )}
+
       <label className="flex items-start gap-3 text-sm text-foreground/90">
         <input
           type="checkbox"
@@ -45,8 +78,8 @@ export function AadhaarVerification({
           className="mt-0.5 size-4 shrink-0 accent-[var(--gold)]"
         />
         <span>
-          Identity verified — I checked the player&apos;s Aadhaar card. The image
-          is <span className="font-semibold">not stored</span>.
+          Identity verified — I checked the player&apos;s masked Aadhaar. Saving
+          as verified <span className="font-semibold">deletes the stored image</span>.
         </span>
       </label>
 

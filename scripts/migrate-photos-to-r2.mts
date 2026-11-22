@@ -21,12 +21,12 @@
  *       # ^ deletes Supabase originals — run ONLY after verifying R2 across the app
  *
  * Requires env (same as the app): NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
- * R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET, R2_PUBLIC_URL.
+ * R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_PUBLIC_BUCKET, R2_PUBLIC_URL.
  * ========================================================================== */
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 
-for (const line of readFileSync("D:/USCL/.env.local", "utf8").split(/\r?\n/)) {
+for (const line of readFileSync(".env.local", "utf8").split(/\r?\n/)) {
   const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
   if (m && !(m[1] in process.env)) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
 }
@@ -39,7 +39,7 @@ import sharp from "sharp";
 // ---- Config ----------------------------------------------------------------
 const BUCKET = "player-photos";
 const SUPABASE_PATH_MARKER = `/storage/v1/object/public/${BUCKET}/`;
-const MANIFEST = "D:/USCL/scripts/photo-r2-migration.manifest.json";
+const MANIFEST = "scripts/photo-r2-migration.manifest.json";
 const MAX_EDGE = 500;
 const TARGET_BYTES = 140_000; // aim ~100–150 KB
 const phase = (process.argv[2] ?? "plan").toLowerCase();
@@ -68,7 +68,7 @@ function r2() {
     "R2_ACCOUNT_ID",
     "R2_ACCESS_KEY_ID",
     "R2_SECRET_ACCESS_KEY",
-    "R2_BUCKET",
+    "R2_PUBLIC_BUCKET",
     "R2_PUBLIC_URL",
   ]);
   const s3 = new S3Client({
@@ -260,7 +260,7 @@ async function migrate() {
       const r2Key = `players/${randomUUID()}.webp`;
       await s3.send(
         new PutObjectCommand({
-          Bucket: process.env.R2_BUCKET!,
+          Bucket: process.env.R2_PUBLIC_BUCKET!,
           Key: r2Key,
           Body: compressed,
           ContentType: "image/webp",

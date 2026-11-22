@@ -19,7 +19,7 @@
  * This cannot be undone.
  * ========================================================================== */
 import { readFileSync } from "node:fs";
-for (const line of readFileSync("D:/USCL/.env.local", "utf8").split(/\r?\n/)) {
+for (const line of readFileSync(".env.local", "utf8").split(/\r?\n/)) {
   const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
   if (m && !(m[1] in process.env)) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
 }

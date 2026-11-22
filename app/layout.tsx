@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { Barlow, Barlow_Condensed } from "next/font/google";
 import { getSiteUrl, site } from "@/lib/site";
+import { leagueConfig } from "@/lib/league.config";
 import { OrganizationJsonLd } from "@/components/site/structured-data";
 import "./globals.css";
 
-const SITE_TITLE = "Urban Sports Champions League — Season 2";
-const SITE_DESCRIPTION =
-  "Urban Sports Champions League Season 2 — Gurugram's finest T20 cricket league at Champions Den, Bandhwari, Gurugram. 14 franchises, live auction, live scoring.";
+const SITE_TITLE = `${site.name} — ${site.season}`;
+const SITE_DESCRIPTION = `${site.name} ${site.season} — ${site.tagline}. Franchise cricket with public player registration, a live auction, and live scoring.`;
 
 // Body / UI — Barlow (athletic, clean grotesque). Sports/fitness pairing.
 const barlow = Barlow({
@@ -28,17 +28,15 @@ export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
   title: {
     default: SITE_TITLE,
-    template: "%s · USCL Season 2",
+    template: `%s · ${site.shortName} ${site.season}`,
   },
   description: SITE_DESCRIPTION,
   applicationName: site.name,
   keywords: [
-    "USCL",
-    "Urban Sports Champions League",
-    "Urban Sports Studio",
-    "cricket league Gurugram",
-    "T20 cricket",
-    "Champions Den Bandhwari",
+    site.shortName,
+    site.name,
+    "corporate cricket league",
+    "cricket league",
     "player registration",
     "cricket auction",
   ],
@@ -54,10 +52,10 @@ export const metadata: Metadata = {
     locale: "en_IN",
     images: [
       {
-        url: "/hero-champions.jpg",
+        url: leagueConfig.logos.hero,
         width: 2400,
         height: 1628,
-        alt: "USCL Season 2 champions lifting the trophy",
+        alt: `${site.name} ${site.season}`,
       },
     ],
   },
@@ -65,7 +63,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
-    images: ["/hero-champions.jpg"],
+    images: [leagueConfig.logos.hero],
   },
 };
 

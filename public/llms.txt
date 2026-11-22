@@ -1,16 +1,14 @@
-# Urban Sports Studio — Urban Sports Champions League (USCL) Season 2
+# Ballpark Corporate Cricket League (BCCL)
 
-> Urban Sports Studio runs the Urban Sports Champions League (USCL), Gurugram's
-> finest amateur T20 cricket league. Season 2 is played at Champions Den,
-> Bandhwari, Gurugram, and features 14 franchises, a live player auction, and
-> live match scoring. This site is the league's official home: sponsor showcase,
-> public player registration, franchise squads, fixtures, and live scorecards.
+> The Ballpark Corporate Cricket League (BCCL) is a franchise cricket league.
+> This site is the league's official home: sponsor showcase, public player
+> registration, franchise squads, fixtures, and live scorecards.
 
-## What USCL is
+## What BCCL is
 
-- A community T20 cricket league of 14 franchises.
-- Players register publicly, then are reviewed and assigned a category
-  (Legend / Category A+ / Category A / Category B) by league admins.
+- A franchise cricket league where corporate teams compete.
+- Players register publicly, then are reviewed and assigned a category by
+  league admins ahead of a live player auction.
 - Franchises build squads through a live auction that uses mock/virtual purse
   currency only — no real money changes hands in the auction.
 - Squads are published after the auction; fixtures and live scoring follow
@@ -18,15 +16,13 @@
 
 ## Key facts
 
-- League: Urban Sports Champions League (USCL), Season 2
-- Operator: Urban Sports Studio
-- Venue: Champions Den, Bandhwari, Gurugram, Haryana, India
+- League: Ballpark Corporate Cricket League (BCCL)
+- Season: Season 1
 - Format: T20 cricket
-- Franchises: 16
 - Registration eligibility: players aged 30 and above
-- Registration fee: ₹3000 (per player, as stated on the registration form)
 - Auction currency: mock/virtual purse (not real money)
-- Contact: Urbansportsstudio@gmail.com
+- Venue, franchise count, registration fee and dates: to be announced
+  (configured in the admin portal, not hard-coded)
 
 ## Key pages
 
@@ -41,4 +37,3 @@
 - Player registration is a frictionless public form — no login required.
 - Admin, franchise-owner, auction, and API routes are private and disallowed
   for crawling (see /robots.txt).
-- For sponsorship or general enquiries, email Urbansportsstudio@gmail.com.

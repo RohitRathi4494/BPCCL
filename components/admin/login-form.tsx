@@ -27,7 +27,7 @@ export function LoginForm({ notice }: { notice?: string }) {
         <label htmlFor="email" className={labelClass}>
           Email
         </label>
-        <input id="email" name="email" type="email" autoComplete="email" className={fieldClass} placeholder="you@uscl.in" />
+        <input id="email" name="email" type="email" autoComplete="email" className={fieldClass} placeholder="you@example.com" />
       </div>
       <div className="flex flex-col gap-1.5">
         <label htmlFor="password" className={labelClass}>

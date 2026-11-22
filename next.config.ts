@@ -38,8 +38,9 @@ try {
 const nextConfig: NextConfig = {
   // Ensure the brand logo ships with the serverless functions so transactional
   // emails can embed it as an inline (CID) attachment at runtime.
+  // Keep this path in sync with leagueConfig.logos.email.
   outputFileTracingIncludes: {
-    "/**": ["./public/uscl-logo.png"],
+    "/**": ["./public/logo.png"],
   },
   images: {
     // Disable Vercel's on-demand Image Optimization so the project stays within
@@ -54,8 +55,8 @@ const nextConfig: NextConfig = {
   // redirect in next.config FIGHTS Vercel's edge redirect and creates an
   // infinite loop (ERR_TOO_MANY_REDIRECTS): Vercel sends non-www → www, then
   // this config sent www → non-www, forever. Keep canonicalization in ONE place
-  // (Vercel domains). Set the canonical host there to non-www
-  // (urbansportsstudio.in) so it matches PROD_SITE_URL in lib/site.ts.
+  // (Vercel domains). Set the canonical host there to match PROD_SITE_URL
+  // (sourced from leagueConfig.prodSiteUrl in lib/site.ts).
 };
 
 export default nextConfig;

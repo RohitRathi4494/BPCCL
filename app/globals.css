@@ -3,7 +3,7 @@
 @import "shadcn/tailwind.css";
 
 /* =============================================================================
-   USCL Season 2 — "VELYXO" royal crest theme (logo-matched)
+   "VELYXO" royal crest theme (logo-matched)
    Dark & premium, drawn straight from the league crest:
    deep royal NAVY (dominant/primary), championship GOLD (accent),
    crest CRIMSON (secondary). Barlow type, crisp rules, restrained glow.
@@ -60,7 +60,7 @@
 :root {
   --radius: 0.75rem;
 
-  /* Brand palette — pulled from the USCL crest */
+  /* Brand palette — pulled from the league crest */
   --navy: #0a1e3d; /* deepest royal navy (base) — the dominant brand color */
   --navy-2: #0f2950; /* raised navy surface (cards/panels) */
   --royal: #3d7bef; /* royal blue — primary interactive (links, focus) */

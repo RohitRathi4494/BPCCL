@@ -11,6 +11,7 @@ import {
   type Pools,
   type PoolTeam,
 } from "@/lib/pools/shared";
+import { leagueConfig } from "@/lib/league.config";
 import styles from "./pool-stage.module.css";
 
 export type DragPayload = { code: string; from: "tray" | "A" | "B"; index: number };
@@ -121,7 +122,7 @@ export function PoolStage({
     <div className={styles.root}>
       <div
         className={styles.stage}
-        style={{ backgroundImage: "url(/pool-bg.jpg)" }}
+        style={{ backgroundImage: `url(${leagueConfig.logos.poolsBackground})` }}
       >
         {SLOTS_A.map((s, i) => renderSlot("A", i, s.x, s.y))}
         {SLOTS_B.map((s, i) => renderSlot("B", i, s.x, s.y))}

@@ -10,6 +10,7 @@ import { getLeagueSettings, settingsCategories } from "@/lib/queries/settings";
 import { getSponsors } from "@/lib/queries/sponsors";
 import { getPublicFranchises } from "@/lib/queries/franchises";
 import { site } from "@/lib/site";
+import { leagueConfig } from "@/lib/league.config";
 
 export default async function HomePage() {
   const settings = await getLeagueSettings();
@@ -77,7 +78,7 @@ export default async function HomePage() {
             and AI crawlers (the real, described hero renders below). */}
         <div className="absolute inset-0 hidden lg:block" aria-hidden="true">
           <Image
-            src="/hero-champions.jpg"
+            src={leagueConfig.logos.hero}
             alt=""
             fill
             priority
@@ -93,8 +94,8 @@ export default async function HomePage() {
         {/* Mobile/tablet: the complete champions photo, uncropped, at the top */}
         <div className="relative lg:hidden">
           <Image
-            src="/hero-champions.jpg"
-            alt="USCL Season 2 champions lifting the trophy"
+            src={leagueConfig.logos.hero}
+            alt={`${site.name} ${site.season}`}
             width={2400}
             height={1628}
             priority
@@ -114,9 +115,7 @@ export default async function HomePage() {
               </span>
 
               <h1 className="mt-6 font-heading text-5xl font-extrabold tracking-tight text-foreground uppercase sm:text-7xl">
-                Urban Sports
-                <br />
-                Champions League
+                {site.name}
               </h1>
 
               <div className="mt-5 h-1.5 w-20 rounded-full bg-[var(--lime)]" />
@@ -174,7 +173,7 @@ export default async function HomePage() {
           <SectionHeading kicker="The Auction Is Done" title="Squads Are Out" />
           <div className="mt-8 grid gap-8 md:grid-cols-2">
             <p className="text-lg leading-relaxed text-foreground/85">
-              All {settings?.franchise_count ?? 14} franchises have built their
+              All {settings?.franchise_count ?? 8} franchises have built their
               squads at the live auction. Explore every team&apos;s line-up — then
               it&apos;s on to the season at {site.venue.full}.
             </p>
@@ -199,19 +198,19 @@ export default async function HomePage() {
       {/* ================= VENUE ================= */}
       <section id="venue" className="scroll-mt-24 border-t border-border">
         <div className="mx-auto max-w-6xl px-5 py-20">
-          <SectionHeading kicker="The Ground" title="Champions Den" />
+          <SectionHeading kicker="The Ground" title={site.venue.name} />
           <div className="mt-8 grid gap-8 md:grid-cols-2">
             <p className="text-lg leading-relaxed text-foreground/85">
               Every match of {site.shortName} {site.season} is played at{" "}
-              <span className="text-primary">Champions Den, Bandhwari</span> in{" "}
-              {site.venue.city} — the home of the league. Day games under the
-              sun and night games under lights: T20 cricket,{" "}
-              {settings?.franchise_count ?? 14} franchises, one ground.
+              <span className="text-primary">{site.venue.full}</span> — the home
+              of the league. Day games under the sun and night games under
+              lights: T20 cricket, {settings?.franchise_count ?? 8} franchises,
+              one ground.
             </p>
             <div className="relative overflow-hidden rounded-lg border border-border">
               <Image
-                src="/ground.png"
-                alt={`${site.venue.name} — ${site.venue.area}, ${site.venue.city}`}
+                src={leagueConfig.logos.ground}
+                alt={`${site.venue.name} — ${site.venue.full}`}
                 width={1448}
                 height={1086}
                 sizes="(min-width: 768px) 50vw, 100vw"

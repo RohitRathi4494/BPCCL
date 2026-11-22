@@ -1,5 +1,5 @@
 /**
- * Shared TypeScript types for the USCL platform.
+ * Shared TypeScript types for the Ballpark platform.
  *
  * `database.types.ts` is generated from the live Supabase schema. Regenerate it
  * after every migration with:

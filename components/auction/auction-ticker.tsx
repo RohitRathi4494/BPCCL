@@ -13,9 +13,11 @@ import {
   type FranchiseView,
 } from "@/lib/auction/snapshot";
 import { FRANCHISE_META } from "@/lib/franchises";
+import { site } from "@/lib/site";
+import { leagueConfig } from "@/lib/league.config";
 import styles from "./auction-ticker.module.css";
 
-/** Franchise crest artwork path for a short code (e.g. "HB" → /franchises/hb.png). */
+/** Optional franchise crest artwork path for a short code (from FRANCHISE_META). */
 function crestFor(code: string | null): string | null {
   if (!code) return null;
   return FRANCHISE_META[code.toUpperCase()]?.logo ?? null;
@@ -138,7 +140,9 @@ export function AuctionTicker({ initial }: { initial: AuctionSnapshot }) {
                   {photo ? (
                     <img src={photo} alt={currentPlayer?.full_name ?? ""} />
                   ) : (
-                    <span className={styles.playerPhotoFallback}>USCL</span>
+                    <span className={styles.playerPhotoFallback}>
+                      {site.shortName}
+                    </span>
                   )}
                 </div>
                 <div className={styles.playerPanel}>
@@ -166,8 +170,14 @@ export function AuctionTicker({ initial }: { initial: AuctionSnapshot }) {
             </>
           ) : (
             <div className={styles.idle}>
-              <img className={styles.idleLogo} src="/uscl-logo.png" alt="USCL" />
-              <span className={styles.idleText}>USCL Season 2 · Live Auction</span>
+              <img
+                className={styles.idleLogo}
+                src={leagueConfig.logos.main}
+                alt={site.shortName}
+              />
+              <span className={styles.idleText}>
+                {site.shortName} {site.season} · Live Auction
+              </span>
               <span className={styles.idleDot}>
                 <i />
                 Live

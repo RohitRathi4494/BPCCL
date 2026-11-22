@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { ShoppingBag } from "lucide-react";
+import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Shop",
-  description:
-    "The Urban Sports Shop is coming soon — your complete cricket equipment store.",
+  description: `The ${site.name} shop is coming soon — your complete cricket equipment store.`,
 };
 
 export default function ShopPage() {
@@ -20,7 +20,7 @@ export default function ShopPage() {
         </span>
 
         <h1 className="mt-4 font-heading text-4xl font-extrabold tracking-tight text-foreground uppercase sm:text-6xl">
-          Urban Sports Shop
+          {site.shortName} Shop
         </h1>
 
         <p className="mt-5 max-w-xl text-lg text-foreground/85">

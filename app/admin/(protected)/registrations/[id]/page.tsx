@@ -10,6 +10,7 @@ import { getLeagueSettings, settingsCategories } from "@/lib/queries/settings";
 import { RegistrationStatus as StatusBadge } from "@/components/admin/registration-status";
 import { ReviewForm } from "@/components/admin/review-form";
 import { AadhaarVerification } from "@/components/admin/aadhaar-verification";
+import { PaymentVerification } from "@/components/admin/payment-verification";
 import { EditStatsForm } from "@/components/admin/edit-stats-form";
 import { EditAgeForm } from "@/components/admin/edit-age-form";
 import { ResetStatusButton } from "@/components/admin/reset-status-button";
@@ -54,7 +55,7 @@ export default async function ReviewPlayerPage({
 
   // Preserve the list's filters/search/page so "Back" returns to the same view.
   const backQuery = new URLSearchParams();
-  for (const key of ["status", "q", "category", "role", "stats", "aadhaar", "age", "sort", "size", "page"]) {
+  for (const key of ["status", "q", "category", "role", "stats", "aadhaar", "payment", "age", "sort", "size", "page"]) {
     const v = sp[key];
     if (typeof v === "string" && v) backQuery.set(key, v);
   }
@@ -153,11 +154,12 @@ export default async function ReviewPlayerPage({
 
             <hr className="crease-rule my-6 w-full" />
 
-            {/* Aadhaar identity verification — the image is never stored. */}
+            {/* Aadhaar identity verification — image deleted once verified. */}
             <AadhaarVerification
               playerId={player.id}
               verified={player.aadhaar_verified}
               last4={player.aadhaar_last4}
+              aadhaarDocKey={player.aadhaar_doc_key}
             />
 
             <hr className="crease-rule my-6 w-full" />
@@ -203,13 +205,13 @@ export default async function ReviewPlayerPage({
 
             <hr className="crease-rule my-6 w-full" />
 
-            <Detail
-              label="Registration Fee"
-              value={
-                player.registration_fee_agreed
-                  ? "Agreed (payable if selected)"
-                  : "Not agreed"
-              }
+            {/* Payment capture + verification (screenshot via presigned URL). */}
+            <PaymentVerification
+              playerId={player.id}
+              utr={player.payment_utr}
+              amount={player.payment_amount}
+              hasScreenshot={Boolean(player.payment_screenshot_key)}
+              verified={player.payment_verified}
             />
 
             {player.status === "rejected" && player.rejection_reason && (

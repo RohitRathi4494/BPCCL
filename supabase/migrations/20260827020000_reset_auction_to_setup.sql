@@ -13,4 +13,5 @@ update public.auction_state
       current_result = null,
       current_result_franchise_id = null,
       current_result_amount = null,
-      updated_at = now();
+      updated_at = now()
+  where true;  -- singleton row; `where true` satisfies the safe-update guard

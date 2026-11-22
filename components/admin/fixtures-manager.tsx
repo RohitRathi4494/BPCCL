@@ -21,6 +21,7 @@ import {
   istTimeInput,
   type Fixture,
 } from "@/lib/fixtures";
+import { site } from "@/lib/site";
 
 type Team = {
   id: string;
@@ -167,7 +168,7 @@ function FixtureFields({ teams, f }: { teams: Team[]; f?: Fixture }) {
           <span className={labelClass}>Venue</span>
           <input
             name="ground"
-            defaultValue={f?.ground ?? "Champions Den, Bandhwari"}
+            defaultValue={f?.ground ?? site.venue.full}
             className={fieldClass}
           />
         </label>

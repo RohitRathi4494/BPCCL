@@ -8,6 +8,8 @@ import { computeCategory } from "@/lib/categorization";
 import { STAT_FIELDS, type StatKey } from "@/lib/registration";
 import { sendEmail } from "@/lib/email/send";
 import { approvalEmail, rejectionEmail } from "@/lib/email/templates";
+import { getPrivateViewUrl, deletePrivateObject } from "@/lib/storage";
+import { isValidDocKind } from "@/lib/storage/docs";
 
 export type ReviewState = { error?: string };
 export type EditStatsState = { error?: string; saved?: boolean };
@@ -17,6 +19,27 @@ export type DeleteState = { error?: string };
 export type BulkState = { error?: string; approved?: number };
 export type AutoAssignState = { error?: string; assigned?: number };
 export type AadhaarVerifyState = { error?: string; saved?: boolean };
+export type PaymentVerifyState = { error?: string; saved?: boolean };
+export type ViewDocState = { url?: string; error?: string };
+
+/** Resolve the signed-in admin, or an error string. Needed for operations that
+ *  reach OUTSIDE Supabase RLS (presigned R2 URLs, R2 deletes). */
+async function ensureAdmin(): Promise<
+  { ok: true; userId: string } | { ok: false; error: string }
+> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Your session expired — please sign in again." };
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (!profile || profile.role !== "admin") return { ok: false, error: "Admins only." };
+  return { ok: true, userId: user.id };
+}
 
 // Columns the auto-categoriser needs.
 const STAT_COLS =
@@ -456,19 +479,112 @@ export async function setAadhaarVerification(
   }
   const aadhaar_last4 = last4Raw ? last4Raw : null;
 
+  const admin = await ensureAdmin();
+  if (!admin.ok) return { error: admin.error };
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Your session expired — please sign in again." };
+
+  // Marking verified means we no longer need the image: delete the private R2
+  // object and clear its key. Fetch the key first so we can delete it after.
+  let keyToDelete: string | null = null;
+  if (verified) {
+    const { data } = await supabase
+      .from("players")
+      .select("aadhaar_doc_key")
+      .eq("id", playerId)
+      .maybeSingle();
+    keyToDelete = data?.aadhaar_doc_key ?? null;
+  }
 
   const { error } = await supabase
     .from("players")
-    .update({ aadhaar_verified: verified, aadhaar_last4 })
+    .update({
+      aadhaar_verified: verified,
+      aadhaar_last4,
+      ...(verified ? { aadhaar_doc_key: null } : {}),
+    })
     .eq("id", playerId);
   if (error) {
     console.error("setAadhaarVerification:", error.message);
     return { error: "Could not save the verification. Please try again." };
+  }
+
+  // Best-effort delete of the stored Aadhaar image — never fail the save on it.
+  if (keyToDelete) {
+    try {
+      await deletePrivateObject(keyToDelete);
+    } catch (e) {
+      console.error("delete aadhaar object:", e);
+    }
+  }
+
+  revalidatePath("/admin/registrations");
+  revalidatePath(`/admin/registrations/${playerId}`);
+  return { saved: true };
+}
+
+/**
+ * Return a SHORT-LIVED (5-minute) presigned URL for an admin to view a private
+ * document (Aadhaar / payment screenshot). The URL is never rendered into page
+ * HTML or cached — the client fetches it on click and opens it in a new tab.
+ */
+export async function viewPrivateDoc(
+  playerId: string,
+  kind: string,
+): Promise<ViewDocState> {
+  if (!UUID_RE.test(playerId)) return { error: "Invalid player." };
+  if (!isValidDocKind(kind)) return { error: "Invalid document type." };
+
+  const admin = await ensureAdmin();
+  if (!admin.ok) return { error: admin.error };
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("players")
+    .select("aadhaar_doc_key, payment_screenshot_key")
+    .eq("id", playerId)
+    .maybeSingle();
+  const key =
+    kind === "aadhaar" ? data?.aadhaar_doc_key : data?.payment_screenshot_key;
+  if (!key) return { error: "No document on file." };
+
+  try {
+    const url = await getPrivateViewUrl(key);
+    return { url };
+  } catch (e) {
+    console.error("viewPrivateDoc:", e);
+    return { error: "Could not open the document. Please try again." };
+  }
+}
+
+/**
+ * Record the admin's payment verification for one player. Sets the verified
+ * flag + the verified-at/by stamp (cleared when un-verifying). The payment
+ * screenshot itself is kept until registration closes (bulk-deletable from the
+ * exports page). Admin-only.
+ */
+export async function setPaymentVerified(
+  _prev: PaymentVerifyState,
+  formData: FormData,
+): Promise<PaymentVerifyState> {
+  const playerId = String(formData.get("player_id") ?? "");
+  if (!UUID_RE.test(playerId)) return { error: "Missing or invalid player." };
+
+  const admin = await ensureAdmin();
+  if (!admin.ok) return { error: admin.error };
+
+  const verified = formData.get("payment_verified") === "on";
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("players")
+    .update({
+      payment_verified: verified,
+      payment_verified_at: verified ? new Date().toISOString() : null,
+      payment_verified_by: verified ? admin.userId : null,
+    })
+    .eq("id", playerId);
+  if (error) {
+    console.error("setPaymentVerified:", error.message);
+    return { error: "Could not save the payment status. Please try again." };
   }
 
   revalidatePath("/admin/registrations");

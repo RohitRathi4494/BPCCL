@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { PoolDisplay } from "@/components/pools/pool-display";
+import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Pool Creation",
-  description: "USCL Season 2 — live pool creation display.",
+  description: `${site.shortName} ${site.season} — live pool creation display.`,
   robots: { index: false, follow: false },
 };
 

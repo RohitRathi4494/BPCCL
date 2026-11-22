@@ -22,11 +22,12 @@ export const EMPTY_POOLS: Pools = {
 /** Supabase Realtime broadcast channel — ephemeral sync, nothing is persisted. */
 export const POOL_CHANNEL = "pool-creation";
 /** Edit-side localStorage key so a refresh restores the arrangement. */
-export const POOL_STORAGE_KEY = "uscl-pools-v1";
+export const POOL_STORAGE_KEY = "bccl-pools-v1";
 
 /**
  * Centre of each shield slot as a percentage of the 16:9 backdrop
- * (public/pool-bg.jpg). Group A (left) and Group B (right), each 4 shields on
+ * (leagueConfig.logos.poolsBackground). Group A (left) and Group B (right),
+ * each 4 shields on
  * the top row + 3 on the bottom, matching the designed artwork. Tune these if
  * the backdrop art changes.
  */

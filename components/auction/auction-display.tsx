@@ -16,6 +16,7 @@ import { FRANCHISE_META } from "@/lib/franchises";
 import { deriveStyleFromRoles } from "@/lib/registration";
 import { SoldCelebration } from "@/components/auction/sold-celebration";
 import { site } from "@/lib/site";
+import { leagueConfig } from "@/lib/league.config";
 import styles from "./auction-display.module.css";
 
 export type DisplaySponsor = {
@@ -25,7 +26,7 @@ export type DisplaySponsor = {
   tier: string | null;
 };
 
-/** Franchise crest artwork path for a short code (e.g. "HB" → /franchises/hb.png). */
+/** Optional franchise crest artwork path for a short code (from FRANCHISE_META). */
 function crestFor(code: string | null): string | null {
   if (!code) return null;
   return FRANCHISE_META[code.toUpperCase()]?.logo ?? null;
@@ -34,10 +35,10 @@ function crestFor(code: string | null): string | null {
 /**
  * Read-only big-screen view for the venue projector. No login. A 16:9 stage
  * scales to fill the screen (container-query units), so it never scrolls:
- * branded top bar (USCL · LIVE AUCTION · title sponsor), a full-width player
- * profile with the portrait photo inside, a right-aligned current-bid strip, a
- * recently-sold feed, the live 14-team purse board, and the associate + media
- * partner strip. Everything updates live via `useAuction`.
+ * branded top bar (league crest · LIVE AUCTION · title sponsor), a full-width
+ * player profile with the portrait photo inside, a right-aligned current-bid
+ * strip, a recently-sold feed, the live per-franchise purse board, and the
+ * associate + media partner strip. Everything updates live via `useAuction`.
  */
 export function AuctionDisplay({
   initial,
@@ -81,13 +82,22 @@ export function AuctionDisplay({
   return (
     <div className={styles.root}>
       <div className={styles.stage}>
-        <img className={styles.bgimg} src="/auction-bg.jpg" alt="" aria-hidden />
+        <img
+          className={styles.bgimg}
+          src={leagueConfig.logos.bigScreenBackground}
+          alt=""
+          aria-hidden
+        />
 
         <div className={styles.frame}>
           {/* ---- Top bar ---- */}
           <header className={styles.topbar}>
             <div className={styles.brand}>
-              <img className={styles.brandLogo} src="/uscl-logo.png" alt="USCL" />
+              <img
+                className={styles.brandLogo}
+                src={leagueConfig.logos.main}
+                alt={site.shortName}
+              />
               <div className={styles.brandTxt}>
                 <span className={styles.brandName}>{site.shortName}</span>
                 <span className={styles.brandSub}>
@@ -145,15 +155,15 @@ export function AuctionDisplay({
                     aria-hidden
                   >
                     <defs>
-                      <linearGradient id="uscl-silh" x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient id="player-silh" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0" stopColor="#ffffff" stopOpacity="0.22" />
                         <stop offset="1" stopColor="#ffffff" stopOpacity="0.06" />
                       </linearGradient>
                     </defs>
-                    <circle cx="50" cy="34" r="20" fill="url(#uscl-silh)" />
+                    <circle cx="50" cy="34" r="20" fill="url(#player-silh)" />
                     <path
                       d="M15 120 C15 86 30 66 50 66 C70 66 85 86 85 120 Z"
-                      fill="url(#uscl-silh)"
+                      fill="url(#player-silh)"
                     />
                   </svg>
                 )}

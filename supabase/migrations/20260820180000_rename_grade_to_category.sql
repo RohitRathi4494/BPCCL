@@ -17,7 +17,8 @@ alter table public.league_settings
 -- Live settings row: rewrite "Grade " → "Category " inside both jsonb blobs.
 update public.league_settings
   set categories = replace(categories::text, 'Grade ', 'Category ')::jsonb,
-      base_price = replace(base_price::text, 'Grade ', 'Category ')::jsonb;
+      base_price = replace(base_price::text, 'Grade ', 'Category ')::jsonb
+  where true;  -- singleton row; `where true` satisfies the safe-update guard
 
 -- Existing player rows carrying a "Grade X" value.
 update public.players

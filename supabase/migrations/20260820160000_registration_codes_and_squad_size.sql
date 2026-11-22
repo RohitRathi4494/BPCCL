@@ -23,4 +23,5 @@ alter table public.league_settings
 
 update public.league_settings
   set squad_min_per_franchise = 17,
-      squad_max_per_franchise = 22;
+      squad_max_per_franchise = 22
+  where true;  -- singleton row; `where true` satisfies the safe-update guard

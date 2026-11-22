@@ -83,6 +83,17 @@ export function RegistrationsFilters({
       </select>
 
       <select
+        aria-label="Filter by payment verification"
+        value={params.get("payment") ?? ""}
+        onChange={(e) => setParam("payment", e.target.value)}
+        className={selectClass}
+      >
+        <option value="">Payment: any</option>
+        <option value="unverified">Payment unverified</option>
+        <option value="verified">Payment verified</option>
+      </select>
+
+      <select
         aria-label="Filter by age"
         value={params.get("age") ?? ""}
         onChange={(e) => setParam("age", e.target.value)}

@@ -2,7 +2,10 @@
  * Shared (client + server safe) helpers for the admin "Notify Players"
  * announcement composer. No server-only imports here so the composer UI can
  * reuse the same placeholder list + substitution for its live preview.
+ *
+ * Only pure brand constants are imported (league.config) — no server-only code.
  */
+import { leagueConfig } from "@/lib/league.config";
 
 /** A placeholder the admin can drop into the subject / heading / body. */
 export type Placeholder = {
@@ -53,7 +56,7 @@ export const ANNOUNCEMENT_PLACEHOLDERS: Placeholder[] = [
     token: "{{registration_code}}",
     key: "registration_code",
     label: "Registration ID",
-    example: "USCL2-7K3M9Q",
+    example: `${leagueConfig.registrationCodePrefix}-7K3M9Q`,
   },
 ];
 
@@ -102,17 +105,16 @@ export function buildAnnouncementVars(
 
 /** Sensible default the composer pre-fills — the admin can edit freely. */
 export const DEFAULT_ANNOUNCEMENT = {
-  subject:
-    "Congratulations! You've been drafted by {{franchise_name}} — USCL Season 2",
+  subject: `Congratulations! You've been drafted by {{franchise_name}} — ${leagueConfig.name} ${leagueConfig.season}`,
   heading: "Welcome to {{franchise_name}}!",
   body: `Hi {{player_name}},
 
-Congratulations! You have been drafted by {{franchise_name}} in the USCL Season 2 auction. The whole franchise is thrilled to have you in the squad.
+Congratulations! You have been drafted by {{franchise_name}} in the ${leagueConfig.name} ${leagueConfig.season} auction. The whole franchise is thrilled to have you in the squad.
 
 To confirm your place in the team, please pay your registration fee of ₹{{registration_fee}} directly to your franchise owner. Your owner will share the payment details with you.
 
 We can't wait to see you take the field. Let's make this season count!
 
 Best of luck,
-Team USCL`,
+Team ${leagueConfig.shortName}`,
 };

@@ -48,7 +48,8 @@ update public.league_settings
       retention_base_price = coalesce(
         nullif(retention_base_price, '{}'::jsonb),
         '{"Legend":0,"Category A+":0,"Category A":0,"Category B":0}'::jsonb
-      );
+      )
+  where true;  -- singleton row; `where true` satisfies the safe-update guard
 
 -- ---------------------------------------------------------------------------
 -- 2. franchises — top-up tracking (purse_total / purse_remaining already exist)
