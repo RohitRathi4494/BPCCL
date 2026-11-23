@@ -111,41 +111,24 @@ export default async function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-t from-navy-950/90 via-transparent to-transparent" />
 
         <div className="relative z-10 mx-auto flex h-full max-w-6xl flex-col px-5 pt-24 pb-8 sm:pt-28">
-          {/* top row */}
+          {/* top row — crest + registration status */}
           <div className="flex items-start justify-between gap-4">
-            {/* event card */}
-            <div className="glass max-w-[15rem] rounded-2xl p-2.5">
-              <div className="flex items-center gap-2 px-1 pb-2">
-                <span
-                  className={`size-1.5 rounded-full ${open ? "animate-pulse bg-gold-400" : "bg-ball-red"}`}
-                  aria-hidden
-                />
-                <span className="eyebrow text-white/90">
-                  {open ? "Registrations Open" : "Registrations Closed"}
-                </span>
-              </div>
-              <div className="overflow-hidden rounded-xl">
-                <Image
-                  src="/images/teams.webp"
-                  alt=""
-                  width={240}
-                  height={130}
-                  className="h-24 w-full object-cover"
-                />
-              </div>
-              <p className="px-1 pt-2 font-display text-sm font-semibold text-white">
-                {site.season} Player Draft
-              </p>
-            </div>
-
-            {/* crest */}
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 backdrop-blur">
+              <span
+                className={`size-1.5 rounded-full ${open ? "animate-pulse bg-gold-400" : "bg-ball-red"}`}
+                aria-hidden
+              />
+              <span className="eyebrow text-white/90">
+                {open ? "Registrations Open" : "Registrations Closed"}
+              </span>
+            </span>
             <Image
               src={leagueConfig.logos.main}
               alt={`${site.name} crest`}
               width={260}
               height={272}
               priority
-              className="h-16 w-auto drop-shadow-[0_8px_30px_rgba(0,0,0,0.45)] sm:h-24"
+              className="h-20 w-auto drop-shadow-[0_8px_30px_rgba(0,0,0,0.45)] sm:h-28"
             />
           </div>
 
