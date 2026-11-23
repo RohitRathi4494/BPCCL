@@ -1,84 +1,140 @@
 import Link from "next/link";
-import { MapPin } from "lucide-react";
-import { BrandMark } from "@/components/site/brand-mark";
-import { getLeagueSettings } from "@/lib/queries/settings";
+import { ArrowUp } from "lucide-react";
 import { site } from "@/lib/site";
+import { leagueConfig } from "@/lib/league.config";
+import { BallGlyph, DisplayWordmark } from "@/components/site/primitives";
+import {
+  InstagramIcon,
+  LinkedInIcon,
+  WhatsAppIcon,
+} from "@/components/site/social-icons";
 
-const cols: { heading: string; links: { label: string; href: string; soon?: boolean }[] }[] = [
-  {
-    heading: "League",
-    links: [
-      { label: "Home", href: "/" },
-      { label: "Venue", href: "/#venue" },
-      { label: "Sponsors", href: "/sponsors" },
-    ],
-  },
-  {
-    heading: "Season",
-    links: [
-      { label: "Register", href: "/register" },
-      { label: "Franchises", href: "/franchises" },
-      { label: "Fixtures", href: "/fixtures", soon: true },
-      { label: "Live Scores", href: "/live", soon: true },
-    ],
-  },
+const linkCols = [
+  { label: "Home", href: "/" },
+  { label: "About", href: "/#about" },
+  { label: "Teams", href: "/franchises" },
+  { label: "Fixtures", href: "/fixtures" },
+  { label: "Sponsors", href: "/sponsors" },
+  { label: "Admin Login", href: "/admin/login" },
 ];
 
-export async function SiteFooter() {
-  const settings = await getLeagueSettings();
-  const franchiseCount = settings?.franchise_count ?? 14;
+function socialList() {
+  const s = leagueConfig.socials;
+  return [
+    { label: "Instagram", href: s.instagram, Icon: InstagramIcon },
+    { label: "LinkedIn", href: s.linkedin, Icon: LinkedInIcon },
+    { label: "WhatsApp", href: s.whatsapp, Icon: WhatsAppIcon },
+  ].filter((x) => x.href);
+}
+
+/** "SAT 24 JAN \ 09:00" IST line for the next key date. */
+function nextLine(iso: string | null): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  const day = d
+    .toLocaleDateString("en-IN", {
+      weekday: "short",
+      day: "2-digit",
+      month: "short",
+      timeZone: "Asia/Kolkata",
+    })
+    .toUpperCase();
+  const time = d.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Asia/Kolkata",
+  });
+  return `${day} \\ ${time}`;
+}
+
+export function SiteFooter({ nextDateIso }: { nextDateIso?: string | null }) {
+  const socials = socialList();
+  const next = nextLine(nextDateIso ?? null);
+  const venue = site.venue.full !== "Venue to be announced" ? site.venue.full : null;
+
   return (
-    <footer className="mt-24 border-t border-border bg-[var(--card)]">
-      <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 sm:grid-cols-2 md:grid-cols-4">
-        <div className="sm:col-span-2 md:col-span-2">
-          <BrandMark />
-          <p className="mt-4 max-w-xs text-sm text-muted-foreground">
-            {site.tagline} · {site.season}. {franchiseCount} franchises, one
-            home ground.
-          </p>
-          <p className="mt-4 flex items-start gap-2 text-sm text-foreground/85">
-            <MapPin className="mt-0.5 size-4 shrink-0 text-primary" />
-            <span>{site.venue.full}</span>
-          </p>
+    <footer className="relative overflow-hidden bg-navy-950 text-white">
+      <div className="mx-auto max-w-6xl px-5 pt-16 pb-6">
+        <div className="grid gap-10 md:grid-cols-3">
+          {/* Left — links */}
+          <nav className="flex flex-col gap-3">
+            {linkCols.map((l) => (
+              <Link
+                key={l.label}
+                href={l.href}
+                className="w-fit text-sm text-white/70 transition-colors hover:text-gold-400"
+              >
+                {l.label}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Centre — next date + address */}
+          <div className="flex flex-col items-start gap-2 md:items-center md:text-center">
+            {next && (
+              <p className="font-display text-lg font-semibold tracking-tight text-white">
+                {next}
+              </p>
+            )}
+            {venue && <p className="max-w-xs text-sm text-white/60">{venue}</p>}
+            {leagueConfig.contactPhone && (
+              <a
+                href={`tel:${leagueConfig.contactPhone.replace(/\s/g, "")}`}
+                className="text-sm text-white/70 hover:text-gold-400"
+              >
+                {leagueConfig.contactPhone}
+              </a>
+            )}
+            {leagueConfig.contactEmail && (
+              <a
+                href={`mailto:${leagueConfig.contactEmail}`}
+                className="text-sm text-white/70 hover:text-gold-400"
+              >
+                {leagueConfig.contactEmail}
+              </a>
+            )}
+          </div>
+
+          {/* Right — socials + back to top */}
+          <div className="flex flex-col items-start gap-5 md:items-end">
+            {socials.length > 0 && (
+              <div className="flex gap-2.5">
+                {socials.map(({ label, href, Icon }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={label}
+                    className="grid size-10 place-items-center rounded-full border border-white/20 text-white/80 transition-colors hover:border-gold-400 hover:text-gold-400"
+                  >
+                    <Icon className="size-4" />
+                  </a>
+                ))}
+              </div>
+            )}
+            <a
+              href="#top"
+              className="inline-flex items-center gap-1.5 text-sm text-white/60 transition-colors hover:text-white"
+            >
+              Back to top <ArrowUp className="size-3.5" />
+            </a>
+          </div>
         </div>
 
-        {cols.map((col) => (
-          <div key={col.heading}>
-            <h3 className="font-mono text-xs tracking-[0.24em] text-primary uppercase">
-              {col.heading}
-            </h3>
-            <ul className="mt-4 flex flex-col gap-2.5">
-              {col.links.map((l) => (
-                <li key={l.label}>
-                  {l.soon ? (
-                    <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground/70">
-                      {l.label}
-                      <span className="font-mono text-[9px] tracking-widest uppercase">
-                        (soon)
-                      </span>
-                    </span>
-                  ) : (
-                    <Link
-                      href={l.href}
-                      className="text-sm text-foreground/85 transition-colors hover:text-primary"
-                    >
-                      {l.label}
-                    </Link>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
+        {/* Giant wordmark */}
+        <DisplayWordmark className="mt-14 bg-gradient-to-b from-white/15 to-white/5 bg-clip-text text-[clamp(3.5rem,18vw,13rem)] text-transparent select-none">
+          BALLPARK
+        </DisplayWordmark>
 
-      <div className="border-t border-border">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-5 py-5 sm:flex-row">
-          <p className="font-mono text-[11px] tracking-wider text-muted-foreground uppercase">
-            © {site.shortName} {site.season}
+        <div className="mt-6 flex flex-col items-center justify-between gap-2 border-t border-white/10 pt-6 sm:flex-row">
+          <p className="inline-flex items-center gap-2 text-xs tracking-wide text-white/50 uppercase">
+            <BallGlyph className="text-gold-400" /> {site.shortName} · {site.name}
           </p>
-          <p className="font-mono text-[11px] tracking-wider text-muted-foreground/70 uppercase">
-            {site.venue.city} · T20 Cricket League
+          <p className="text-xs tracking-wide text-white/40 uppercase">
+            © {new Date().getFullYear()} · All rights reserved
           </p>
         </div>
       </div>

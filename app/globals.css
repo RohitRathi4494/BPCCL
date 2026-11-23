@@ -226,12 +226,25 @@
    ========================================================================== */
 .roll-btn {
   position: relative;
+}
+/* A one-line window; the track holds two stacked copies and rolls up on hover. */
+.roll-btn .roll-clip {
+  display: block;
+  height: 1em;
+  line-height: 1;
   overflow: hidden;
 }
 .roll-btn .roll-track {
-  display: inline-flex;
+  display: flex;
   flex-direction: column;
   transition: transform 0.26s cubic-bezier(0.4, 0, 0.1, 1);
+}
+.roll-btn .roll-track > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 1em;
+  line-height: 1;
 }
 .roll-btn:hover .roll-track,
 .roll-btn:focus-visible .roll-track {
@@ -283,7 +296,14 @@
     -webkit-mask-image: none;
     mask-image: none;
   }
+  .roll-btn .roll-clip {
+    height: auto;
+    overflow: visible;
+  }
   .roll-btn .roll-track {
     transition: none;
+  }
+  .roll-btn .roll-track > span[aria-hidden] {
+    display: none;
   }
 }

@@ -71,6 +71,16 @@ export type LeagueConfig = {
   /** Operating entity / parent organisation name (schema.org publisher). */
   operator: string;
   logos: LeagueLogos;
+  /** Social profile URLs. Empty string = hidden in the UI. */
+  socials: { instagram: string; linkedin: string; whatsapp: string };
+  /** Public contact phone (display + tel:). Empty = hidden. */
+  contactPhone: string;
+  /** Support WhatsApp link (wa.me/…). Empty = hidden. */
+  supportWhatsApp: string;
+  /** Short venue coordinates line for the hero (e.g. "28.42° N, 77.10° E"). */
+  venueCoordinates: string;
+  /** Participating company / industry names for the "about" chips. Empty = hidden. */
+  companies: string[];
 };
 
 export const leagueConfig: LeagueConfig = {
@@ -94,13 +104,20 @@ export const leagueConfig: LeagueConfig = {
   contactEmail: "hello@example.com",
   operator: "Ballpark Corporate Cricket League",
   logos: {
-    main: "/logo.png",
-    email: "/logo.png",
+    main: "/brand/bpccl-logo.png",
+    email: "/brand/bpccl-logo.png",
     bigScreenBackground: "/auction-bg.png",
     poolsBackground: "/pool-bg.png",
-    hero: "/hero.png",
+    hero: "/images/hero.webp",
     ground: "/ground.png",
   },
+  // TODO: fill these in. Empty strings/arrays are hidden in the UI.
+  socials: { instagram: "", linkedin: "", whatsapp: "" },
+  contactPhone: "",
+  supportWhatsApp: "",
+  // TODO: real venue coordinates once the ground is confirmed.
+  venueCoordinates: "",
+  companies: [],
 };
 
 export default leagueConfig;

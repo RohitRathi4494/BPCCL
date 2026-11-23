@@ -1,132 +1,158 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Menu, X, Shield, Users, ShoppingBag } from "lucide-react";
-import { BrandMark } from "@/components/site/brand-mark";
-import { navLinks } from "@/lib/site";
+import { Menu, X, ArrowUpRight } from "lucide-react";
+import { site } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
-const loginLinks = [
-  { label: "Franchise Login", href: "/franchise/login", icon: Users },
-  { label: "Admin Login", href: "/admin/login", icon: Shield },
+const NAV = [
+  { label: "About", href: "/#about" },
+  { label: "Format", href: "/#format" },
+  { label: "Key Dates", href: "/#dates" },
+  { label: "Teams", href: "/franchises" },
+  { label: "Sponsors", href: "/sponsors" },
+  { label: "FAQ", href: "/#faq" },
 ] as const;
 
-function LoginItems({
-  onNavigate,
-  className,
-}: {
-  onNavigate?: () => void;
-  className?: string;
-}) {
+/** "BPCCL" wordmark with a gold full-stop. */
+function Wordmark({ className }: { className?: string }) {
   return (
-    <>
-      {loginLinks.map((link) => (
-        <Link
-          key={link.label}
-          href={link.href}
-          onClick={onNavigate}
-          className={cn(
-            "inline-flex items-center gap-1.5 rounded-sm border border-border px-3 py-2 font-heading text-xs font-bold tracking-wide text-foreground/85 uppercase transition-colors hover:border-primary/50 hover:text-primary",
-            className,
-          )}
-        >
-          <link.icon className="size-3.5" />
-          {link.label}
-        </Link>
-      ))}
-    </>
-  );
-}
-
-function NavItems({ onNavigate }: { onNavigate?: () => void }) {
-  return (
-    <>
-      {navLinks.map((link) =>
-        "soon" in link && link.soon ? (
-          <span
-            key={link.label}
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground/70"
-            aria-disabled
-          >
-            {link.label}
-            <span className="rounded-sm bg-muted px-1.5 py-0.5 font-mono text-[9px] tracking-widest text-muted-foreground uppercase">
-              Soon
-            </span>
-          </span>
-        ) : (
-          <Link
-            key={link.label}
-            href={link.href}
-            onClick={onNavigate}
-            className="text-sm text-foreground/85 transition-colors hover:text-primary"
-          >
-            {link.label}
-          </Link>
-        ),
+    <span
+      className={cn(
+        "font-display text-lg font-extrabold tracking-tight text-white",
+        className,
       )}
-    </>
+    >
+      {site.shortName}
+      <span className="text-gold-400">.</span>
+    </span>
   );
 }
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Lock body scroll while the mobile sheet is open.
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/85 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5">
-        <BrandMark />
+    <header className="fixed inset-x-0 top-0 z-50 px-3 pt-3 sm:px-4 sm:pt-4">
+      <div
+        className={cn(
+          "mx-auto flex max-w-6xl items-center justify-between gap-4 rounded-xl border border-white/10 px-4 py-2.5 transition-all duration-300",
+          scrolled
+            ? "bg-navy-950/90 shadow-[0_8px_30px_-10px_rgba(0,0,0,0.6)] backdrop-blur-md"
+            : "bg-navy-950/55 backdrop-blur",
+        )}
+      >
+        <Link href="/" aria-label={`${site.name} home`}>
+          <Wordmark />
+        </Link>
 
-        <nav className="hidden items-center gap-6 xl:flex">
-          <NavItems />
+        <nav className="hidden items-center gap-7 lg:flex">
+          {NAV.map((l) => (
+            <Link
+              key={l.label}
+              href={l.href}
+              className="text-sm font-medium text-white/80 transition-colors hover:text-white"
+            >
+              {l.label}
+            </Link>
+          ))}
         </nav>
 
-        <div className="hidden items-center gap-2.5 xl:flex">
-          <LoginItems />
+        <div className="hidden items-center gap-4 lg:flex">
           <Link
-            href="/shop"
-            className="inline-flex items-center gap-1.5 rounded-sm bg-primary px-4 py-2 font-heading text-sm font-bold tracking-wide text-primary-foreground uppercase shadow-[0_0_20px_rgba(61,123,239,0.3)] transition-shadow hover:shadow-[0_0_28px_rgba(61,123,239,0.5)]"
+            href="/franchise/login"
+            className="text-sm font-medium text-white/80 underline-offset-4 transition-colors hover:text-white hover:underline"
           >
-            <ShoppingBag className="size-4" />
-            Shop
+            Franchise Login
+          </Link>
+          <Link
+            href="/register"
+            className="roll-btn group inline-flex items-center rounded-full bg-gold-400 px-5 py-2 text-sm font-semibold uppercase tracking-wide text-navy-950"
+          >
+            <span className="roll-clip">
+              <span className="roll-track">
+                <span>Register</span>
+                <span aria-hidden>Register</span>
+              </span>
+            </span>
           </Link>
         </div>
 
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="inline-flex size-10 items-center justify-center rounded-sm border border-border text-foreground xl:hidden"
-          aria-label={open ? "Close menu" : "Open menu"}
+          onClick={() => setOpen(true)}
+          className="inline-flex size-9 items-center justify-center rounded-full border border-white/15 text-white lg:hidden"
+          aria-label="Open menu"
           aria-expanded={open}
         >
-          {open ? <X className="size-5" /> : <Menu className="size-5" />}
+          <Menu className="size-5" />
         </button>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile full-screen navy sheet */}
       <div
         className={cn(
-          "overflow-hidden border-t border-border xl:hidden",
-          open ? "max-h-[32rem]" : "max-h-0 border-t-0",
+          "fixed inset-0 z-50 bg-navy-950 transition-opacity duration-300 lg:hidden",
+          open ? "opacity-100" : "pointer-events-none opacity-0",
         )}
       >
-        <nav className="mx-auto flex max-w-6xl flex-col gap-4 px-5 py-5">
-          <NavItems onNavigate={() => setOpen(false)} />
-          <div className="mt-1 flex flex-col gap-2.5 border-t border-border pt-4">
-            <LoginItems
-              onNavigate={() => setOpen(false)}
-              className="justify-center"
-            />
+        <div className="flex items-center justify-between px-5 pt-5">
+          <Wordmark className="text-xl" />
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="inline-flex size-10 items-center justify-center rounded-full border border-white/15 text-white"
+            aria-label="Close menu"
+          >
+            <X className="size-5" />
+          </button>
+        </div>
+        <nav className="flex flex-col gap-1 px-5 pt-10">
+          {NAV.map((l) => (
             <Link
-              href="/shop"
+              key={l.label}
+              href={l.href}
               onClick={() => setOpen(false)}
-              className="inline-flex items-center justify-center gap-1.5 rounded-sm bg-primary px-4 py-2.5 font-heading text-sm font-bold tracking-wide text-primary-foreground uppercase"
+              className="editorial-heading flex items-center justify-between border-b border-white/10 py-4 text-4xl text-white"
             >
-              <ShoppingBag className="size-4" />
-              Shop
+              {l.label}
+              <ArrowUpRight className="size-6 text-gold-400" />
             </Link>
-          </div>
+          ))}
         </nav>
+        <div className="mt-8 flex flex-col gap-3 px-5">
+          <Link
+            href="/register"
+            onClick={() => setOpen(false)}
+            className="inline-flex items-center justify-center rounded-full bg-gold-400 px-6 py-3.5 text-sm font-semibold uppercase tracking-wide text-navy-950"
+          >
+            Register Now
+          </Link>
+          <Link
+            href="/franchise/login"
+            onClick={() => setOpen(false)}
+            className="inline-flex items-center justify-center rounded-full border border-white/20 px-6 py-3.5 text-sm font-semibold uppercase tracking-wide text-white"
+          >
+            Franchise Login
+          </Link>
+        </div>
       </div>
     </header>
   );
