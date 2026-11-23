@@ -3,22 +3,23 @@
 @import "shadcn/tailwind.css";
 
 /* =============================================================================
-   "VELYXO" royal crest theme (logo-matched)
-   Dark & premium, drawn straight from the league crest:
-   deep royal NAVY (dominant/primary), championship GOLD (accent),
-   crest CRIMSON (secondary). Barlow type, crisp rules, restrained glow.
-   Palette: #0A1E3D navy · #0F2950 raised navy · #3D7BEF royal blue ·
-   #F4B324 gold · #D42433 crimson · #EAF1FB near-white · #9BB0D0 slate.
+   BPCCL — Ballpark Corporate Cricket League design system.
+   Editorial, premium, brand-led. Drawn from the BPCCL crest:
+   navy shield · championship gold · pitch green · white/red ball.
+   Light base theme (public sections set their own navy/cream/white rhythm).
+   The old VELYXO token NAMES are kept as aliases so the admin/franchise
+   portals keep working while they get re-themed.
    ========================================================================== */
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
-  --font-sans: var(--font-barlow), ui-sans-serif, system-ui, sans-serif;
-  --font-heading: var(--font-barlow-condensed), var(--font-barlow), sans-serif;
-  /* Labels/eyebrows use the sans face too (Swiss minimal — no mono). */
-  --font-mono: var(--font-barlow), ui-sans-serif, system-ui, sans-serif;
+  /* Type: Archivo (display + headings), Inter Tight (body/UI/labels). */
+  --font-sans: var(--font-inter-tight), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-inter-tight), ui-sans-serif, system-ui, sans-serif;
 
   --color-ring: var(--ring);
   --color-input: var(--input);
@@ -37,9 +38,21 @@
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
 
-  /* Brand tokens (names kept for backwards-compat; repointed to the crest
-     palette). `--gold*` are now truly gold; `--lime*` alias gold so any
-     leftover references adopt the accent. Adds `--royal` + `--crimson`. */
+  /* ---- BPCCL brand scale (use directly: bg-navy-950, text-gold-400, …) ---- */
+  --color-navy-950: #07142e;
+  --color-navy-900: #0b1f4b;
+  --color-navy-700: #163a8a;
+  --color-gold-400: #f5c542;
+  --color-gold-600: #c8961e;
+  --color-pitch-700: #0f6b3a;
+  --color-pitch-900: #0a3b22;
+  --color-ball-red: #d62839;
+  --color-cream-100: #f4f0e6;
+  --color-ink-900: #0b1220;
+  --color-muted-ink: #5b6478; /* muted text on light */
+  --color-muted-dusk: #a9b3c9; /* muted text on dark */
+
+  /* ---- Legacy aliases (admin/franchise + any leftover markup) ---- */
   --color-navy: var(--navy);
   --color-royal: var(--royal);
   --color-gold: var(--gold);
@@ -53,54 +66,62 @@
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-xl: calc(var(--radius) * 1.7);
+  --radius-2xl: calc(var(--radius) * 2.4);
 }
 
 :root {
   --radius: 0.75rem;
 
-  /* Brand palette — pulled from the league crest */
-  --navy: #0a1e3d; /* deepest royal navy (base) — the dominant brand color */
-  --navy-2: #0f2950; /* raised navy surface (cards/panels) */
-  --royal: #3d7bef; /* royal blue — primary interactive (links, focus) */
-  --royal-deep: #1e56d6; /* deeper royal for gradients/edges */
-  --royal-light: #9cc0ff; /* light sky-blue — highlights on the deep navy */
-  --gold: #f4b324; /* championship gold — accent */
-  --gold-soft: #fbd24b; /* gold highlight */
-  --crimson: #d42433; /* crest crimson — secondary accent / live */
-  --cream: #eaf1fb; /* near-white text (cool tint) */
-  --slate: #9bb0d0; /* muted blue-grey */
+  /* BPCCL palette */
+  --navy-950: #07142e;
+  --navy-900: #0b1f4b;
+  --navy-700: #163a8a;
+  --gold-400: #f5c542;
+  --gold-600: #c8961e;
+  --gold-soft: #ffd873;
+  --pitch-700: #0f6b3a;
+  --pitch-900: #0a3b22;
+  --ball-red: #d62839;
+  --cream-100: #f4f0e6;
+  --ink-900: #0b1220;
 
-  /* Dark, royal surfaces */
-  --background: #0a1e3d; /* deep navy background */
-  --foreground: #eaf1fb; /* near-white text */
-  --card: #0f2950; /* raised navy card */
-  --card-foreground: #eaf1fb;
-  --popover: #0f2950;
-  --popover-foreground: #eaf1fb;
+  /* ---- Light base theme (portals + default surface) ---- */
+  --background: #ffffff;
+  --foreground: #0b1220;
+  --card: #ffffff;
+  --card-foreground: #0b1220;
+  --popover: #ffffff;
+  --popover-foreground: #0b1220;
 
-  /* Royal blue is the primary; gold is the accent/CTA pop (dark text on it). */
-  --primary: #3d7bef;
+  /* Navy is the primary (links, primary buttons, focus); gold is the brand
+     highlight used via explicit bg-gold-400; green is the positive accent. */
+  --primary: #163a8a;
   --primary-foreground: #ffffff;
-  --secondary: #14315c;
-  --secondary-foreground: #eaf1fb;
-  --muted: #12305a;
-  --muted-foreground: #9bb0d0; /* readable slate on navy */
-  --accent: #f4b324;
-  --accent-foreground: #0a1e3d;
-  --destructive: #e24b57; /* crimson-leaning red for errors */
+  --secondary: #f4f0e6;
+  --secondary-foreground: #0b1220;
+  --muted: #f4f0e6;
+  --muted-foreground: #5b6478;
+  --accent: #0f6b3a; /* pitch green — readable positive accent on light */
+  --accent-foreground: #ffffff;
+  --destructive: #d62839;
 
-  --border: #223b66; /* subtle navy hairline */
-  --input: #2a4677;
-  --ring: #3d7bef;
+  --border: #e4e1d6; /* warm hairline on cream/white */
+  --input: #d9d6ca;
+  --ring: #163a8a;
 
-  /* Backwards-compat named tokens */
-  --gold-glow: #fbd24b;
-  --chalk: #eaf1fb;
-  --closed: #d42433; /* crimson for closed/urgent states */
-  --pitch-line: #f4b324;
-  /* `--lime*` kept as aliases → gold, so any legacy `var(--lime)` adopts the accent. */
+  /* ---- Legacy named aliases → BPCCL values ---- */
+  --navy: #0b1f4b;
+  --royal: #163a8a;
+  --royal-deep: #07142e;
+  --gold: #f5c542;
+  --crimson: #d62839;
+  --cream: #f4f0e6;
+  --slate: #5b6478;
+  --chalk: #f4f0e6;
+  --closed: #d62839;
+  --gold-glow: #ffd873;
+  --pitch-line: #f5c542;
   --lime: var(--gold);
   --lime-soft: var(--gold-soft);
 }
@@ -118,63 +139,62 @@
   h4,
   .font-heading {
     font-family: var(--font-heading);
-    letter-spacing: -0.01em;
+    letter-spacing: -0.015em;
   }
-  /* Subtle, consistent focus ring (accessibility + minimal aesthetic). */
   :focus-visible {
-    outline: 2px solid var(--ring);
+    outline: 2px solid var(--gold-400);
     outline-offset: 2px;
   }
 }
 
 /* =============================================================================
-   Motif classes — redefined to clean/minimal (kept so existing markup adopts
-   the new look without churn).
+   Display / editorial primitives
    ========================================================================== */
 
-/* Was: mown-grass stripes. Now: a whisper-faint royal-navy sheen, mostly off. */
-.grass-stripes {
-  background-image: none;
+/* Giant grotesk wordmark set into photos / section bottoms. */
+.display-wordmark {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-stretch: 125%;
+  letter-spacing: -0.02em;
+  line-height: 0.82;
+  text-transform: uppercase;
 }
 
-/* Hero glow wash — royal-blue depth crowned with a warm gold halo. */
-.lamp-glow {
-  background:
-    radial-gradient(
-      70% 60% at 50% -12%,
-      rgba(61, 123, 239, 0.22) 0%,
-      rgba(61, 123, 239, 0.06) 45%,
-      transparent 72%
-    ),
-    radial-gradient(
-      42% 40% at 50% -6%,
-      rgba(244, 179, 36, 0.16) 0%,
-      transparent 68%
-    );
+/* Big light-weight editorial section headings. */
+.editorial-heading {
+  font-family: var(--font-display);
+  font-weight: 450;
+  letter-spacing: -0.015em;
+  line-height: 1.05;
 }
 
-/* Divider — a thin gold rule (championship accent). */
-.crease-rule {
-  border: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--gold), var(--gold-soft));
-  border-radius: 2px;
-  opacity: 1;
+/* Tiny bracketed/tracked eyebrow label. */
+.eyebrow {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
-/* Countdown cell — raised navy tile with a glowing gold digit. */
-.segment-cell {
-  background: #0c2347;
-  border: 1px solid var(--border);
-}
-.segment-digit {
-  color: var(--gold);
-  text-shadow: 0 0 14px rgba(244, 179, 36, 0.4);
-  font-variant-numeric: tabular-nums;
+/* Glassmorphism caption bar (over photos). */
+.glass {
+  background: rgba(11, 31, 75, 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-/* Ticker marquee (kept, restyled minimal via component classes). */
-@keyframes ticker-scroll {
+/* Warm gold halo behind headline words (on dark only). */
+.text-glow-gold {
+  text-shadow: 0 0 22px rgba(245, 197, 66, 0.3);
+}
+
+/* =============================================================================
+   Marquee (infinite loop, pauses on hover; reduced-motion = static wrap)
+   ========================================================================== */
+@keyframes bpccl-marquee {
   from {
     transform: translateX(0);
   }
@@ -182,51 +202,75 @@
     transform: translateX(-50%);
   }
 }
-.ticker-track {
-  display: inline-flex;
-  white-space: nowrap;
-  animation: ticker-scroll 40s linear infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .ticker-track {
-    animation: none;
-  }
-}
-
-/* ---- Franchise logo marquee (home page) ---- */
-/* Two duplicated sets scroll left as one seamless loop (translateX -50% = one
-   full set). Fades at both edges via a mask; pauses on hover. */
 .marquee-mask {
-  -webkit-mask-image: linear-gradient(
-    90deg,
-    transparent 0,
-    #000 6%,
-    #000 94%,
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    90deg,
-    transparent 0,
-    #000 6%,
-    #000 94%,
-    transparent 100%
-  );
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 5%, #000 95%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 5%, #000 95%, transparent 100%);
 }
 .marquee-track {
   display: inline-flex;
   white-space: nowrap;
-  animation: ticker-scroll 48s linear infinite;
+  animation: bpccl-marquee var(--marquee-duration, 40s) linear infinite;
 }
 .marquee-group:hover .marquee-track {
   animation-play-state: paused;
 }
+/* legacy ticker alias */
+.ticker-track {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: bpccl-marquee 40s linear infinite;
+}
+
+/* =============================================================================
+   Button label vertical roll on hover (two stacked copies)
+   ========================================================================== */
+.roll-btn {
+  position: relative;
+  overflow: hidden;
+}
+.roll-btn .roll-track {
+  display: inline-flex;
+  flex-direction: column;
+  transition: transform 0.26s cubic-bezier(0.4, 0, 0.1, 1);
+}
+.roll-btn:hover .roll-track,
+.roll-btn:focus-visible .roll-track {
+  transform: translateY(-50%);
+}
+
+/* =============================================================================
+   Legacy motif classes (kept so un-migrated markup still renders sensibly)
+   ========================================================================== */
+.grass-stripes {
+  background-image: none;
+}
+.lamp-glow {
+  background:
+    radial-gradient(70% 60% at 50% -12%, rgba(22, 58, 138, 0.12) 0%, transparent 70%),
+    radial-gradient(42% 40% at 50% -6%, rgba(245, 197, 66, 0.1) 0%, transparent 68%);
+}
+.crease-rule {
+  border: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--gold-400), var(--gold-soft));
+  border-radius: 2px;
+  opacity: 1;
+}
+.segment-cell {
+  background: var(--navy-900);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.segment-digit {
+  color: var(--gold-400);
+  font-variant-numeric: tabular-nums;
+}
+.card-glow {
+  box-shadow: 0 10px 40px -12px rgba(11, 31, 75, 0.35);
+}
+
 @media (prefers-reduced-motion: reduce) {
-  /* No auto-scroll: show one centred, wrapping set (hide the duplicate). */
-  .marquee-mask {
-    -webkit-mask-image: none;
-    mask-image: none;
-  }
-  .marquee-track {
+  .marquee-track,
+  .ticker-track {
     animation: none;
     flex-wrap: wrap;
     justify-content: center;
@@ -235,35 +279,11 @@
   .marquee-track [data-marquee-dupe] {
     display: none;
   }
-}
-
-/* Subtle warm halo behind gold headline words. */
-.text-glow-gold {
-  text-shadow: 0 0 18px rgba(244, 179, 36, 0.28);
-}
-
-/* ---- Registration card glow ---- */
-/* Pulsing royal-blue halo to draw the eye to the "Registration is open" box. */
-@keyframes card-glow {
-  0%,
-  100% {
-    box-shadow:
-      0 0 0 0 rgba(61, 123, 239, 0.35),
-      0 0 24px 2px rgba(61, 123, 239, 0.28);
+  .marquee-mask {
+    -webkit-mask-image: none;
+    mask-image: none;
   }
-  50% {
-    box-shadow:
-      0 0 0 6px rgba(61, 123, 239, 0),
-      0 0 44px 10px rgba(61, 123, 239, 0.55);
-  }
-}
-.card-glow {
-  animation: card-glow 2.4s ease-in-out infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .card-glow {
-    animation: none;
-    box-shadow: 0 0 30px 4px rgba(61, 123, 239, 0.4);
+  .roll-btn .roll-track {
+    transition: none;
   }
 }
