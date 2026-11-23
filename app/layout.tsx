@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Archivo, Inter_Tight } from "next/font/google";
 import { getSiteUrl, site } from "@/lib/site";
-import { leagueConfig } from "@/lib/league.config";
 import { OrganizationJsonLd } from "@/components/site/structured-data";
 import "./globals.css";
 
@@ -53,9 +52,9 @@ export const metadata: Metadata = {
     locale: "en_IN",
     images: [
       {
-        url: leagueConfig.logos.hero,
-        width: 2400,
-        height: 1628,
+        url: "/brand/og.png",
+        width: 1200,
+        height: 630,
         alt: `${site.name} ${site.season}`,
       },
     ],
@@ -64,7 +63,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
-    images: [leagueConfig.logos.hero],
+    images: ["/brand/og.png"],
   },
 };
 

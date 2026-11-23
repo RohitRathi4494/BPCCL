@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function ShopPage() {
   return (
     <section className="lamp-glow">
-      <div className="mx-auto flex min-h-[70vh] max-w-3xl flex-col items-center justify-center px-5 py-24 text-center">
+      <div className="mx-auto flex min-h-[70vh] max-w-3xl flex-col items-center justify-center px-5 pt-32 pb-24 text-center">
         <span className="inline-flex size-20 items-center justify-center rounded-full border border-primary/40 bg-primary/10 text-primary">
           <ShoppingBag className="size-9" />
         </span>

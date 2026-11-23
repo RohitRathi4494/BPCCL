@@ -226,7 +226,7 @@ export default async function FixturesPage() {
     <>
       {/* Hero */}
       <section className="lamp-glow border-b border-border">
-        <div className="mx-auto max-w-6xl px-5 pt-20 pb-12">
+        <div className="mx-auto max-w-6xl px-5 pt-28 pb-12 sm:pt-36">
           <span className="font-mono text-xs tracking-[0.28em] text-primary uppercase">
             The Season · {site.season}
           </span>

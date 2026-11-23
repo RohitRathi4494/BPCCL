@@ -6,13 +6,13 @@ import { BRAND_LOGO_CID } from "@/lib/email/send";
  * Brand: deep royal navy + championship gold accent, matching the site crest.
  */
 
-const NAVY = "#0a1e3d"; // card background
-const NAVY_SOFT = "#0f2950"; // insets / callouts
-const GOLD = "#f4b324"; // accent
-const CREAM = "#eaf1fb"; // body text
-const SLATE = "#9bb0d0"; // muted text
-const CRIMSON = "#d42433"; // rejection accent
-const PAGE_BG = "#eef2f7"; // outer page background
+const NAVY = "#0b1f4b"; // card background (BPCCL navy-900)
+const NAVY_SOFT = "#0e2a5e"; // insets / callouts
+const GOLD = "#f5c542"; // accent (BPCCL gold-400)
+const CREAM = "#f4f0e6"; // body text (warm near-white on navy)
+const SLATE = "#a9b3c9"; // muted text
+const CRIMSON = "#d62839"; // rejection accent (ball red)
+const PAGE_BG = "#f4f0e6"; // outer page background (cream)
 
 /** Hidden inbox-preview text (shows next to the subject in most clients). */
 function preheader(text: string): string {

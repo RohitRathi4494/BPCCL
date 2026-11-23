@@ -40,7 +40,7 @@ const nextConfig: NextConfig = {
   // emails can embed it as an inline (CID) attachment at runtime.
   // Keep this path in sync with leagueConfig.logos.email.
   outputFileTracingIncludes: {
-    "/**": ["./public/logo.png"],
+    "/**": ["./public/brand/bpccl-logo.png"],
   },
   images: {
     // Disable Vercel's on-demand Image Optimization so the project stays within
