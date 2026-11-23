@@ -138,22 +138,24 @@ export default async function HomePage() {
               </p>
             </div>
 
-            {/* coords + season */}
-            <div className="hidden flex-col items-end gap-1 text-right sm:flex">
-              {leagueConfig.venueCoordinates && (
-                <span className="eyebrow text-white/70">{leagueConfig.venueCoordinates}</span>
-              )}
-              <DisplayWordmark className="text-3xl text-white/90 sm:text-4xl">
-                SEASON 01
-              </DisplayWordmark>
-            </div>
+            {/* crest */}
+            <Image
+              src={leagueConfig.logos.main}
+              alt={`${site.name} crest`}
+              width={260}
+              height={272}
+              priority
+              className="h-16 w-auto drop-shadow-[0_8px_30px_rgba(0,0,0,0.45)] sm:h-24"
+            />
           </div>
 
           {/* giant wordmark */}
-          <div className="mt-6 flex flex-1 items-start justify-end">
-            <DisplayWordmark className="text-right text-[clamp(2.75rem,12vw,8rem)] text-white">
-              BALLPARK
-              <BallGlyph className="ml-1 inline size-8 align-top text-gold-400 sm:size-12" />
+          <div className="mt-6 flex flex-1 flex-col items-end justify-start text-right">
+            <Eyebrow className="text-white/80">
+              {site.name} · {site.season}
+            </Eyebrow>
+            <DisplayWordmark className="mt-2 text-[clamp(4.5rem,20vw,14rem)] text-white">
+              {site.shortName}
             </DisplayWordmark>
           </div>
 

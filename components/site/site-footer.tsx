@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowUp } from "lucide-react";
 import { site } from "@/lib/site";
 import { leagueConfig } from "@/lib/league.config";
@@ -57,6 +58,27 @@ export function SiteFooter({ nextDateIso }: { nextDateIso?: string | null }) {
   return (
     <footer className="relative overflow-hidden bg-navy-950 text-white">
       <div className="mx-auto max-w-6xl px-5 pt-16 pb-6">
+        <div className="mb-12 flex flex-col items-start gap-4 border-b border-white/10 pb-10 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <Image
+              src={leagueConfig.logos.main}
+              alt={`${site.name} crest`}
+              width={56}
+              height={59}
+              className="h-12 w-auto"
+            />
+            <div className="flex flex-col">
+              <span className="font-display text-lg font-extrabold tracking-tight text-white">
+                {site.name}
+              </span>
+              <span className="eyebrow text-white/50">{site.season}</span>
+            </div>
+          </div>
+          {site.tagline && (
+            <p className="max-w-xs text-sm text-white/55 sm:text-right">{site.tagline}.</p>
+          )}
+        </div>
+
         <div className="grid gap-10 md:grid-cols-3">
           {/* Left — links */}
           <nav className="flex flex-col gap-3">

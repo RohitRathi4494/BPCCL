@@ -2,9 +2,27 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Menu, X, ArrowUpRight } from "lucide-react";
 import { site } from "@/lib/site";
+import { leagueConfig } from "@/lib/league.config";
 import { cn } from "@/lib/utils";
+
+/** Small crest + wordmark lockup. */
+function Lockup({ className }: { className?: string }) {
+  return (
+    <span className={cn("inline-flex items-center gap-2", className)}>
+      <Image
+        src={leagueConfig.logos.main}
+        alt=""
+        width={40}
+        height={42}
+        className="h-8 w-auto"
+      />
+      <Wordmark />
+    </span>
+  );
+}
 
 const NAV = [
   { label: "About", href: "/#about" },
@@ -60,7 +78,7 @@ export function SiteHeader() {
         )}
       >
         <Link href="/" aria-label={`${site.name} home`}>
-          <Wordmark />
+          <Lockup />
         </Link>
 
         <nav className="hidden items-center gap-7 lg:flex">
@@ -114,7 +132,7 @@ export function SiteHeader() {
         )}
       >
         <div className="flex items-center justify-between px-5 pt-5">
-          <Wordmark className="text-xl" />
+          <Lockup />
           <button
             type="button"
             onClick={() => setOpen(false)}
