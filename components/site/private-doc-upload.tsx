@@ -8,7 +8,6 @@ import {
 } from "react";
 import { FileText, Loader2, Upload, X } from "lucide-react";
 import { compressImage } from "@/lib/images/compress";
-import { createDocUploadUrl } from "@/app/register/doc-actions";
 import {
   type DocKind,
   acceptAttr,
@@ -67,8 +66,19 @@ export const PrivateDocUpload = forwardRef<
       setBusy(true);
       setLocalError(null);
       try {
-        const target = await createDocUploadUrl(kind, prepared.type);
-        if (target.error || !target.url || !target.key) {
+        // Presign via a plain route handler (not a server action) so the PUT
+        // that follows isn't aborted by a server-action RSC refresh.
+        const presignRes = await fetch("/api/register/upload-url", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ kind, contentType: prepared.type }),
+        });
+        const target = (await presignRes.json().catch(() => ({}))) as {
+          key?: string;
+          url?: string;
+          error?: string;
+        };
+        if (!presignRes.ok || !target.url || !target.key) {
           setLocalError(target.error ?? "Upload failed — please try again.");
           return null;
         }

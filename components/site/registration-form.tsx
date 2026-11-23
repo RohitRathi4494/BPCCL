@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { startTransition, useActionState, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import {
   Check,
@@ -164,7 +164,6 @@ export function RegistrationForm({
   registrationFee: number; upiId: string | null; upiQrUrl: string | null;
 }) {
   const [state, formAction, pending] = useActionState(submitRegistration, initial);
-  const formRef = useRef<HTMLFormElement>(null);
   const aadhaarRef = useRef<PrivateDocHandle>(null);
   const paymentRef = useRef<PrivateDocHandle>(null);
   const [values, setValues] = useState<FormValues>(EMPTY_VALUES);
@@ -173,9 +172,7 @@ export function RegistrationForm({
   const [docKeys, setDocKeys] = useState({ aadhaar: "", payment: "" });
   const [docSel, setDocSel] = useState({ aadhaar: false, payment: false });
   const [uploading, setUploading] = useState(false);
-  const [submitTick, setSubmitTick] = useState(0);
   const [confirmDuplicate, setConfirmDuplicate] = useState(false);
-  const [confirmTick, setConfirmTick] = useState(0);
   const [copied, setCopied] = useState<"upi" | "code" | null>(null);
   const [draftLoaded, setDraftLoaded] = useState(false);
 
@@ -211,13 +208,6 @@ export function RegistrationForm({
       try { localStorage.removeItem(DRAFT_KEY); } catch {}
     }
   }, [state.status]);
-
-  useEffect(() => {
-    if (submitTick > 0 && docKeys.aadhaar && docKeys.payment) formRef.current?.requestSubmit();
-  }, [submitTick, docKeys]);
-  useEffect(() => {
-    if (confirmTick > 0 && confirmDuplicate) formRef.current?.requestSubmit();
-  }, [confirmTick, confirmDuplicate]);
 
   const set =
     (key: keyof FormValues) =>
@@ -265,6 +255,37 @@ export function RegistrationForm({
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  /** Build FormData from state + the uploaded keys and dispatch the action
+   *  directly. Avoids relying on input name attributes and on requestSubmit()
+   *  (which was aborting the server-action POST in the wizard). */
+  function submit(aadhaarKey: string, paymentKey: string, confirm: boolean) {
+    const fd = new FormData();
+    const s = (k: string, v: string) => fd.set(k, v ?? "");
+    s("full_name", values.full_name);
+    s("dob", values.dob);
+    s("phone", values.phone);
+    s("email", values.email);
+    s("company", values.company);
+    s("work_email", values.work_email);
+    s("cricheroes_url", values.cricheroes_url);
+    s("linkedin_url", values.linkedin_url);
+    s("tshirt_size", values.tshirt_size);
+    s("tshirt_size_other", values.tshirt_size_other);
+    s("lower_size", values.lower_size);
+    s("lower_size_other", values.lower_size_other);
+    s("jersey_number", values.jersey_number);
+    s("jersey_name", values.jersey_name);
+    s("payment_utr", values.payment_utr);
+    for (const f of STAT_FIELDS) s(f.key, values[f.key]);
+    for (const r of values.roles) fd.append("roles", r);
+    s("photo_url", values.photo_url);
+    s("aadhaar_doc_key", aadhaarKey);
+    s("payment_screenshot_key", paymentKey);
+    if (values.data_consent) fd.set("data_consent", "on");
+    fd.set("confirm_duplicate", confirm ? "true" : "false");
+    startTransition(() => formAction(fd));
+  }
+
   async function handleSubmit() {
     const errs = validate(values, docSel.aadhaar, docSel.payment);
     if (Object.keys(errs).length > 0) {
@@ -275,11 +296,13 @@ export function RegistrationForm({
       return;
     }
     setUploading(true);
-    const [aKey, pKey] = await Promise.all([aadhaarRef.current!.upload(), paymentRef.current!.upload()]);
+    // Reuse keys if already uploaded (e.g. the duplicate-confirm re-submit).
+    const aKey = docKeys.aadhaar || (await aadhaarRef.current!.upload());
+    const pKey = aKey ? docKeys.payment || (await paymentRef.current!.upload()) : null;
     setUploading(false);
     if (!aKey || !pKey) return;
     setDocKeys({ aadhaar: aKey, payment: pKey });
-    setSubmitTick((t) => t + 1);
+    submit(aKey, pKey, confirmDuplicate);
   }
 
   async function copy(kind: "upi" | "code", text: string) {
@@ -361,13 +384,7 @@ export function RegistrationForm({
   );
 
   return (
-    <form ref={formRef} action={formAction} className="flex flex-col gap-8">
-      <input type="hidden" name="confirm_duplicate" value={confirmDuplicate ? "true" : "false"} />
-      <input type="hidden" name="aadhaar_doc_key" value={docKeys.aadhaar} />
-      <input type="hidden" name="payment_screenshot_key" value={docKeys.payment} />
-      <input type="hidden" name="photo_url" value={values.photo_url} />
-      {values.roles.map((r) => (<input key={r} type="hidden" name="roles" value={r} />))}
-
+    <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-8">
       {/* Progress */}
       <div>
         <div className="flex items-center justify-between">
@@ -404,7 +421,7 @@ export function RegistrationForm({
             <p className="text-sm text-ink-900">{state.message}</p>
             <button
               type="button" disabled={busy}
-              onClick={() => { setConfirmDuplicate(true); setConfirmTick((t) => t + 1); }}
+              onClick={() => { setConfirmDuplicate(true); submit(docKeys.aadhaar, docKeys.payment, true); }}
               className="inline-flex w-fit items-center gap-2 rounded-full border border-navy-900 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-navy-900 hover:bg-navy-900 hover:text-white disabled:opacity-70"
             >
               {busy && <Loader2 className="size-3.5 animate-spin" />} Submit Anyway

@@ -71,6 +71,11 @@ function r2Client(): S3Client {
       accessKeyId: c.accessKeyId,
       secretAccessKey: c.secretAccessKey,
     },
+    // AWS SDK v3 now adds a CRC32 checksum to PutObject by default, which breaks
+    // browser presigned PUTs to R2 (the browser can't supply the signed checksum
+    // header → the request is aborted). Only compute checksums when R2 requires.
+    requestChecksumCalculation: "WHEN_REQUIRED",
+    responseChecksumValidation: "WHEN_REQUIRED",
   });
   return client;
 }
