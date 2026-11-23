@@ -2,7 +2,16 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { CheckCircle2, Loader2, AlertTriangle } from "lucide-react";
+import {
+  Check,
+  Loader2,
+  AlertTriangle,
+  Copy,
+  ArrowRight,
+  ArrowLeft,
+  Pencil,
+  CheckCircle2,
+} from "lucide-react";
 import {
   submitRegistration,
   type RegistrationState,
@@ -25,17 +34,20 @@ import {
   PrivateDocUpload,
   type PrivateDocHandle,
 } from "@/components/site/private-doc-upload";
+import { Confetti } from "@/components/site/confetti";
+import { WhatsAppIcon } from "@/components/site/social-icons";
+import { leagueConfig } from "@/lib/league.config";
+import { site } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 const fieldClass =
-  "w-full rounded-sm border border-input bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary";
+  "w-full rounded-lg border border-navy-900/15 bg-white px-4 py-3 text-base text-ink-900 placeholder:text-muted-ink/50 outline-none transition-colors focus:border-navy-700 focus:ring-2 focus:ring-navy-700/20";
 const labelClass =
-  "font-mono text-[11px] tracking-[0.18em] text-muted-foreground uppercase";
+  "text-[11px] font-semibold tracking-[0.1em] text-muted-ink uppercase";
 
 const initial: RegistrationState = { status: "idle" };
 
 type StatValues = Record<StatKey, string>;
-
 type FormValues = {
   full_name: string;
   dob: string;
@@ -57,404 +69,399 @@ type FormValues = {
   data_consent: boolean;
 } & StatValues;
 
-const EMPTY_STATS = Object.fromEntries(
-  STAT_FIELDS.map((f) => [f.key, ""]),
-) as StatValues;
-
+const EMPTY_STATS = Object.fromEntries(STAT_FIELDS.map((f) => [f.key, ""])) as StatValues;
 const EMPTY_VALUES: FormValues = {
-  full_name: "",
-  dob: "",
-  phone: "",
-  email: "",
-  company: "",
-  work_email: "",
-  photo_url: "",
-  cricheroes_url: "",
-  linkedin_url: "",
-  roles: [],
-  tshirt_size: "",
-  tshirt_size_other: "",
-  lower_size: "",
-  lower_size_other: "",
-  jersey_number: "",
-  jersey_name: "",
-  payment_utr: "",
-  data_consent: false,
+  full_name: "", dob: "", phone: "", email: "", company: "", work_email: "",
+  photo_url: "", cricheroes_url: "", linkedin_url: "", roles: [],
+  tshirt_size: "", tshirt_size_other: "", lower_size: "", lower_size_other: "",
+  jersey_number: "", jersey_name: "", payment_utr: "", data_consent: false,
   ...EMPTY_STATS,
 };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const DRAFT_KEY = "bpccl-reg-draft";
 
-/**
- * Client-side validation that mirrors the server. We run this BEFORE uploading
- * the private docs so an incomplete form never creates orphan objects in R2.
- */
-function validate(
-  v: FormValues,
-  hasAadhaar: boolean,
-  hasPayment: boolean,
-): Record<string, string> {
+const STEPS = [
+  { n: 1, label: "Personal" },
+  { n: 2, label: "Cricket" },
+  { n: 3, label: "Kit" },
+  { n: 4, label: "Docs & Pay" },
+  { n: 5, label: "Review" },
+] as const;
+
+// Which field keys are validated on each step.
+const STEP_KEYS: Record<number, string[]> = {
+  1: ["full_name", "dob", "phone", "email", "company", "work_email", "linkedin_url"],
+  2: ["roles", "cricheroes_url", ...STAT_FIELDS.map((f) => f.key)],
+  3: ["tshirt_size", "lower_size", "jersey_number", "jersey_name"],
+  4: ["photo_url", "aadhaar_doc_key", "payment_utr", "payment_screenshot_key", "data_consent"],
+};
+
+function validate(v: FormValues, hasAadhaar: boolean, hasPayment: boolean): Record<string, string> {
   const e: Record<string, string> = {};
   if (!v.full_name.trim()) e.full_name = "Please enter your full name.";
-
   if (!v.dob) e.dob = "Please enter your date of birth.";
   else {
     const d = new Date(v.dob);
-    if (Number.isNaN(d.getTime()) || d > new Date())
-      e.dob = "Enter a valid date of birth.";
+    if (Number.isNaN(d.getTime()) || d > new Date()) e.dob = "Enter a valid date of birth.";
     else {
       const age = computeAge(v.dob);
-      if (age < MIN_AGE)
-        e.dob = `Registration is open to players aged ${MIN_AGE} and above.`;
+      if (age < MIN_AGE) e.dob = `Open to players aged ${MIN_AGE} and above.`;
       else if (age > MAX_AGE) e.dob = "Please double-check your date of birth.";
     }
   }
-
   if (!v.phone.trim()) e.phone = "Please enter a contact number.";
-  else if (!isValidPhone(normalizePhone(v.phone)))
-    e.phone = "Enter a valid contact number (10–13 digits).";
-
+  else if (!isValidPhone(normalizePhone(v.phone))) e.phone = "Enter a valid contact number (10–13 digits).";
   if (!v.email.trim()) e.email = "Please enter your email.";
   else if (!EMAIL_RE.test(v.email.trim())) e.email = "Enter a valid email address.";
-
   if (!v.company.trim()) e.company = "Please enter your company.";
-
   if (!v.work_email.trim()) e.work_email = "Please enter a work or personal email.";
-  else if (!EMAIL_RE.test(v.work_email.trim()))
-    e.work_email = "Enter a valid email address.";
-
-  if (!v.photo_url) e.photo_url = "Please upload a player photo.";
-  if (!v.cricheroes_url.trim())
-    e.cricheroes_url = "A CricHeroes profile link is required.";
-  if (!v.linkedin_url.trim())
-    e.linkedin_url = "A LinkedIn profile link is required.";
-
-  const sizeOk = (sel: string, other: string) =>
-    sel === OTHER_SIZE ? other.trim().length > 0 : sel.length > 0;
-  if (!sizeOk(v.tshirt_size, v.tshirt_size_other))
-    e.tshirt_size = "Please select a size.";
-  if (!sizeOk(v.lower_size, v.lower_size_other))
-    e.lower_size = "Please select a size.";
-
+  else if (!EMAIL_RE.test(v.work_email.trim())) e.work_email = "Enter a valid email address.";
+  if (!v.cricheroes_url.trim()) e.cricheroes_url = "A CricHeroes profile link is required.";
+  if (!v.linkedin_url.trim()) e.linkedin_url = "A LinkedIn profile link is required.";
+  const sizeOk = (sel: string, other: string) => (sel === OTHER_SIZE ? other.trim().length > 0 : sel.length > 0);
+  if (!sizeOk(v.tshirt_size, v.tshirt_size_other)) e.tshirt_size = "Please select a size.";
+  if (!sizeOk(v.lower_size, v.lower_size_other)) e.lower_size = "Please select a size.";
   if (!v.jersey_number.trim()) e.jersey_number = "Enter your jersey number.";
-  else if (!/^\d{1,3}$/.test(v.jersey_number))
-    e.jersey_number = "Jersey number must be 1–3 digits.";
+  else if (!/^\d{1,3}$/.test(v.jersey_number)) e.jersey_number = "Jersey number must be 1–3 digits.";
   if (!v.jersey_name.trim()) e.jersey_name = "Enter the name for your jersey.";
-
   if (v.roles.length === 0) e.roles = "Select at least one playing role.";
-
-  for (const f of STAT_FIELDS) {
-    if (!v[f.key].trim()) e[f.key] = `Enter ${f.label} (or NA).`;
-  }
-
+  for (const f of STAT_FIELDS) if (!v[f.key].trim()) e[f.key] = `Enter ${f.label} (or NA).`;
+  if (!v.photo_url) e.photo_url = "Please upload a player photo.";
   if (!hasAadhaar) e.aadhaar_doc_key = "Please upload your masked Aadhaar.";
   if (!hasPayment) e.payment_screenshot_key = "Please upload your payment screenshot.";
-
   if (!v.payment_utr.trim()) e.payment_utr = "Enter your UPI transaction ID (UTR).";
-  else if (!/^\d{12}$/.test(v.payment_utr.trim()))
-    e.payment_utr = "The UTR must be exactly 12 digits.";
-
-  if (!v.data_consent)
-    e.data_consent = "Please consent to the verification use of your documents.";
-
+  else if (!/^\d{12}$/.test(v.payment_utr.trim())) e.payment_utr = "The UTR must be exactly 12 digits.";
+  if (!v.data_consent) e.data_consent = "Please consent to the verification use of your documents.";
   return e;
 }
 
 function Err({ msg }: { msg?: string }) {
   if (!msg) return null;
-  return <p className="text-xs text-[var(--closed)]">{msg}</p>;
+  return <p className="mt-1 text-xs text-ball-red">{msg}</p>;
 }
 
 function Field({
-  label,
-  htmlFor,
-  required,
-  error,
-  hint,
-  children,
+  label, htmlFor, required, error, hint, children,
 }: {
-  label: string;
-  htmlFor: string;
-  required?: boolean;
-  error?: string;
-  hint?: string;
-  children: React.ReactNode;
+  label: string; htmlFor: string; required?: boolean; error?: string; hint?: string; children: React.ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={htmlFor} className={labelClass}>
-        {label} {required && <span className="text-primary">*</span>}
+        {label} {required && <span className="text-ball-red">*</span>}
       </label>
       {children}
-      {hint && !error && <p className="text-xs text-muted-foreground">{hint}</p>}
+      {hint && !error && <p className="text-xs text-muted-ink">{hint}</p>}
       <Err msg={error} />
     </div>
   );
 }
 
-function Legend({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="font-mono text-xs tracking-[0.24em] text-primary uppercase">
-      {children}
-    </span>
-  );
-}
-
 export function RegistrationForm({
-  registrationFee,
-  upiId,
-  upiQrUrl,
+  registrationFee, upiId, upiQrUrl,
 }: {
-  registrationFee: number;
-  upiId: string | null;
-  upiQrUrl: string | null;
+  registrationFee: number; upiId: string | null; upiQrUrl: string | null;
 }) {
-  const [state, formAction, pending] = useActionState(
-    submitRegistration,
-    initial,
-  );
+  const [state, formAction, pending] = useActionState(submitRegistration, initial);
   const formRef = useRef<HTMLFormElement>(null);
   const aadhaarRef = useRef<PrivateDocHandle>(null);
   const paymentRef = useRef<PrivateDocHandle>(null);
   const [values, setValues] = useState<FormValues>(EMPTY_VALUES);
-  const [confirmDuplicate, setConfirmDuplicate] = useState(false);
-  const [confirmTick, setConfirmTick] = useState(0);
+  const [step, setStep] = useState(1);
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
   const [docKeys, setDocKeys] = useState({ aadhaar: "", payment: "" });
+  const [docSel, setDocSel] = useState({ aadhaar: false, payment: false });
   const [uploading, setUploading] = useState(false);
   const [submitTick, setSubmitTick] = useState(0);
+  const [confirmDuplicate, setConfirmDuplicate] = useState(false);
+  const [confirmTick, setConfirmTick] = useState(0);
+  const [copied, setCopied] = useState<"upi" | "code" | null>(null);
+  const [draftLoaded, setDraftLoaded] = useState(false);
 
-  // After docs upload + keys set, actually submit the form (one tick later so the
-  // hidden key inputs are in the DOM before the server action reads them).
+  // Load the saved draft (text fields only) once on mount. Deferred out of the
+  // effect body so it isn't a synchronous setState-in-effect.
   useEffect(() => {
-    if (submitTick > 0 && docKeys.aadhaar && docKeys.payment) {
-      formRef.current?.requestSubmit();
-    }
-  }, [submitTick, docKeys]);
+    const raf = requestAnimationFrame(() => {
+      try {
+        const raw = localStorage.getItem(DRAFT_KEY);
+        if (raw) {
+          const saved = JSON.parse(raw) as Partial<FormValues>;
+          setValues((v) => ({ ...v, ...saved, photo_url: "" }));
+        }
+      } catch {}
+      setDraftLoaded(true);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
-  // "Submit anyway" (duplicate phone) — docs are already uploaded, just resubmit.
+  // Persist the draft (never files) whenever values change.
+  useEffect(() => {
+    if (!draftLoaded) return;
+    try {
+      const { photo_url: _p, ...rest } = values;
+      void _p;
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(rest));
+    } catch {}
+  }, [values, draftLoaded]);
+
+  // Clear the draft on success.
+  useEffect(() => {
+    if (state.status === "success") {
+      try { localStorage.removeItem(DRAFT_KEY); } catch {}
+    }
+  }, [state.status]);
+
+  useEffect(() => {
+    if (submitTick > 0 && docKeys.aadhaar && docKeys.payment) formRef.current?.requestSubmit();
+  }, [submitTick, docKeys]);
   useEffect(() => {
     if (confirmTick > 0 && confirmDuplicate) formRef.current?.requestSubmit();
   }, [confirmTick, confirmDuplicate]);
 
   const set =
     (key: keyof FormValues) =>
-    (
-      e: React.ChangeEvent<
-        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-      >,
-    ) => {
+    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
       const value =
-        e.target instanceof HTMLInputElement && e.target.type === "checkbox"
-          ? e.target.checked
-          : e.target.value;
+        e.target instanceof HTMLInputElement && e.target.type === "checkbox" ? e.target.checked : e.target.value;
       setValues((v) => ({ ...v, [key]: value }));
       if (confirmDuplicate) setConfirmDuplicate(false);
-      if (clientErrors[key as string])
-        setClientErrors((c) => {
-          const next = { ...c };
-          delete next[key as string];
-          return next;
-        });
+      if (clientErrors[key as string]) {
+        setClientErrors((c) => { const n = { ...c }; delete n[key as string]; return n; });
+      }
     };
 
-  const toggleRoleInGroup =
-    (groupRoles: readonly string[], role: string) => () => {
-      setValues((v) => {
-        const already = v.roles.includes(role);
-        const withoutGroup = v.roles.filter((r) => !groupRoles.includes(r));
-        return {
-          ...v,
-          roles: already ? withoutGroup : [...withoutGroup, role],
-        };
-      });
-      if (confirmDuplicate) setConfirmDuplicate(false);
-    };
+  const toggleRoleInGroup = (groupRoles: readonly string[], role: string) => () => {
+    setValues((v) => {
+      const already = v.roles.includes(role);
+      const withoutGroup = v.roles.filter((r) => !groupRoles.includes(r));
+      return { ...v, roles: already ? withoutGroup : [...withoutGroup, role] };
+    });
+    if (confirmDuplicate) setConfirmDuplicate(false);
+  };
+
+  function stepErrorsFor(n: number): Record<string, string> {
+    const all = validate(values, docSel.aadhaar, docSel.payment);
+    const out: Record<string, string> = {};
+    for (const k of STEP_KEYS[n] ?? []) if (all[k]) out[k] = all[k];
+    return out;
+  }
+
+  function goNext() {
+    const errs = stepErrorsFor(step);
+    setClientErrors(errs);
+    if (Object.keys(errs).length === 0) {
+      setStep((s) => Math.min(5, s + 1));
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }
+  function goBack() {
+    setClientErrors({});
+    setStep((s) => Math.max(1, s - 1));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  function goEdit(n: number) {
+    setStep(n);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   async function handleSubmit() {
-    const hasAadhaar = aadhaarRef.current?.hasFile() ?? false;
-    const hasPayment = paymentRef.current?.hasFile() ?? false;
-    const errs = validate(values, hasAadhaar, hasPayment);
-    setClientErrors(errs);
-    if (Object.keys(errs).length > 0) return;
-
-    // Validation passed → upload the private docs, then submit with their keys.
+    const errs = validate(values, docSel.aadhaar, docSel.payment);
+    if (Object.keys(errs).length > 0) {
+      setClientErrors(errs);
+      // Jump to the earliest step that has an error.
+      const firstStep = [1, 2, 3, 4].find((n) => STEP_KEYS[n].some((k) => errs[k]));
+      if (firstStep) setStep(firstStep);
+      return;
+    }
     setUploading(true);
-    const [aKey, pKey] = await Promise.all([
-      aadhaarRef.current!.upload(),
-      paymentRef.current!.upload(),
-    ]);
+    const [aKey, pKey] = await Promise.all([aadhaarRef.current!.upload(), paymentRef.current!.upload()]);
     setUploading(false);
-    if (!aKey || !pKey) return; // each uploader shows its own error
+    if (!aKey || !pKey) return;
     setDocKeys({ aadhaar: aKey, payment: pKey });
     setSubmitTick((t) => t + 1);
+  }
+
+  async function copy(kind: "upi" | "code", text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(kind);
+      setTimeout(() => setCopied(null), 1600);
+    } catch {}
   }
 
   const feeText = new Intl.NumberFormat("en-IN").format(registrationFee);
   const err = (k: string) => clientErrors[k] ?? state.errors?.[k];
   const busy = pending || uploading;
 
+  // ----- Success screen -----
   if (state.status === "success") {
+    const shareText = `I just registered for ${site.name} ${site.season}! Join the corporate cricket league:`;
+    const shareHref = `https://wa.me/?text=${encodeURIComponent(`${shareText} ${leagueConfig.prodSiteUrl}/register`)}`;
     return (
-      <div className="flex flex-col items-center gap-4 rounded-lg border border-primary/40 bg-card p-10 text-center">
-        <CheckCircle2 className="size-11 text-primary" />
-        <h2 className="font-heading text-3xl font-bold tracking-tight text-foreground uppercase">
-          You&apos;re In
-        </h2>
-        <p className="max-w-md text-sm text-muted-foreground">{state.message}</p>
+      <div className="relative">
+        <Confetti />
+        <div className="flex flex-col items-center gap-6 rounded-2xl border border-pitch-700/30 bg-white p-8 text-center sm:p-12">
+          <span className="grid size-16 place-items-center rounded-full bg-pitch-700/10 text-pitch-700">
+            <CheckCircle2 className="size-9" />
+          </span>
+          <div>
+            <h2 className="editorial-heading text-3xl text-navy-900 sm:text-4xl">You&apos;re in!</h2>
+            <p className="mt-2 max-w-md text-sm text-muted-ink">{state.message}</p>
+          </div>
+          {state.code && (
+            <div className="w-full max-w-xs">
+              <span className={labelClass}>Your registration ID</span>
+              <div className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-navy-900/15 bg-cream-100 px-4 py-3">
+                <span className="font-display text-xl font-extrabold tracking-wider text-navy-900">{state.code}</span>
+                <button
+                  type="button"
+                  onClick={() => copy("code", state.code!)}
+                  className="inline-flex items-center gap-1 rounded-md border border-navy-900/15 px-2.5 py-1.5 text-xs font-medium text-navy-700 hover:border-navy-700"
+                >
+                  {copied === "code" ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+                  {copied === "code" ? "Copied" : "Copy"}
+                </button>
+              </div>
+            </div>
+          )}
+          <div className="w-full max-w-sm text-left">
+            <span className={labelClass}>What happens next</span>
+            <ol className="mt-3 flex flex-col gap-3">
+              {[
+                ["Verification", "We verify your identity, age and payment."],
+                ["Categorisation", "Selectors assess your profile and set a category."],
+                ["Auction day", "Franchises bid to draft you into a squad."],
+              ].map(([t, d], i) => (
+                <li key={t} className="flex gap-3">
+                  <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-navy-900 text-xs font-bold text-white">{i + 1}</span>
+                  <div>
+                    <p className="text-sm font-semibold text-navy-900">{t}</p>
+                    <p className="text-xs text-muted-ink">{d}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+          <a
+            href={shareHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full bg-pitch-700 px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+          >
+            <WhatsAppIcon className="size-4" /> Share on WhatsApp
+          </a>
+        </div>
       </div>
     );
   }
 
+  const stepPanel = (n: number, children: React.ReactNode) => (
+    <div className={cn("flex flex-col gap-6", step === n ? "" : "hidden")}>{children}</div>
+  );
+
   return (
     <form ref={formRef} action={formAction} className="flex flex-col gap-8">
-      <input
-        type="hidden"
-        name="confirm_duplicate"
-        value={confirmDuplicate ? "true" : "false"}
-      />
+      <input type="hidden" name="confirm_duplicate" value={confirmDuplicate ? "true" : "false"} />
       <input type="hidden" name="aadhaar_doc_key" value={docKeys.aadhaar} />
-      <input
-        type="hidden"
-        name="payment_screenshot_key"
-        value={docKeys.payment}
-      />
+      <input type="hidden" name="payment_screenshot_key" value={docKeys.payment} />
+      <input type="hidden" name="photo_url" value={values.photo_url} />
+      {values.roles.map((r) => (<input key={r} type="hidden" name="roles" value={r} />))}
+
+      {/* Progress */}
+      <div>
+        <div className="flex items-center justify-between">
+          {STEPS.map((s) => (
+            <div key={s.n} className="flex flex-1 flex-col items-center gap-1.5">
+              <span
+                className={cn(
+                  "grid size-8 place-items-center rounded-full text-xs font-bold transition-colors",
+                  step > s.n ? "bg-pitch-700 text-white"
+                    : step === s.n ? "bg-navy-900 text-white"
+                    : "bg-navy-900/10 text-muted-ink",
+                )}
+              >
+                {step > s.n ? <Check className="size-4" /> : s.n}
+              </span>
+              <span className={cn("text-[10px] font-medium tracking-wide uppercase", step === s.n ? "text-navy-900" : "text-muted-ink")}>
+                {s.label}
+              </span>
+            </div>
+          ))}
+        </div>
+        <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-navy-900/10">
+          <div className="h-full rounded-full bg-gold-400 transition-all duration-300" style={{ width: `${((step - 1) / 4) * 100}%` }} />
+        </div>
+      </div>
 
       {state.status === "error" && state.message && (
-        <p className="rounded-sm border border-[var(--closed)]/40 bg-[var(--closed)]/10 px-3.5 py-2.5 text-sm text-[var(--closed)]">
-          {state.message}
-        </p>
+        <p className="rounded-lg border border-ball-red/30 bg-ball-red/5 px-4 py-3 text-sm text-ball-red">{state.message}</p>
       )}
-
       {state.status === "duplicate" && (
-        <div className="flex items-start gap-3 rounded-sm border border-primary/40 bg-primary/10 px-3.5 py-3">
-          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-primary" />
+        <div className="flex items-start gap-3 rounded-lg border border-gold-600/40 bg-gold-400/10 px-4 py-3">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-gold-600" />
           <div className="flex flex-col gap-3">
-            <p className="text-sm text-foreground/90">{state.message}</p>
+            <p className="text-sm text-ink-900">{state.message}</p>
             <button
-              type="button"
-              disabled={busy}
-              onClick={() => {
-                setConfirmDuplicate(true);
-                setConfirmTick((t) => t + 1);
-              }}
-              className="inline-flex w-fit items-center gap-2 rounded-sm border border-primary bg-transparent px-4 py-2 font-heading text-xs font-bold tracking-wide text-primary uppercase transition-colors hover:bg-primary hover:text-primary-foreground disabled:opacity-70"
+              type="button" disabled={busy}
+              onClick={() => { setConfirmDuplicate(true); setConfirmTick((t) => t + 1); }}
+              className="inline-flex w-fit items-center gap-2 rounded-full border border-navy-900 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-navy-900 hover:bg-navy-900 hover:text-white disabled:opacity-70"
             >
-              {busy && <Loader2 className="size-3.5 animate-spin" />}
-              Submit Anyway
+              {busy && <Loader2 className="size-3.5 animate-spin" />} Submit Anyway
             </button>
           </div>
         </div>
       )}
 
-      {/* ---- Personal info ---- */}
-      <fieldset className="flex flex-col gap-5">
-        <Legend>Personal Details</Legend>
+      {/* STEP 1 — Personal */}
+      {stepPanel(1, <>
+        <h3 className="editorial-heading text-2xl text-navy-900">Personal details</h3>
         <div className="grid gap-5 sm:grid-cols-2">
           <Field label="Full Name" htmlFor="full_name" required error={err("full_name")}>
-            <input id="full_name" name="full_name" value={values.full_name} onChange={set("full_name")} className={fieldClass} placeholder="Full name" />
+            <input id="full_name" value={values.full_name} onChange={set("full_name")} className={fieldClass} placeholder="Your full name" />
           </Field>
-          <Field
-            label="Date of Birth"
-            htmlFor="dob"
-            required
-            error={err("dob")}
-            hint={`Open to players aged ${MIN_AGE}+`}
-          >
-            <input id="dob" name="dob" type="date" value={values.dob} onChange={set("dob")} className={cn(fieldClass, "appearance-none")} />
+          <Field label="Date of Birth" htmlFor="dob" required error={err("dob")} hint={`Open to players aged ${MIN_AGE}+ (as of 1 Jan 2027)`}>
+            <input id="dob" type="date" value={values.dob} onChange={set("dob")} className={cn(fieldClass, "appearance-none")} />
           </Field>
           <Field label="Contact Number" htmlFor="phone" required error={err("phone")}>
-            <input id="phone" name="phone" type="tel" inputMode="tel" value={values.phone} onChange={set("phone")} className={fieldClass} placeholder="10-digit mobile" />
+            <input id="phone" type="tel" inputMode="tel" value={values.phone} onChange={set("phone")} className={fieldClass} placeholder="10-digit mobile" />
           </Field>
           <Field label="Email ID" htmlFor="email" required error={err("email")}>
-            <input id="email" name="email" type="email" value={values.email} onChange={set("email")} className={fieldClass} placeholder="you@email.com" />
+            <input id="email" type="email" inputMode="email" value={values.email} onChange={set("email")} className={fieldClass} placeholder="you@email.com" />
           </Field>
           <Field label="Company" htmlFor="company" required error={err("company")}>
-            <input id="company" name="company" value={values.company} onChange={set("company")} className={fieldClass} placeholder="Where you work" />
+            <input id="company" value={values.company} onChange={set("company")} className={fieldClass} placeholder="Where you work" />
           </Field>
-          <Field
-            label="Work Email"
-            htmlFor="work_email"
-            required
-            error={err("work_email")}
-            hint="Prefer your company email. If you don't have one, a personal email is fine."
-          >
-            <input id="work_email" name="work_email" type="email" value={values.work_email} onChange={set("work_email")} className={fieldClass} placeholder="you@company.com (or personal)" />
+          <Field label="Work Email" htmlFor="work_email" required error={err("work_email")} hint="Prefer your company email; a personal email is fine.">
+            <input id="work_email" type="email" inputMode="email" value={values.work_email} onChange={set("work_email")} className={fieldClass} placeholder="you@company.com" />
           </Field>
-          <Field
-            label="CricHeroes Profile Link"
-            htmlFor="cricheroes_url"
-            required
-            error={err("cricheroes_url")}
-            hint="Reviewers open this to assess your profile."
-          >
-            <input id="cricheroes_url" name="cricheroes_url" value={values.cricheroes_url} onChange={set("cricheroes_url")} className={fieldClass} placeholder="cricheroes.com/player/…" />
-          </Field>
-          <Field label="LinkedIn Profile Link" htmlFor="linkedin_url" required error={err("linkedin_url")}>
-            <input id="linkedin_url" name="linkedin_url" value={values.linkedin_url} onChange={set("linkedin_url")} className={fieldClass} placeholder="linkedin.com/in/…" />
-          </Field>
+          <div className="sm:col-span-2">
+            <Field label="LinkedIn Profile Link" htmlFor="linkedin_url" required error={err("linkedin_url")}>
+              <input id="linkedin_url" value={values.linkedin_url} onChange={set("linkedin_url")} className={fieldClass} placeholder="linkedin.com/in/…" />
+            </Field>
+          </div>
         </div>
+      </>)}
 
-        {/* Photo upload writes its public URL into a hidden field for submit. */}
-        <input type="hidden" name="photo_url" value={values.photo_url} />
-        <PhotoUpload
-          value={values.photo_url}
-          error={err("photo_url")}
-          onUploaded={(url) => {
-            setValues((v) => ({ ...v, photo_url: url }));
-            if (confirmDuplicate) setConfirmDuplicate(false);
-            setClientErrors((c) => {
-              const next = { ...c };
-              delete next.photo_url;
-              return next;
-            });
-          }}
-        />
-      </fieldset>
-
-      <hr className="crease-rule w-full" />
-
-      {/* ---- Playing profile: roles + stats ---- */}
-      <fieldset className="flex flex-col gap-5">
-        <Legend>Playing Profile</Legend>
-
-        {values.roles.map((r) => (
-          <input key={r} type="hidden" name="roles" value={r} />
-        ))}
+      {/* STEP 2 — Cricket */}
+      {stepPanel(2, <>
+        <h3 className="editorial-heading text-2xl text-navy-900">Your cricket</h3>
+        <Field label="CricHeroes Profile Link" htmlFor="cricheroes_url" required error={err("cricheroes_url")} hint="Selectors open this to assess your profile.">
+          <input id="cricheroes_url" value={values.cricheroes_url} onChange={set("cricheroes_url")} className={fieldClass} placeholder="cricheroes.com/player/…" />
+        </Field>
         <div className="flex flex-col gap-3">
-          <span className={labelClass}>
-            Playing Role <span className="text-primary">*</span>
-          </span>
-          <p className="text-xs text-muted-foreground">
-            Pick one option per category. You can select across categories (e.g.
-            a batter who also bowls).
-          </p>
+          <span className={labelClass}>Playing Role <span className="text-ball-red">*</span></span>
+          <p className="text-xs text-muted-ink">Pick one per category; you can select across categories.</p>
           <div className="flex flex-col gap-4">
             {ROLE_GROUPS.map((group) => (
               <div key={group.label} className="flex flex-col gap-2">
-                <span className="font-mono text-[10px] tracking-[0.18em] text-muted-foreground/80 uppercase">
-                  {group.label}
-                </span>
+                <span className="text-[10px] font-semibold tracking-wide text-muted-ink uppercase">{group.label}</span>
                 <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {group.roles.map((role) => {
                     const checked = values.roles.includes(role);
                     return (
-                      <label
-                        key={role}
-                        className={cn(
-                          "flex cursor-pointer items-center gap-2.5 rounded-sm border px-3 py-2.5 text-sm transition-colors",
-                          checked
-                            ? "border-primary bg-primary/10 text-foreground"
-                            : "border-input bg-background text-foreground/80 hover:border-primary/50",
-                        )}
-                      >
-                        <input
-                          type="radio"
-                          checked={checked}
-                          onChange={() => {}}
-                          onClick={toggleRoleInGroup(group.roles, role)}
-                          className="size-4 shrink-0 accent-[var(--gold)]"
-                        />
+                      <label key={role} className={cn("flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2.5 text-sm transition-colors", checked ? "border-navy-700 bg-navy-700/5 text-navy-900" : "border-navy-900/15 text-ink-900 hover:border-navy-700/40")}>
+                        <input type="radio" checked={checked} onChange={() => {}} onClick={toggleRoleInGroup(group.roles, role)} className="size-4 shrink-0 accent-navy-700" />
                         {role}
                       </label>
                     );
@@ -465,188 +472,178 @@ export function RegistrationForm({
           </div>
           <Err msg={err("roles")} />
         </div>
-
         <div className="flex flex-col gap-2">
-          <span className={labelClass}>
-            Career Stats <span className="text-primary">*</span>
-          </span>
-          <p className="text-xs text-muted-foreground">
-            Enter <span className="font-medium text-foreground/90">NA</span> for
-            any stat that doesn&apos;t apply to you.
-          </p>
+          <span className={labelClass}>Career Stats <span className="text-ball-red">*</span></span>
+          <p className="text-xs text-muted-ink">Enter <span className="font-medium text-ink-900">NA</span> for any stat that doesn&apos;t apply.</p>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {STAT_FIELDS.map((f) => (
-              <Field
-                key={f.key}
-                label={f.label}
-                htmlFor={f.key}
-                required
-                error={err(f.key)}
-              >
-                <input
-                  id={f.key}
-                  name={f.key}
-                  value={values[f.key]}
-                  onChange={set(f.key)}
-                  className={fieldClass}
-                  placeholder="e.g. 42 or NA"
-                />
+              <Field key={f.key} label={f.label} htmlFor={f.key} required error={err(f.key)}>
+                <input id={f.key} value={values[f.key]} onChange={set(f.key)} className={fieldClass} placeholder="e.g. 42 or NA" />
               </Field>
             ))}
           </div>
         </div>
-      </fieldset>
+      </>)}
 
-      <hr className="crease-rule w-full" />
-
-      {/* ---- Kit ---- */}
-      <fieldset className="flex flex-col gap-5">
-        <Legend>Kit & Jersey</Legend>
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="T-Shirt Size" htmlFor="tshirt_size" required error={err("tshirt_size")}>
-            <div className="flex flex-col gap-2">
-              <select id="tshirt_size" name="tshirt_size" value={values.tshirt_size} onChange={set("tshirt_size")} className={cn(fieldClass, "appearance-none")}>
-                <option value="" disabled>Select size…</option>
-                {TSHIRT_SIZES.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-                <option value={OTHER_SIZE}>Other</option>
-              </select>
-              {values.tshirt_size === OTHER_SIZE && (
-                <input name="tshirt_size_other" value={values.tshirt_size_other} onChange={set("tshirt_size_other")} className={fieldClass} placeholder="Enter your size" />
-              )}
+      {/* STEP 3 — Kit */}
+      {stepPanel(3, <>
+        <h3 className="editorial-heading text-2xl text-navy-900">Kit &amp; jersey</h3>
+        <div className="grid gap-8 lg:grid-cols-[1fr_auto]">
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field label="T-Shirt Size" htmlFor="tshirt_size" required error={err("tshirt_size")}>
+              <div className="flex flex-col gap-2">
+                <select id="tshirt_size" value={values.tshirt_size} onChange={set("tshirt_size")} className={cn(fieldClass, "appearance-none")}>
+                  <option value="" disabled>Select size…</option>
+                  {TSHIRT_SIZES.map((s) => (<option key={s} value={s}>{s}</option>))}
+                  <option value={OTHER_SIZE}>Other</option>
+                </select>
+                {values.tshirt_size === OTHER_SIZE && (<input value={values.tshirt_size_other} onChange={set("tshirt_size_other")} className={fieldClass} placeholder="Enter your size" />)}
+              </div>
+            </Field>
+            <Field label="Lower Size" htmlFor="lower_size" required error={err("lower_size")}>
+              <div className="flex flex-col gap-2">
+                <select id="lower_size" value={values.lower_size} onChange={set("lower_size")} className={cn(fieldClass, "appearance-none")}>
+                  <option value="" disabled>Select size…</option>
+                  {LOWER_SIZES.map((s) => (<option key={s} value={s}>{s}</option>))}
+                  <option value={OTHER_SIZE}>Other</option>
+                </select>
+                {values.lower_size === OTHER_SIZE && (<input value={values.lower_size_other} onChange={set("lower_size_other")} className={fieldClass} placeholder="Enter your size" />)}
+              </div>
+            </Field>
+            <Field label="Number on Jersey" htmlFor="jersey_number" required error={err("jersey_number")}>
+              <input id="jersey_number" inputMode="numeric" maxLength={3} value={values.jersey_number} onChange={set("jersey_number")} className={fieldClass} placeholder="e.g. 7" />
+            </Field>
+            <Field label="Name on Jersey" htmlFor="jersey_name" required error={err("jersey_name")}>
+              <input id="jersey_name" maxLength={20} value={values.jersey_name} onChange={set("jersey_name")} className={fieldClass} placeholder="As printed on the back" />
+            </Field>
+          </div>
+          {/* Live jersey preview */}
+          <div className="flex flex-col items-center gap-2">
+            <span className={labelClass}>Preview</span>
+            <div className="relative grid h-56 w-44 place-items-center rounded-t-[3rem] bg-gradient-to-b from-navy-700 to-navy-900 shadow-lg">
+              <div className="absolute inset-x-0 top-0 h-6 rounded-t-[3rem] bg-navy-900/40" />
+              <div className="flex flex-col items-center">
+                <span className="max-w-[9rem] truncate px-2 font-display text-lg font-bold tracking-wide text-white uppercase">{values.jersey_name || "NAME"}</span>
+                <span className="font-display text-6xl font-extrabold text-gold-400">{values.jersey_number || "0"}</span>
+              </div>
             </div>
-          </Field>
-          <Field label="Lower Size" htmlFor="lower_size" required error={err("lower_size")}>
-            <div className="flex flex-col gap-2">
-              <select id="lower_size" name="lower_size" value={values.lower_size} onChange={set("lower_size")} className={cn(fieldClass, "appearance-none")}>
-                <option value="" disabled>Select size…</option>
-                {LOWER_SIZES.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-                <option value={OTHER_SIZE}>Other</option>
-              </select>
-              {values.lower_size === OTHER_SIZE && (
-                <input name="lower_size_other" value={values.lower_size_other} onChange={set("lower_size_other")} className={fieldClass} placeholder="Enter your size" />
-              )}
-            </div>
-          </Field>
-          <Field label="Number on Jersey" htmlFor="jersey_number" required error={err("jersey_number")}>
-            <input id="jersey_number" name="jersey_number" inputMode="numeric" value={values.jersey_number} onChange={set("jersey_number")} className={fieldClass} placeholder="e.g. 7" />
-          </Field>
-          <Field label="Name on Jersey" htmlFor="jersey_name" required error={err("jersey_name")}>
-            <input id="jersey_name" name="jersey_name" maxLength={20} value={values.jersey_name} onChange={set("jersey_name")} className={fieldClass} placeholder="As printed on the back" />
-          </Field>
+          </div>
         </div>
-      </fieldset>
+      </>)}
 
-      <hr className="crease-rule w-full" />
+      {/* STEP 4 — Documents & Payment */}
+      {stepPanel(4, <>
+        <h3 className="editorial-heading text-2xl text-navy-900">Documents &amp; payment</h3>
+        <PhotoUpload value={values.photo_url} error={err("photo_url")} onUploaded={(url) => {
+          setValues((v) => ({ ...v, photo_url: url }));
+          if (confirmDuplicate) setConfirmDuplicate(false);
+          setClientErrors((c) => { const n = { ...c }; delete n.photo_url; return n; });
+        }} />
+        <PrivateDocUpload ref={aadhaarRef} kind="aadhaar" label="Masked Aadhaar" help="Download your masked Aadhaar from the UIDAI website — only the last 4 digits should be visible. JPG, PNG or PDF." error={err("aadhaar_doc_key")} onChange={(h) => setDocSel((d) => ({ ...d, aadhaar: h }))} />
 
-      {/* ---- Identity (masked Aadhaar) ---- */}
-      <fieldset className="flex flex-col gap-5">
-        <Legend>Identity Verification</Legend>
-        <PrivateDocUpload
-          ref={aadhaarRef}
-          kind="aadhaar"
-          label="Masked Aadhaar"
-          help="Download your masked Aadhaar from the UIDAI website. Only the last 4 digits should be visible. JPG, PNG or PDF."
-          error={err("aadhaar_doc_key")}
-        />
-      </fieldset>
-
-      <hr className="crease-rule w-full" />
-
-      {/* ---- Payment ---- */}
-      <fieldset className="flex flex-col gap-5">
-        <Legend>Registration Fee Payment</Legend>
-        <div className="rounded-lg border border-primary/40 bg-primary/5 p-5">
+        <div className="rounded-xl border border-navy-900/10 bg-cream-100 p-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-col gap-1">
-              <span className={labelClass}>Amount Payable</span>
-              <span className="font-heading text-3xl font-bold text-primary">
-                ₹{feeText}
-              </span>
+            <div>
+              <span className={labelClass}>Registration fee</span>
+              <p className="font-display text-3xl font-extrabold text-navy-900">₹{feeText}</p>
               {upiId ? (
-                <span className="mt-1 text-sm text-foreground/85">
-                  Pay via UPI to{" "}
-                  <span className="font-mono font-semibold text-foreground">
-                    {upiId}
-                  </span>
-                  , then enter your transaction ID and upload the screenshot below.
-                </span>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-sm text-ink-900">Pay via UPI to <span className="font-mono font-semibold">{upiId}</span></span>
+                  <button type="button" onClick={() => copy("upi", upiId)} className="inline-flex items-center gap-1 rounded-md border border-navy-900/15 px-2 py-1 text-xs font-medium text-navy-700 hover:border-navy-700">
+                    {copied === "upi" ? <Check className="size-3" /> : <Copy className="size-3" />} {copied === "upi" ? "Copied" : "Copy"}
+                  </button>
+                </div>
               ) : (
-                <span className="mt-1 text-sm text-muted-foreground">
-                  Pay the fee via UPI, then enter your transaction ID and upload
-                  the screenshot below.
-                </span>
+                <p className="mt-2 text-sm text-muted-ink">Pay the fee via UPI, then enter your transaction ID below.</p>
               )}
             </div>
             {upiQrUrl && (
-              <div className="shrink-0 rounded-md border border-border bg-background p-2">
-                <Image
-                  src={upiQrUrl}
-                  alt="UPI payment QR code"
-                  width={132}
-                  height={132}
-                  unoptimized
-                  className="size-32 object-contain"
-                />
+              <div className="shrink-0 rounded-lg border border-navy-900/10 bg-white p-2">
+                <Image src={upiQrUrl} alt="UPI payment QR" width={120} height={120} unoptimized className="size-28 object-contain" />
               </div>
             )}
           </div>
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2">
-          <Field
-            label="UPI Transaction ID (UTR)"
-            htmlFor="payment_utr"
-            required
-            error={err("payment_utr")}
-            hint="The 12-digit reference from your UPI app."
-          >
-            <input id="payment_utr" name="payment_utr" inputMode="numeric" maxLength={12} value={values.payment_utr} onChange={set("payment_utr")} className={fieldClass} placeholder="12-digit UTR" />
+          <Field label="UPI Transaction ID (UTR)" htmlFor="payment_utr" required error={err("payment_utr")} hint="The 12-digit reference from your UPI app.">
+            <input id="payment_utr" inputMode="numeric" maxLength={12} value={values.payment_utr} onChange={set("payment_utr")} className={fieldClass} placeholder="12-digit UTR" />
           </Field>
-          <PrivateDocUpload
-            ref={paymentRef}
-            kind="payment"
-            label="Payment Screenshot"
-            help="A screenshot of the successful UPI payment. JPG or PNG."
-            error={err("payment_screenshot_key")}
-          />
+          <PrivateDocUpload ref={paymentRef} kind="payment" label="Payment Screenshot" help="A screenshot of the successful UPI payment. JPG or PNG." error={err("payment_screenshot_key")} onChange={(h) => setDocSel((d) => ({ ...d, payment: h }))} />
         </div>
-      </fieldset>
 
-      <hr className="crease-rule w-full" />
-
-      {/* ---- Consent (data usage) ---- */}
-      <div className="flex flex-col gap-1.5">
-        <div className="rounded-lg border border-primary/40 bg-primary/5 p-4">
-          <label className="flex items-start gap-3 text-sm text-foreground/90">
-            <input type="checkbox" name="data_consent" checked={values.data_consent} onChange={set("data_consent")} className="mt-0.5 size-4 shrink-0 accent-[var(--gold)]" />
-            <span>
-              I consent to the league using my Aadhaar and payment proof{" "}
-              <span className="font-semibold text-foreground">only</span> to
-              verify my identity, age and payment. They will be deleted after
-              verification.
-            </span>
+        <div className="rounded-xl border border-navy-900/10 bg-white p-4">
+          <label className="flex items-start gap-3 text-sm text-ink-900">
+            <input type="checkbox" name="data_consent" checked={values.data_consent} onChange={set("data_consent")} className="mt-0.5 size-4 shrink-0 accent-navy-700" />
+            <span>I consent to the league using my Aadhaar and payment proof <span className="font-semibold">only</span> to verify my identity, age and payment. They will be deleted after verification.</span>
           </label>
+          <Err msg={err("data_consent")} />
         </div>
-        <Err msg={err("data_consent")} />
-      </div>
+      </>)}
 
-      <button
-        type="button"
-        onClick={handleSubmit}
-        disabled={busy}
-        className="inline-flex items-center justify-center gap-2 self-start rounded-sm bg-primary px-7 py-3 font-heading text-sm font-bold tracking-wide text-primary-foreground uppercase shadow-[0_0_20px_rgba(61,123,239,0.3)] transition-shadow hover:shadow-[0_0_30px_rgba(61,123,239,0.55)] disabled:opacity-70"
-      >
-        {busy && <Loader2 className="size-4 animate-spin" />}
-        {uploading
-          ? "Uploading documents…"
-          : pending
-            ? "Submitting…"
-            : "Submit Registration"}
-      </button>
+      {/* STEP 5 — Review */}
+      {stepPanel(5, <>
+        <h3 className="editorial-heading text-2xl text-navy-900">Review &amp; submit</h3>
+        <ReviewBlock title="Personal" onEdit={() => goEdit(1)} rows={[
+          ["Name", values.full_name], ["DOB", values.dob], ["Phone", values.phone],
+          ["Email", values.email], ["Company", values.company], ["LinkedIn", values.linkedin_url],
+        ]} />
+        <ReviewBlock title="Cricket" onEdit={() => goEdit(2)} rows={[
+          ["Roles", values.roles.join(", ")], ["CricHeroes", values.cricheroes_url],
+        ]} />
+        <ReviewBlock title="Kit" onEdit={() => goEdit(3)} rows={[
+          ["T-Shirt", values.tshirt_size === OTHER_SIZE ? values.tshirt_size_other : values.tshirt_size],
+          ["Lower", values.lower_size === OTHER_SIZE ? values.lower_size_other : values.lower_size],
+          ["Jersey", `${values.jersey_name} · ${values.jersey_number}`],
+        ]} />
+        <ReviewBlock title="Documents & Payment" onEdit={() => goEdit(4)} rows={[
+          ["Photo", values.photo_url ? "Uploaded" : "—"],
+          ["Aadhaar", docSel.aadhaar ? "Ready" : "—"],
+          ["UTR", values.payment_utr], ["Amount", `₹${feeText}`],
+          ["Payment proof", docSel.payment ? "Ready" : "—"],
+        ]} />
+        <p className="text-xs text-muted-ink">By submitting, your documents are uploaded securely and your registration is sent for review.</p>
+      </>)}
+
+      {/* Nav */}
+      <div className="flex items-center justify-between gap-3 border-t border-navy-900/10 pt-6">
+        {step > 1 ? (
+          <button type="button" onClick={goBack} disabled={busy} className="inline-flex items-center gap-1.5 rounded-full border border-navy-900/20 px-5 py-3 text-sm font-semibold text-navy-900 transition-colors hover:border-navy-900 disabled:opacity-60">
+            <ArrowLeft className="size-4" /> Back
+          </button>
+        ) : <span />}
+        {step < 5 ? (
+          <button type="button" onClick={goNext} className="inline-flex items-center gap-1.5 rounded-full bg-navy-900 px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90">
+            Next <ArrowRight className="size-4" />
+          </button>
+        ) : (
+          <button type="button" onClick={handleSubmit} disabled={busy} className="inline-flex items-center gap-2 rounded-full bg-gold-400 px-7 py-3 text-sm font-bold uppercase tracking-wide text-navy-950 transition-opacity hover:opacity-90 disabled:opacity-70">
+            {busy && <Loader2 className="size-4 animate-spin" />}
+            {uploading ? "Uploading…" : pending ? "Submitting…" : "Submit Registration"}
+          </button>
+        )}
+      </div>
     </form>
+  );
+}
+
+function ReviewBlock({ title, rows, onEdit }: { title: string; rows: [string, string][]; onEdit: () => void }) {
+  return (
+    <div className="rounded-xl border border-navy-900/10 bg-white p-5">
+      <div className="mb-3 flex items-center justify-between">
+        <span className={labelClass}>{title}</span>
+        <button type="button" onClick={onEdit} className="inline-flex items-center gap-1 text-xs font-medium text-navy-700 hover:text-gold-600">
+          <Pencil className="size-3" /> Edit
+        </button>
+      </div>
+      <dl className="grid gap-2 sm:grid-cols-2">
+        {rows.map(([k, v]) => (
+          <div key={k} className="flex flex-col">
+            <dt className="text-[10px] font-semibold tracking-wide text-muted-ink uppercase">{k}</dt>
+            <dd className="truncate text-sm text-ink-900">{v || "—"}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
   );
 }

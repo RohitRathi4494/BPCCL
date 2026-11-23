@@ -23,6 +23,8 @@ import { confirmationEmail } from "@/lib/email/templates";
 export type RegistrationState = {
   status: "idle" | "success" | "error" | "duplicate";
   message?: string;
+  /** The assigned registration code, set on success (e.g. "BPCCL1-7Q3K9M"). */
+  code?: string;
   errors?: Record<string, string>;
 };
 
@@ -284,8 +286,9 @@ export async function submitRegistration(
 
   return {
     status: "success",
+    code: registrationCode,
     message:
-      `You're registered! Your registration ID is ${registrationCode} — we've emailed it to you too. ` +
-      "Our reviewers will assess your profile ahead of the auction. If you're selected, you'll be contacted about the registration fee.",
+      "You're registered! We've emailed your registration ID to you too. " +
+      "Our reviewers will assess your profile ahead of the auction.",
   };
 }

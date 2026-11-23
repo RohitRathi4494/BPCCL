@@ -1,23 +1,27 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { ClipboardList, Gavel, Search } from "lucide-react";
-import { SectionHeading } from "@/components/site/section-heading";
+import { Check, ArrowUpRight } from "lucide-react";
 import { RegistrationForm } from "@/components/site/registration-form";
+import { CountdownChip } from "@/components/site/countdown-chip";
+import { WhatsAppIcon } from "@/components/site/social-icons";
 import { getLeagueSettings } from "@/lib/queries/settings";
 import { MIN_AGE, DEFAULT_REGISTRATION_FEE } from "@/lib/registration";
 import { site } from "@/lib/site";
 import { leagueConfig } from "@/lib/league.config";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Player Registration",
-  description: `Register to play in ${site.name} ${site.season} at ${site.venue.full}. Open to players aged ${MIN_AGE}+.`,
+  description: `Register to play in ${site.name} ${site.season}. Open to players aged ${MIN_AGE}+.`,
 };
 
-const steps = [
-  { icon: ClipboardList, title: "Register", body: "Fill this form and share your CricHeroes profile." },
-  { icon: Search, title: "Review", body: "Reviewers assess your profile ahead of the auction." },
-  { icon: Gavel, title: "Auction", body: "Franchises bid to draft you into a squad." },
+const checklist = [
+  "A clear photo of yourself",
+  "Masked Aadhaar (last 4 digits visible)",
+  "UPI payment screenshot",
+  "Your CricHeroes profile link",
 ];
 
 export default async function RegisterPage() {
@@ -25,112 +29,85 @@ export default async function RegisterPage() {
   const fee = settings?.registration_fee ?? DEFAULT_REGISTRATION_FEE;
   const feeText = new Intl.NumberFormat("en-IN").format(fee);
   const registrationOpen = settings?.registration_open !== false;
+  const closesAt = settings?.registration_closes_at ?? null;
 
   return (
-    <>
-      {/* Hero */}
-      <section className="lamp-glow">
-        <div className="mx-auto max-w-4xl px-5 pt-12 pb-8 sm:pt-16">
-          <Image
-            src={leagueConfig.logos.main}
-            alt={`${site.name} — ${site.season}`}
-            width={480}
-            height={600}
-            priority
-            className="mb-8 h-44 w-auto drop-shadow-[0_8px_30px_rgba(0,0,0,0.45)] sm:h-56"
-          />
-          <span className="font-mono text-xs tracking-[0.28em] text-primary uppercase">
-            Player Registration · {site.season}
-          </span>
-          <h1 className="mt-4 font-heading text-4xl font-extrabold tracking-tight text-foreground uppercase sm:text-6xl">
-            {registrationOpen ? "Enter the pool" : "Registrations Closed"}
-          </h1>
-          {registrationOpen ? (
-            <p className="mt-5 text-lg text-foreground/85">
-              Register to be part of{" "}
-              <span className="font-bold text-foreground">
-                {site.name} {site.season}
-              </span>{" "}
-              at{" "}
-              <span className="font-bold text-foreground">
-                {site.venue.full}
-              </span>
-              . No account needed — just fill the form below. Open to players aged{" "}
-              <span className="text-primary">{MIN_AGE} and above</span>.
-            </p>
-          ) : (
-            <p className="mt-5 text-lg text-foreground/85">
-              Registrations for{" "}
-              <span className="font-bold text-foreground">
-                {site.name} {site.season}
-              </span>{" "}
-              are now closed — the auction is complete and squads have been
-              announced. Thank you to everyone who registered.
-            </p>
-          )}
+    <div className="grid min-h-dvh lg:grid-cols-[23rem_1fr]">
+      {/* ---- Left brand panel ---- */}
+      <aside className="flex flex-col gap-8 bg-navy-950 px-6 py-8 text-white sm:px-8 lg:sticky lg:top-0 lg:h-dvh lg:overflow-y-auto">
+        <Link href="/" className="inline-flex w-fit items-center gap-1.5 text-xs font-medium tracking-wide text-white/70 uppercase transition-colors hover:text-gold-400">
+          <ArrowUpRight className="size-3.5" /> League site
+        </Link>
 
-          {registrationOpen && (
-          <div className="mt-10 grid gap-4 sm:grid-cols-3">
-            {steps.map((s, i) => (
-              <div
-                key={s.title}
-                className="flex flex-col gap-2 rounded-lg border border-border bg-card p-5"
-              >
-                <div className="flex items-center gap-2">
-                  <s.icon className="size-4 text-primary" />
-                  <span className="font-mono text-[11px] tracking-[0.2em] text-muted-foreground uppercase">
-                    Step 0{i + 1}
-                  </span>
-                </div>
-                <p className="font-heading text-lg font-bold tracking-tight text-foreground uppercase">
-                  {s.title}
-                </p>
-                <p className="text-sm text-muted-foreground">{s.body}</p>
-              </div>
-            ))}
+        <div className="flex items-center gap-3">
+          <Image src={leagueConfig.logos.main} alt={`${site.name} crest`} width={72} height={76} className="h-16 w-auto" priority />
+          <div>
+            <p className="font-display text-xl font-extrabold tracking-tight">{site.shortName}<span className="text-gold-400">.</span></p>
+            <p className="text-[11px] font-medium tracking-wide text-white/50 uppercase">{site.season}</p>
           </div>
+        </div>
+
+        <div>
+          <h1 className="editorial-heading text-3xl text-white sm:text-4xl">Season 01 Player Registration</h1>
+          <p className="mt-3 text-sm text-white/65">
+            Corporate professionals, a real player auction, real teams. No account
+            needed — register in a few steps.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <div className="flex items-end justify-between rounded-xl border border-white/12 bg-white/5 p-4">
+            <div>
+              <span className="text-[11px] font-semibold tracking-wide text-white/50 uppercase">Registration fee</span>
+              <p className="font-display text-2xl font-extrabold text-white">₹{feeText}</p>
+            </div>
+            <span className="text-[11px] text-white/45">payable by UPI</span>
+          </div>
+          {registrationOpen && closesAt && (
+            <CountdownChip target={closesAt} label="Closes in" className="self-start" />
           )}
         </div>
-      </section>
 
-      {/* Form (open) / closed notice */}
-      {registrationOpen ? (
-        <section className="border-t border-border">
-          <div className="mx-auto max-w-4xl px-5 py-16">
-            <SectionHeading kicker="Your Details" title="Registration Form" />
-            <div className="mt-10 rounded-xl border border-border bg-card p-6 sm:p-8">
-              <RegistrationForm
-                registrationFee={fee}
-                upiId={settings?.upi_id ?? null}
-                upiQrUrl={settings?.upi_qr_url ?? null}
-              />
+        <div>
+          <span className="text-[11px] font-semibold tracking-wide text-white/50 uppercase">Keep these ready</span>
+          <ul className="mt-3 flex flex-col gap-2.5">
+            {checklist.map((c) => (
+              <li key={c} className="flex items-start gap-2.5 text-sm text-white/80">
+                <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-gold-400/15 text-gold-400">
+                  <Check className="size-3" />
+                </span>
+                {c}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {leagueConfig.supportWhatsApp && (
+          <a href={leagueConfig.supportWhatsApp} target="_blank" rel="noopener noreferrer" className="mt-auto inline-flex w-fit items-center gap-2 rounded-full border border-white/20 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:border-gold-400 hover:text-gold-400">
+            <WhatsAppIcon className="size-4" /> Need help? Chat with us
+          </a>
+        )}
+      </aside>
+
+      {/* ---- Right form area ---- */}
+      <main className="px-5 py-10 sm:px-10 sm:py-14">
+        <div className="mx-auto max-w-3xl">
+          {registrationOpen ? (
+            <RegistrationForm registrationFee={fee} upiId={settings?.upi_id ?? null} upiQrUrl={settings?.upi_qr_url ?? null} />
+          ) : (
+            <div className="flex flex-col items-start gap-5 rounded-2xl border border-navy-900/10 bg-white p-8 sm:p-12">
+              <h2 className="editorial-heading text-3xl text-navy-900">Registrations are closed</h2>
+              <p className="text-muted-ink">
+                Registration and the player auction are complete. Head over to the
+                franchises to see every team&apos;s line-up for {site.season}.
+              </p>
+              <Link href="/franchises" className="inline-flex items-center gap-1.5 rounded-full bg-navy-900 px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90">
+                View Teams <ArrowUpRight className="size-4" />
+              </Link>
             </div>
-            <p className="mt-6 text-center text-xs text-muted-foreground">
-              A registration fee of ₹{feeText} is payable now via UPI to complete
-              your registration. Registering does not guarantee selection in the
-              auction.
-            </p>
-          </div>
-        </section>
-      ) : (
-        <section className="border-t border-border">
-          <div className="mx-auto flex max-w-2xl flex-col items-center gap-5 px-5 py-20 text-center">
-            <p className="font-heading text-2xl font-bold tracking-tight text-foreground uppercase">
-              The squads are out
-            </p>
-            <p className="text-muted-foreground">
-              Registration and the player auction are complete. Head over to the
-              franchises to see every team&apos;s line-up for {site.season}.
-            </p>
-            <Link
-              href="/franchises"
-              className="inline-flex items-center rounded-sm bg-primary px-6 py-3 font-heading text-sm font-bold tracking-wide text-primary-foreground uppercase shadow-[0_0_20px_rgba(61,123,239,0.3)] transition-shadow hover:shadow-[0_0_28px_rgba(61,123,239,0.5)]"
-            >
-              View the Squads
-            </Link>
-          </div>
-        </section>
-      )}
-    </>
+          )}
+        </div>
+      </main>
+    </div>
   );
 }

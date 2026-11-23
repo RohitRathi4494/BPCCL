@@ -39,8 +39,15 @@ const labelClass =
 
 export const PrivateDocUpload = forwardRef<
   PrivateDocHandle,
-  { kind: DocKind; label: string; help?: string; error?: string }
->(function PrivateDocUpload({ kind, label, help, error }, ref) {
+  {
+    kind: DocKind;
+    label: string;
+    help?: string;
+    error?: string;
+    /** Fired when a file becomes selected (true) or cleared (false). */
+    onChange?: (hasFile: boolean) => void;
+  }
+>(function PrivateDocUpload({ kind, label, help, error, onChange }, ref) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -92,6 +99,7 @@ export const PrivateDocUpload = forwardRef<
     setPreview(null);
     setPrepared(null);
     setFileName(null);
+    onChange?.(false);
 
     if (file.size > MAX_RAW_DOC_BYTES) {
       setLocalError("File must be under 5 MB. Please pick a smaller file.");
@@ -110,6 +118,7 @@ export const PrivateDocUpload = forwardRef<
       }
       setPrepared({ blob: file, type: DOC_PDF_TYPE, isPdf: true });
       setFileName(file.name);
+      onChange?.(true);
       return;
     }
 
@@ -122,6 +131,7 @@ export const PrivateDocUpload = forwardRef<
       setPrepared({ blob, type, isPdf: false });
       setPreview(URL.createObjectURL(blob));
       setFileName(file.name);
+      onChange?.(true);
     } catch (e) {
       console.error("doc compress:", e);
       const heic = (DOC_HEIC_TYPES as readonly string[]).includes(file.type);
@@ -139,6 +149,7 @@ export const PrivateDocUpload = forwardRef<
     setPrepared(null);
     setUploadedKey(null);
     setLocalError(null);
+    onChange?.(false);
     if (inputRef.current) inputRef.current.value = "";
   }
 
