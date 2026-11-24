@@ -44,6 +44,21 @@ export type LeagueLogos = {
   ground: string;
 };
 
+/** A founder shown in the "Founders" section (photo, name, role, message). */
+export type LeagueFounder = {
+  /** Founder's full name. */
+  name: string;
+  /** Designation / title, e.g. "Co-Founder & Commissioner". */
+  role: string;
+  /** Short first-person message / note from the founder. */
+  message: string;
+  /**
+   * Public path to the founder's portrait (e.g. "/founders/name.jpg"). Place
+   * files in `public/founders/`. Leave "" to render an initials monogram.
+   */
+  photo: string;
+};
+
 export type LeagueConfig = {
   /** Full league name, e.g. "Ballpark Corporate Cricket League". */
   name: string;
@@ -53,6 +68,13 @@ export type LeagueConfig = {
   season: string;
   /** One-line tagline shown in hero + metadata. */
   tagline: string;
+  /**
+   * 2–3 sentence statement of the league's purpose / vision, shown atop the
+   * Founders section. Empty = the section's intro paragraph is hidden.
+   */
+  vision: string;
+  /** League founders. Empty array hides the entire Founders section. */
+  founders: LeagueFounder[];
   venue: LeagueVenue;
   /**
    * Canonical production domain (no trailing slash). SEO surfaces (sitemap,
@@ -89,6 +111,39 @@ export const leagueConfig: LeagueConfig = {
   season: "Season 1",
   // TODO: finalise the real tagline.
   tagline: "Corporate Cricket, Played to Win",
+  // TODO: replace with the league's real vision statement.
+  vision:
+    "Ballpark began with a simple idea: give working professionals the same " +
+    "thrill the pros feel — a real auction, real teams and cricket played the " +
+    "right way. We're building a league where your company, your colleagues and " +
+    "your competitive streak all have a home, one season at a time.",
+  // TODO: replace placeholders with the real founders, roles, messages and
+  // portraits. Drop portrait files into `public/founders/`. Empty array hides
+  // the Founders section entirely.
+  founders: [
+    {
+      name: "Aashish Kapur",
+      role: "Founder",
+      // TODO: replace with Aashish's own words.
+      message:
+        "We built Ballpark for everyone who still lives for the game long after " +
+        "the office lights go off. A real auction, real teams, floodlit nights — " +
+        "the whole point is to make Season 1 feel exactly like the cricket we " +
+        "grew up dreaming about.",
+      photo: "/founders/aashish-kapur.jpeg",
+    },
+    {
+      name: "Ayush Soni",
+      role: "Co-Founder",
+      // TODO: replace with Ayush's own words.
+      message:
+        "This league is as much about the people as the cricket. You'll meet " +
+        "professionals from every industry, bond over a shared love for the " +
+        "game, and walk away with a network — and memories — that outlast the " +
+        "final over.",
+      photo: "/founders/ayush-soni.jpeg",
+    },
+  ],
   venue: {
     // TODO: fill in the real venue once confirmed.
     name: "Venue TBD",

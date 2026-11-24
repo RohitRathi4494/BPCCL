@@ -3,7 +3,7 @@ import Image from "next/image";
 import { ArrowUp } from "lucide-react";
 import { site } from "@/lib/site";
 import { leagueConfig } from "@/lib/league.config";
-import { BallGlyph, DisplayWordmark } from "@/components/site/primitives";
+import { BallGlyph } from "@/components/site/primitives";
 import {
   InstagramIcon,
   LinkedInIcon,
@@ -146,10 +146,38 @@ export function SiteFooter({ nextDateIso }: { nextDateIso?: string | null }) {
           </div>
         </div>
 
-        {/* Giant wordmark */}
-        <DisplayWordmark className="mt-14 bg-gradient-to-b from-white/15 to-white/5 bg-clip-text text-[clamp(3.5rem,18vw,13rem)] text-transparent select-none">
-          BALLPARK
-        </DisplayWordmark>
+        {/* Giant wordmark — rendered as a self-fitting SVG so the full word is
+            always visible: textLength locks it to the viewBox width and the SVG
+            scales to the container, so it can never overflow and clip. */}
+        <svg
+          aria-hidden
+          role="presentation"
+          viewBox="0 0 1200 180"
+          className="mt-14 block w-full select-none overflow-visible"
+        >
+          <defs>
+            <linearGradient id="footer-wordmark" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="rgba(255,255,255,0.16)" />
+              <stop offset="100%" stopColor="rgba(255,255,255,0.05)" />
+            </linearGradient>
+          </defs>
+          <text
+            x="600"
+            y="140"
+            textAnchor="middle"
+            textLength="1200"
+            lengthAdjust="spacing"
+            fill="url(#footer-wordmark)"
+            style={{
+              fontFamily: "var(--font-display)",
+              fontWeight: 800,
+              fontSize: "170px",
+              letterSpacing: "-0.03em",
+            }}
+          >
+            BALLPARK
+          </text>
+        </svg>
 
         <div className="mt-6 flex flex-col items-center justify-between gap-2 border-t border-white/10 pt-6 sm:flex-row">
           <p className="inline-flex items-center gap-2 text-xs tracking-wide text-white/50 uppercase">

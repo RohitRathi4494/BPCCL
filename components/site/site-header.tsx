@@ -26,6 +26,7 @@ function Lockup({ className }: { className?: string }) {
 
 const NAV = [
   { label: "About", href: "/#about" },
+  { label: "Founders", href: "/#founders" },
   { label: "Format", href: "/#format" },
   { label: "Key Dates", href: "/#dates" },
   { label: "Teams", href: "/franchises" },

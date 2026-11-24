@@ -15,6 +15,7 @@ import { Reveal } from "@/components/site/reveal";
 import { CountdownChip } from "@/components/site/countdown-chip";
 import { Accordion } from "@/components/site/accordion";
 import { StatCounter } from "@/components/site/stat-counter";
+import { FoundersSection } from "@/components/site/founders-section";
 import {
   Eyebrow,
   DisplayWordmark,
@@ -231,6 +232,9 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ========================= FOUNDERS ========================= */}
+      <FoundersSection />
 
       {/* ========================= FORMAT ========================= */}
       <section id="format" className="scroll-mt-24 bg-navy-900 text-white">
