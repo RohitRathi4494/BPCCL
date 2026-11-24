@@ -8,7 +8,7 @@ import { BRAND_LOGO_CID } from "@/lib/email/send";
 
 const NAVY = "#0b1f4b"; // card background (BPCCL navy-900)
 const NAVY_SOFT = "#0e2a5e"; // insets / callouts
-const GOLD = "#f5c542"; // accent (BPCCL gold-400)
+const GOLD = "#D4AF37"; // accent (BPCCL gold-400)
 const CREAM = "#f4f0e6"; // body text (warm near-white on navy)
 const SLATE = "#a9b3c9"; // muted text
 const CRIMSON = "#d62839"; // rejection accent (ball red)

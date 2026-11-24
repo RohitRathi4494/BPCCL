@@ -324,8 +324,8 @@ export function RegistrationForm({
     return (
       <div className="relative">
         <Confetti />
-        <div className="flex flex-col items-center gap-6 rounded-2xl border border-pitch-700/30 bg-white p-8 text-center sm:p-12">
-          <span className="grid size-16 place-items-center rounded-full bg-pitch-700/10 text-pitch-700">
+        <div className="flex flex-col items-center gap-6 rounded-2xl border border-navy-700/30 bg-white p-8 text-center sm:p-12">
+          <span className="grid size-16 place-items-center rounded-full bg-navy-700/10 text-navy-700">
             <CheckCircle2 className="size-9" />
           </span>
           <div>
@@ -370,7 +370,7 @@ export function RegistrationForm({
             href={shareHref}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-full bg-pitch-700 px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            className="inline-flex items-center gap-2 rounded-full bg-navy-700 px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
           >
             <WhatsAppIcon className="size-4" /> Share on WhatsApp
           </a>
@@ -393,7 +393,7 @@ export function RegistrationForm({
               <span
                 className={cn(
                   "grid size-8 place-items-center rounded-full text-xs font-bold transition-colors",
-                  step > s.n ? "bg-pitch-700 text-white"
+                  step > s.n ? "bg-navy-700 text-white"
                     : step === s.n ? "bg-navy-900 text-white"
                     : "bg-navy-900/10 text-muted-ink",
                 )}

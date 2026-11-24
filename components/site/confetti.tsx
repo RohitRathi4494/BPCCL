@@ -6,7 +6,7 @@ import { useGSAP } from "@gsap/react";
 
 gsap.registerPlugin(useGSAP);
 
-const COLORS = ["#f5c542", "#163a8a", "#0f6b3a", "#d62839", "#ffffff"];
+const COLORS = ["#D4AF37", "#ECD27A", "#163a8a", "#07142e", "#ffffff"];
 
 /**
  * One-shot confetti burst (fixed, pointer-events-none overlay). Fires once on

@@ -44,12 +44,20 @@ export function BallGlyph({
 export function Eyebrow({
   children,
   brackets = "round",
+  variant = "default",
   className,
 }: {
   children: React.ReactNode;
   brackets?: "round" | "square" | "none";
+  /** "script" renders the kicker in a premium flowing cursive (no brackets). */
+  variant?: "default" | "script";
   className?: string;
 }) {
+  if (variant === "script") {
+    return (
+      <span className={cn("eyebrow-script inline-block", className)}>{children}</span>
+    );
+  }
   const [open, close] =
     brackets === "round" ? ["(", ")"] : brackets === "square" ? ["[", "]"] : ["", ""];
   return (
@@ -127,7 +135,7 @@ export function AvatarStack({
 }) {
   const colors = [
     "var(--navy-700)",
-    "var(--pitch-700)",
+    "var(--gold-400)",
     "var(--gold-600)",
     "var(--navy-900)",
   ];

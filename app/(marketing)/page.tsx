@@ -116,7 +116,7 @@ export default async function HomePage() {
           <div className="flex items-start justify-between gap-4">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 backdrop-blur">
               <span
-                className={`size-1.5 rounded-full ${open ? "animate-pulse bg-gold-400" : "bg-ball-red"}`}
+                className={`size-1.5 rounded-full ${open ? "animate-pulse bg-gold-400" : "bg-muted-dusk"}`}
                 aria-hidden
               />
               <span className="eyebrow text-white/90">
@@ -204,8 +204,8 @@ export default async function HomePage() {
       <section id="about" className="scroll-mt-24 bg-white">
         <div className="mx-auto max-w-6xl px-5 py-20 sm:py-28">
           <Reveal className="flex flex-col gap-6">
-            <Eyebrow className="text-gold-600">Corporate cricket, done right</Eyebrow>
-            <h2 className="editorial-heading max-w-3xl text-4xl text-ink-900 sm:text-6xl">
+            <Eyebrow variant="script" className="text-gold-600">Corporate cricket, done right</Eyebrow>
+            <h2 className="editorial-heading max-w-3xl text-4xl text-ink-900 sm:text-5xl">
               We&apos;re bringing working professionals together—across companies,
               roles and playing styles.
             </h2>
@@ -241,7 +241,7 @@ export default async function HomePage() {
         <div className="mx-auto max-w-6xl px-5 py-20 sm:py-28">
           <div className="flex flex-col gap-10 lg:flex-row lg:justify-between">
             <div className="lg:max-w-sm">
-              <Eyebrow brackets="square" className="text-gold-400">
+              <Eyebrow variant="script" className="text-gold-400">
                 How it works
               </Eyebrow>
               <h2 className="editorial-heading mt-5 text-4xl sm:text-5xl">
@@ -329,7 +329,7 @@ export default async function HomePage() {
       {/* ========================= KEY DATES ========================= */}
       <section id="dates" className="scroll-mt-24 bg-cream-100">
         <div className="mx-auto max-w-6xl px-5 py-20 sm:py-28">
-          <Eyebrow brackets="square" className="text-gold-600">
+          <Eyebrow variant="script" className="text-gold-600">
             Mark your calendar
           </Eyebrow>
           <div className="mt-5 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
@@ -392,7 +392,7 @@ export default async function HomePage() {
         </div>
         <div className="relative mx-auto grid max-w-6xl gap-10 px-5 py-20 sm:py-28 lg:grid-cols-2">
           <div className="lg:col-start-2">
-            <Eyebrow brackets="square" className="text-gold-400">
+            <Eyebrow variant="script" className="text-gold-400">
               Choose your role
             </Eyebrow>
             <h2 className="editorial-heading mt-5 text-4xl sm:text-5xl">
@@ -444,7 +444,7 @@ export default async function HomePage() {
         <div className="mx-auto max-w-6xl px-5 py-20 sm:py-28">
           <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
             <div>
-              <Eyebrow brackets="square" className="text-gold-600">
+              <Eyebrow variant="script" className="text-gold-600">
                 The franchises
               </Eyebrow>
               <h2 className="editorial-heading mt-5 text-4xl text-navy-900 sm:text-5xl">
@@ -475,7 +475,7 @@ export default async function HomePage() {
         <section className="border-y border-navy-900/10 bg-white py-12">
           <div className="mx-auto max-w-6xl px-5">
             <div className="mb-6 flex items-center justify-between">
-              <Eyebrow className="text-gold-600">Our partners</Eyebrow>
+              <Eyebrow variant="script" className="text-gold-600">Our partners</Eyebrow>
               <Link
                 href="/sponsors"
                 className="text-sm font-medium text-navy-700 hover:text-gold-600"
@@ -503,7 +503,7 @@ export default async function HomePage() {
       {/* ========================= FAQ ========================= */}
       <section id="faq" className="scroll-mt-24 bg-white">
         <div className="mx-auto max-w-3xl px-5 py-20 sm:py-28">
-          <Eyebrow brackets="square" className="text-gold-600">
+          <Eyebrow variant="script" className="text-gold-600">
             Good to know
           </Eyebrow>
           <h2 className="editorial-heading mt-5 mb-10 text-4xl text-ink-900 sm:text-5xl">
@@ -555,7 +555,7 @@ export default async function HomePage() {
       {/* ========================= FINAL CTA ========================= */}
       <section className="bg-gold-400">
         <div className="mx-auto flex max-w-6xl flex-col items-start gap-8 px-5 py-20 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="editorial-heading max-w-xl text-4xl text-navy-950 sm:text-6xl">
+          <h2 className="editorial-heading max-w-xl text-4xl text-navy-950 sm:text-5xl">
             Your company. Your colours. Your season.
           </h2>
           <RollButton href="/register" variant="navy" className="shrink-0">

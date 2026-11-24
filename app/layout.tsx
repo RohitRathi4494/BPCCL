@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Archivo, Inter_Tight } from "next/font/google";
+import { Archivo, Inter_Tight, Great_Vibes } from "next/font/google";
 import { getSiteUrl, site } from "@/lib/site";
 import { OrganizationJsonLd } from "@/components/site/structured-data";
 import "./globals.css";
@@ -20,6 +20,15 @@ const archivo = Archivo({
 const interTight = Inter_Tight({
   variable: "--font-inter-tight",
   weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+  display: "swap",
+});
+
+// Premium script accent — Great Vibes (flowing, royal cursive). Used only for
+// highlighted accent phrases inside section headings via `.script-accent`.
+const greatVibes = Great_Vibes({
+  variable: "--font-script",
+  weight: ["400"],
   subsets: ["latin"],
   display: "swap",
 });
@@ -71,7 +80,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${archivo.variable} ${interTight.variable} h-full`}
+      className={`${archivo.variable} ${interTight.variable} ${greatVibes.variable} h-full`}
     >
       <body className="min-h-full">
         <OrganizationJsonLd />

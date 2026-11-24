@@ -4,8 +4,9 @@
 
 /* =============================================================================
    BPCCL — Ballpark Corporate Cricket League design system.
-   Editorial, premium, brand-led. Drawn from the BPCCL crest:
-   navy shield · championship gold · pitch green · white/red ball.
+   Editorial, premium, brand-led. Two-colour brand drawn from the crest:
+   navy (#0b1f4b / #163a8a) + metallic championship gold (#D4AF37 / #A16207).
+   Red (#d62839) is reserved for error / destructive states only.
    Light base theme (public sections set their own navy/cream/white rhythm).
    The old VELYXO token NAMES are kept as aliases so the admin/franchise
    portals keep working while they get re-themed.
@@ -42,11 +43,9 @@
   --color-navy-950: #07142e;
   --color-navy-900: #0b1f4b;
   --color-navy-700: #163a8a;
-  --color-gold-400: #f5c542;
-  --color-gold-600: #c8961e;
-  --color-pitch-700: #0f6b3a;
-  --color-pitch-900: #0a3b22;
-  --color-ball-red: #d62839;
+  --color-gold-400: #D4AF37;
+  --color-gold-600: #A16207;
+  --color-ball-red: #d62839; /* reserved for error / destructive states only */
   --color-cream-100: #f4f0e6;
   --color-ink-900: #0b1220;
   --color-muted-ink: #5b6478; /* muted text on light */
@@ -77,11 +76,9 @@
   --navy-950: #07142e;
   --navy-900: #0b1f4b;
   --navy-700: #163a8a;
-  --gold-400: #f5c542;
-  --gold-600: #c8961e;
-  --gold-soft: #ffd873;
-  --pitch-700: #0f6b3a;
-  --pitch-900: #0a3b22;
+  --gold-400: #D4AF37;
+  --gold-600: #A16207;
+  --gold-soft: #ECD27A;
   --ball-red: #d62839;
   --cream-100: #f4f0e6;
   --ink-900: #0b1220;
@@ -94,15 +91,15 @@
   --popover: #ffffff;
   --popover-foreground: #0b1220;
 
-  /* Navy is the primary (links, primary buttons, focus); gold is the brand
-     highlight used via explicit bg-gold-400; green is the positive accent. */
+  /* Two-colour brand: navy is the primary (links, primary buttons, focus);
+     gold is the single accent/highlight. Red is kept only for errors. */
   --primary: #163a8a;
   --primary-foreground: #ffffff;
   --secondary: #f4f0e6;
   --secondary-foreground: #0b1220;
   --muted: #f4f0e6;
   --muted-foreground: #5b6478;
-  --accent: #0f6b3a; /* pitch green — readable positive accent on light */
+  --accent: #A16207; /* deep gold — single accent; white text passes AA on it */
   --accent-foreground: #ffffff;
   --destructive: #d62839;
 
@@ -114,14 +111,14 @@
   --navy: #0b1f4b;
   --royal: #163a8a;
   --royal-deep: #07142e;
-  --gold: #f5c542;
+  --gold: #D4AF37;
   --crimson: #d62839;
   --cream: #f4f0e6;
   --slate: #5b6478;
   --chalk: #f4f0e6;
   --closed: #d62839;
-  --gold-glow: #ffd873;
-  --pitch-line: #f5c542;
+  --gold-glow: #ECD27A;
+  --pitch-line: #D4AF37;
   --lime: var(--gold);
   --lime-soft: var(--gold-soft);
 }
@@ -169,6 +166,32 @@
   line-height: 1.05;
 }
 
+/* -----------------------------------------------------------------------------
+   Script eyebrow — the section "kicker" labels (e.g. "The people behind it")
+   set in a flowing cursive for a royal, premium feel. Opt in per label with
+   the Eyebrow component's `variant="script"`. Colour comes from the utility
+   class passed in (text-gold-400 on dark, text-gold-600 on light, etc.); the
+   soft warm halo reads as a glow on the gold labels and stays subtle elsewhere.
+   -------------------------------------------------------------------------- */
+.eyebrow-script {
+  font-family: var(--font-script), "Segoe Script", cursive;
+  font-weight: 400;
+  font-style: normal;
+  font-size: clamp(1.5rem, 1rem + 1.6vw, 2.1rem);
+  line-height: 1.15;
+  letter-spacing: normal; /* cursive must not inherit tracked spacing */
+  text-transform: none; /* cursive reads in sentence case, not UPPERCASE */
+  padding-bottom: 0.08em; /* room for descenders (p, y, g) */
+  text-shadow: 0 2px 20px rgba(212, 175, 55, 0.22);
+}
+
+/* Raw cursive utility — used for the founder "signature" overlaid on portraits. */
+.font-script {
+  font-family: var(--font-script), "Segoe Script", cursive;
+  font-weight: 400;
+  letter-spacing: normal;
+}
+
 /* Tiny bracketed/tracked eyebrow label. */
 .eyebrow {
   font-family: var(--font-sans);
@@ -188,7 +211,7 @@
 
 /* Warm gold halo behind headline words (on dark only). */
 .text-glow-gold {
-  text-shadow: 0 0 22px rgba(245, 197, 66, 0.3);
+  text-shadow: 0 0 22px rgba(212, 175, 55, 0.3);
 }
 
 /* =============================================================================
@@ -260,7 +283,7 @@
 .lamp-glow {
   background:
     radial-gradient(70% 60% at 50% -12%, rgba(22, 58, 138, 0.12) 0%, transparent 70%),
-    radial-gradient(42% 40% at 50% -6%, rgba(245, 197, 66, 0.1) 0%, transparent 68%);
+    radial-gradient(42% 40% at 50% -6%, rgba(212, 175, 55, 0.1) 0%, transparent 68%);
 }
 .crease-rule {
   border: 0;
