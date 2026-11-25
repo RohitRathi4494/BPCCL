@@ -40,8 +40,8 @@ import {
   deleteFaq,
   updateGroundSettings,
   uploadHeroMedia,
-  type VideoPreview,
 } from "@/app/admin/(protected)/ground/actions";
+import type { VideoPreview } from "@/app/admin/(protected)/ground/types";
 import {
   ActionButton,
   Panel,

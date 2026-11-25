@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { GripVertical, ChevronUp, ChevronDown, Loader2 } from "lucide-react";
-import type { GroundState } from "@/app/admin/(protected)/ground/actions";
+import type { GroundState } from "@/app/admin/(protected)/ground/types";
 
 /** Run a `(FormData) => Promise<GroundState>` server action with pending + status. */
 export function useGroundAction() {

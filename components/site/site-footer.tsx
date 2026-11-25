@@ -13,6 +13,7 @@ import {
 const linkCols = [
   { label: "Home", href: "/" },
   { label: "About", href: "/#about" },
+  { label: "The Ground", href: "/ballpark" },
   { label: "Teams", href: "/franchises" },
   { label: "Fixtures", href: "/fixtures" },
   { label: "Sponsors", href: "/sponsors" },

@@ -15,11 +15,7 @@ import {
 } from "@/lib/ground/youtube";
 import { sanitizeSvg } from "@/lib/ground/svg";
 import type { TablesInsert, TablesUpdate } from "@/lib/types";
-
-export type GroundState = { error?: string; ok?: boolean; message?: string };
-
-/** Max videos that may be VISIBLE within one section (testimonial / ground). */
-export const MAX_VISIBLE_VIDEOS = 10;
+import { MAX_VISIBLE_VIDEOS, type GroundState, type VideoPreview } from "./types";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -281,10 +277,6 @@ export async function deleteGroundMedia(formData: FormData): Promise<GroundState
 // =============================================================================
 // VIDEOS
 // =============================================================================
-
-export type VideoPreview =
-  | { ok: true; youtubeId: string; title: string; format: "video" | "short"; poster: string }
-  | { ok: false; error: string };
 
 /** Validate + preview a pasted YouTube link (id extraction + oEmbed). */
 export async function previewYouTube(formData: FormData): Promise<VideoPreview> {
