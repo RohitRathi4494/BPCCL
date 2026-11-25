@@ -36,6 +36,10 @@ export type Innings = Tables<"innings">;
 export type Ball = Tables<"balls">;
 export type Sponsor = Tables<"sponsors">;
 export type Wishlist = Tables<"wishlists">;
+export type GroundMedia = Tables<"ground_media">;
+export type Client = Tables<"clients">;
+export type GroundFact = Tables<"ground_facts">;
+export type Faq = Tables<"faqs">;
 
 // View row: an approved player with evaluation columns (stats + cricheroes).
 export type PoolPlayer = Database["public"]["Views"]["players_pool"]["Row"];

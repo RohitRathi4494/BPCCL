@@ -10,6 +10,9 @@ import { createClient } from "@/lib/supabase/server";
 import { getLeagueSettings } from "@/lib/queries/settings";
 import { getSponsors } from "@/lib/queries/sponsors";
 import { getPublicFranchises } from "@/lib/queries/franchises";
+import { getVisibleFaqs } from "@/lib/queries/ground";
+import { ageRuleChip } from "@/lib/ground/age";
+import { renderFaqAnswer } from "@/lib/ground/faq";
 import { SeasonEventsJsonLd } from "@/components/site/structured-data";
 import { Reveal } from "@/components/site/reveal";
 import { CountdownChip } from "@/components/site/countdown-chip";
@@ -31,8 +34,6 @@ import { site } from "@/lib/site";
 import { leagueConfig } from "@/lib/league.config";
 
 export const dynamic = "force-dynamic";
-
-const inr = (n: number) => new Intl.NumberFormat("en-IN").format(n);
 
 function fmtDateTime(iso: string | null): { day: string; time: string } | null {
   if (!iso) return null;
@@ -59,10 +60,11 @@ function icsHref(title: string, iso: string): string {
 }
 
 export default async function HomePage() {
-  const [settings, sponsors, franchises] = await Promise.all([
+  const [settings, sponsors, franchises, faqs] = await Promise.all([
     getLeagueSettings(),
     getSponsors(),
     getPublicFranchises(),
+    getVisibleFaqs(),
   ]);
 
   // Approved-player count (public view). Shown only when it's a meaningful
@@ -75,7 +77,6 @@ export default async function HomePage() {
   const registeredCount = approvedCount ?? 0;
 
   const open = settings?.registration_open !== false;
-  const fee = settings?.registration_fee ?? 0;
   const teamCount = settings?.franchise_count ?? franchises.length;
   const socials = leagueConfig.socials;
 
@@ -87,6 +88,21 @@ export default async function HomePage() {
 
   const nextDate = dates[0] ?? null;
   const auctionFmt = fmtDateTime(settings?.auction_day_at ?? null);
+
+  // "How it works" stats — read from league_settings; a null/0 value is HIDDEN,
+  // never shown as 0 (the old 0/0/0 trust bug).
+  const statItems = [
+    { value: settings?.franchise_count ?? franchises.length, label: "Franchises" },
+    { value: settings?.squad_max ?? 0, label: "Squad cap" },
+    { value: settings?.matchday_size ?? 0, label: "Play each match" },
+  ].filter((s) => typeof s.value === "number" && s.value > 0);
+
+  // FAQ copy lives in the `faqs` table; tokens ({{age_rule}}, {{fee_clause}}) are
+  // resolved from settings so the age rule + fee have one source and ₹0 is never
+  // shown. Empty answers (e.g. an un-set refund policy) are skipped.
+  const faqItems = faqs
+    .map((f) => ({ id: f.id, title: f.question, body: renderFaqAnswer(f.answer, settings ?? {}) }))
+    .filter((f) => f.body.length > 0);
 
   const heroSocials = [
     { label: "Instagram", href: socials.instagram, Icon: InstagramIcon },
@@ -247,11 +263,21 @@ export default async function HomePage() {
               <h2 className="editorial-heading mt-5 text-4xl sm:text-5xl">
                 From registration to the final over.
               </h2>
-              <div className="mt-10 grid grid-cols-3 gap-4">
-                <StatCounter value={teamCount} label="Franchises" />
-                <StatCounter value={settings?.squad_max ?? 20} label="Squad cap" />
-                <StatCounter value={13} label="Play each match" />
-              </div>
+              {statItems.length > 0 && (
+                <div
+                  className={`mt-10 grid gap-4 ${
+                    statItems.length === 1
+                      ? "grid-cols-1"
+                      : statItems.length === 2
+                        ? "grid-cols-2"
+                        : "grid-cols-3"
+                  }`}
+                >
+                  {statItems.map((s) => (
+                    <StatCounter key={s.label} value={s.value} label={s.label} />
+                  ))}
+                </div>
+              )}
               {open && (
                 <RollButton href="/register" variant="gold" className="mt-8">
                   Register Now
@@ -267,7 +293,7 @@ export default async function HomePage() {
                     id: "register",
                     title: "Register",
                     tag: "01",
-                    chips: ["Public form", "Age 30+", "Share CricHeroes"],
+                    chips: ["Public form", ageRuleChip(settings), "Share CricHeroes"],
                     body: "Fill the registration form, pay the fee, and submit your CricHeroes profile. No account needed.",
                   },
                   {
@@ -327,6 +353,7 @@ export default async function HomePage() {
       </section>
 
       {/* ========================= KEY DATES ========================= */}
+      {dates.length > 0 && (
       <section id="dates" className="scroll-mt-24 bg-cream-100">
         <div className="mx-auto max-w-6xl px-5 py-20 sm:py-28">
           <Eyebrow variant="script" className="text-gold-600">
@@ -343,8 +370,7 @@ export default async function HomePage() {
           </div>
 
           <div className="mt-12 grid gap-4 md:grid-cols-3">
-            {dates.length > 0 ? (
-              dates.map((d) => {
+            {dates.map((d) => {
                 const f = fmtDateTime(d.iso);
                 return (
                   <div
@@ -368,15 +394,11 @@ export default async function HomePage() {
                     </a>
                   </div>
                 );
-              })
-            ) : (
-              <p className="text-muted-ink">
-                Key dates will be announced soon. {/* dates come from league_settings */}
-              </p>
-            )}
+              })}
           </div>
         </div>
       </section>
+      )}
 
       {/* ========================= PICK YOUR ROLE ========================= */}
       <section className="relative overflow-hidden bg-navy-950 text-white">
@@ -501,56 +523,19 @@ export default async function HomePage() {
       )}
 
       {/* ========================= FAQ ========================= */}
-      <section id="faq" className="scroll-mt-24 bg-white">
-        <div className="mx-auto max-w-3xl px-5 py-20 sm:py-28">
-          <Eyebrow variant="script" className="text-gold-600">
-            Good to know
-          </Eyebrow>
-          <h2 className="editorial-heading mt-5 mb-10 text-4xl text-ink-900 sm:text-5xl">
-            Questions, answered.
-          </h2>
-          <Accordion
-            tone="light"
-            items={[
-              {
-                id: "elig",
-                title: "Who can play?",
-                body: "Working professionals aged 35+ as of 1 January 2027. Up to three players aged 30–34 are allowed per team.",
-              },
-              {
-                id: "fee",
-                title: "What's the registration fee?",
-                body: `A registration fee of ₹${inr(fee)} is payable via UPI when you register. Registering does not guarantee selection.`,
-              },
-              {
-                id: "docs",
-                title: "What documents do I need?",
-                body: "A clear photo, your masked Aadhaar (only the last 4 digits visible), and a screenshot of your UPI payment.",
-              },
-              {
-                id: "pay",
-                title: "How does payment work?",
-                body: "Pay the fee by UPI to the league's ID, then enter your 12-digit UPI transaction ID (UTR) and upload the payment screenshot on the form.",
-              },
-              {
-                id: "selection",
-                title: "How are players selected?",
-                body: "After review and categorisation, franchises draft players at the live auction. If you're picked, we'll be in touch about next steps.",
-              },
-              {
-                id: "kit",
-                title: "Is kit included?",
-                body: "Yes — your team jersey and lower are part of the league. You enter your sizes and jersey name/number at registration.",
-              },
-              {
-                id: "refund",
-                title: "What's the refund policy?",
-                body: "TODO: add the league's refund/cancellation policy here.",
-              },
-            ]}
-          />
-        </div>
-      </section>
+      {faqItems.length > 0 && (
+        <section id="faq" className="scroll-mt-24 bg-white">
+          <div className="mx-auto max-w-3xl px-5 py-20 sm:py-28">
+            <Eyebrow variant="script" className="text-gold-600">
+              Good to know
+            </Eyebrow>
+            <h2 className="editorial-heading mt-5 mb-10 text-4xl text-ink-900 sm:text-5xl">
+              Questions, answered.
+            </h2>
+            <Accordion tone="light" items={faqItems} />
+          </div>
+        </section>
+      )}
 
       {/* ========================= FINAL CTA ========================= */}
       <section className="bg-gold-400">

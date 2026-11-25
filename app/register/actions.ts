@@ -66,7 +66,7 @@ export async function submitRegistration(
   // also hides the form, but this guards direct POSTs).
   const { data: regSettings } = await supabaseGuard
     .from("league_settings")
-    .select("registration_open, registration_fee")
+    .select("registration_open, registration_fee, min_age, age_as_of")
     .limit(1)
     .maybeSingle();
   if (regSettings && regSettings.registration_open === false) {
@@ -100,7 +100,13 @@ export async function submitRegistration(
 
   if (!full_name) errors.full_name = "Please enter your full name.";
 
-  // DOB → age, enforcing the 30+ eligibility rule.
+  // DOB → age, enforcing the registration floor. The floor + the "assessed as
+  // of" reference date are the single source of truth in league_settings
+  // (min_age / age_as_of); the constants are only a fallback when unset.
+  const minAge = regSettings?.min_age ?? MIN_AGE;
+  const ageRef = regSettings?.age_as_of
+    ? new Date(`${regSettings.age_as_of}T00:00:00Z`)
+    : undefined;
   let age = 0;
   if (!dob) {
     errors.dob = "Please enter your date of birth.";
@@ -109,8 +115,8 @@ export async function submitRegistration(
     if (Number.isNaN(parsed.getTime()) || parsed > new Date()) {
       errors.dob = "Enter a valid date of birth.";
     } else {
-      age = computeAge(dob);
-      if (age < MIN_AGE) errors.dob = `Registration is open to players aged ${MIN_AGE} and above.`;
+      age = ageRef ? computeAge(dob, ageRef) : computeAge(dob);
+      if (age < minAge) errors.dob = `Registration is open to players aged ${minAge} and above.`;
       else if (age > MAX_AGE) errors.dob = "Please double-check your date of birth.";
     }
   }

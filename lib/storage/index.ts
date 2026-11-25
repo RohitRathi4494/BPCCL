@@ -16,6 +16,8 @@ import {
   r2PublicConfigured,
   r2PrivateConfigured,
   r2UploadPublic,
+  r2PublicUrl,
+  r2DeletePublic,
   r2PresignPrivatePut,
   r2PresignPrivateGet,
   r2DeletePrivate,
@@ -70,6 +72,45 @@ export async function uploadPublicPhoto(
   if (error) throw new Error(`supabase upload: ${error.message}`);
   const { data } = supabase.storage.from(PHOTO_BUCKET).getPublicUrl(key);
   return { url: data.publicUrl };
+}
+
+/** True when the public R2 bucket is configured (ground media lives there). */
+export function publicStorageConfigured(): boolean {
+  return r2PublicConfigured();
+}
+
+export type PublicObjectInput = {
+  /** Full object key, e.g. "ground/uuid.webp". The caller owns the prefix. */
+  key: string;
+  bytes: Uint8Array;
+  contentType: string;
+};
+
+/**
+ * Upload an arbitrary object to the PUBLIC R2 bucket under a caller-chosen key
+ * (ground photos, video posters, client logos, the hero loop). Unlike
+ * `uploadPublicPhoto`, the key is explicit so admin content can be namespaced.
+ * R2-only: there is no Supabase fallback for ground media.
+ */
+export async function uploadPublicObject(
+  input: PublicObjectInput,
+): Promise<UploadResult> {
+  if (!r2PublicConfigured()) {
+    throw new Error("Public media storage (Cloudflare R2) is not configured.");
+  }
+  const url = await r2UploadPublic(input.key, input.bytes, input.contentType);
+  return { url };
+}
+
+/** Resolve a stored PUBLIC key to its full URL (no network call). */
+export function publicObjectUrl(key: string): string {
+  return r2PublicUrl(key);
+}
+
+/** Permanently delete a PUBLIC object by key (ignores "not configured"). */
+export async function deletePublicObject(key: string): Promise<void> {
+  if (!r2PublicConfigured()) return;
+  await r2DeletePublic(key);
 }
 
 /** How long a private upload / view URL stays valid (5 minutes). */

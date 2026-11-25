@@ -104,6 +104,22 @@ export async function r2UploadPublic(
   return `${base}/${key}`;
 }
 
+/** Public URL for a key already in the PUBLIC bucket (no network call). */
+export function r2PublicUrl(key: string): string {
+  const base = env("R2_PUBLIC_URL")!.replace(/\/+$/, "");
+  return `${base}/${key.replace(/^\/+/, "")}`;
+}
+
+/** Delete an object from the PUBLIC bucket. */
+export async function r2DeletePublic(key: string): Promise<void> {
+  await r2Client().send(
+    new DeleteObjectCommand({
+      Bucket: env("R2_PUBLIC_BUCKET")!,
+      Key: key,
+    }),
+  );
+}
+
 // --------------------------------------------------------------------------
 // PRIVATE bucket (identity + payment docs) — presigned access only
 // --------------------------------------------------------------------------

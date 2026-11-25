@@ -374,6 +374,21 @@ export type Database = {
           age_as_of: string
           core_category_cap: Json
           matchday_category_cap: Json
+          ground_name: string | null
+          ground_tagline: string | null
+          ground_address: string | null
+          ground_map_url: string | null
+          ground_lat: number | null
+          ground_lng: number | null
+          ground_whatsapp: string | null
+          youtube_channel_url: string | null
+          hero_video_r2_key: string | null
+          hero_poster_r2_key: string | null
+          stat_clients: number | null
+          stat_years: number | null
+          stat_matches_hosted: number | null
+          min_age: number
+          senior_age: number
         }
         Insert: {
           auction_day_at?: string | null
@@ -410,6 +425,21 @@ export type Database = {
           age_as_of?: string
           core_category_cap?: Json
           matchday_category_cap?: Json
+          ground_name?: string | null
+          ground_tagline?: string | null
+          ground_address?: string | null
+          ground_map_url?: string | null
+          ground_lat?: number | null
+          ground_lng?: number | null
+          ground_whatsapp?: string | null
+          youtube_channel_url?: string | null
+          hero_video_r2_key?: string | null
+          hero_poster_r2_key?: string | null
+          stat_clients?: number | null
+          stat_years?: number | null
+          stat_matches_hosted?: number | null
+          min_age?: number
+          senior_age?: number
         }
         Update: {
           auction_day_at?: string | null
@@ -446,6 +476,174 @@ export type Database = {
           age_as_of?: string
           core_category_cap?: Json
           matchday_category_cap?: Json
+          ground_name?: string | null
+          ground_tagline?: string | null
+          ground_address?: string | null
+          ground_map_url?: string | null
+          ground_lat?: number | null
+          ground_lng?: number | null
+          ground_whatsapp?: string | null
+          youtube_channel_url?: string | null
+          hero_video_r2_key?: string | null
+          hero_poster_r2_key?: string | null
+          stat_clients?: number | null
+          stat_years?: number | null
+          stat_matches_hosted?: number | null
+          min_age?: number
+          senior_age?: number
+        }
+        Relationships: []
+      }
+      ground_media: {
+        Row: {
+          id: string
+          kind: string
+          section: string
+          title: string | null
+          caption: string | null
+          alt_text: string | null
+          r2_key: string | null
+          youtube_id: string | null
+          video_format: string | null
+          person_name: string | null
+          person_role: string | null
+          quote: string | null
+          is_featured: boolean
+          display_order: number
+          is_visible: boolean
+          consent_confirmed: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          kind: string
+          section: string
+          title?: string | null
+          caption?: string | null
+          alt_text?: string | null
+          r2_key?: string | null
+          youtube_id?: string | null
+          video_format?: string | null
+          person_name?: string | null
+          person_role?: string | null
+          quote?: string | null
+          is_featured?: boolean
+          display_order?: number
+          is_visible?: boolean
+          consent_confirmed?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          kind?: string
+          section?: string
+          title?: string | null
+          caption?: string | null
+          alt_text?: string | null
+          r2_key?: string | null
+          youtube_id?: string | null
+          video_format?: string | null
+          person_name?: string | null
+          person_role?: string | null
+          quote?: string | null
+          is_featured?: boolean
+          display_order?: number
+          is_visible?: boolean
+          consent_confirmed?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
+      clients: {
+        Row: {
+          id: string
+          name: string
+          logo_r2_key: string | null
+          website_url: string | null
+          category: string | null
+          display_order: number
+          is_visible: boolean
+          permission_confirmed: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          logo_r2_key?: string | null
+          website_url?: string | null
+          category?: string | null
+          display_order?: number
+          is_visible?: boolean
+          permission_confirmed?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          logo_r2_key?: string | null
+          website_url?: string | null
+          category?: string | null
+          display_order?: number
+          is_visible?: boolean
+          permission_confirmed?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
+      ground_facts: {
+        Row: {
+          id: string
+          label: string
+          value: string | null
+          icon: string | null
+          display_order: number
+          is_visible: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          label: string
+          value?: string | null
+          icon?: string | null
+          display_order?: number
+          is_visible?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          label?: string
+          value?: string | null
+          icon?: string | null
+          display_order?: number
+          is_visible?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
+      faqs: {
+        Row: {
+          id: string
+          question: string
+          answer: string
+          display_order: number
+          is_visible: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          question: string
+          answer: string
+          display_order?: number
+          is_visible?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          question?: string
+          answer?: string
+          display_order?: number
+          is_visible?: boolean
+          created_at?: string
         }
         Relationships: []
       }

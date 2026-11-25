@@ -50,10 +50,20 @@ function nextLine(iso: string | null): string | null {
   return `${day} \\ ${time}`;
 }
 
+/** A contact value is usable only if set and not a leftover example.com placeholder. */
+function realContact(value: string): string | null {
+  const v = value?.trim();
+  if (!v || /example\.com/i.test(v)) return null;
+  return v;
+}
+
 export function SiteFooter({ nextDateIso }: { nextDateIso?: string | null }) {
   const socials = socialList();
   const next = nextLine(nextDateIso ?? null);
   const venue = site.venue.full !== "Venue to be announced" ? site.venue.full : null;
+  const email = realContact(leagueConfig.contactEmail);
+  const phone = realContact(leagueConfig.contactPhone);
+  const whatsapp = realContact(leagueConfig.supportWhatsApp);
 
   return (
     <footer className="relative overflow-hidden bg-navy-950 text-white">
@@ -101,20 +111,30 @@ export function SiteFooter({ nextDateIso }: { nextDateIso?: string | null }) {
               </p>
             )}
             {venue && <p className="max-w-xs text-sm text-white/60">{venue}</p>}
-            {leagueConfig.contactPhone && (
+            {phone && (
               <a
-                href={`tel:${leagueConfig.contactPhone.replace(/\s/g, "")}`}
+                href={`tel:${phone.replace(/\s/g, "")}`}
                 className="text-sm text-white/70 hover:text-gold-400"
               >
-                {leagueConfig.contactPhone}
+                {phone}
               </a>
             )}
-            {leagueConfig.contactEmail && (
+            {whatsapp && (
               <a
-                href={`mailto:${leagueConfig.contactEmail}`}
+                href={whatsapp}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-sm text-white/70 hover:text-gold-400"
               >
-                {leagueConfig.contactEmail}
+                WhatsApp us
+              </a>
+            )}
+            {email && (
+              <a
+                href={`mailto:${email}`}
+                className="text-sm text-white/70 hover:text-gold-400"
+              >
+                {email}
               </a>
             )}
           </div>
