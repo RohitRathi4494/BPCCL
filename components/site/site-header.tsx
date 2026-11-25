@@ -24,16 +24,16 @@ function Lockup({ className }: { className?: string }) {
   );
 }
 
-const NAV = [
-  { label: "About", href: "/#about" },
-  { label: "Founders", href: "/#founders" },
-  { label: "The Ground", href: "/ballpark" },
-  { label: "Format", href: "/#format" },
-  { label: "Key Dates", href: "/#dates" },
-  { label: "Teams", href: "/franchises" },
+type NavItem = { label: string; href: string };
+
+/** Public nav. "Venue" leads to the ground page (/ballpark); "Fixtures" only
+ *  appears once the auction has completed (passed in via `showFixtures`). */
+const BASE_NAV: NavItem[] = [
+  { label: "Home", href: "/" },
+  { label: "Venue", href: "/ballpark" },
   { label: "Sponsors", href: "/sponsors" },
-  { label: "FAQ", href: "/#faq" },
-] as const;
+  { label: "Franchises", href: "/franchises" },
+];
 
 /** "BPCCL" wordmark with a gold full-stop. */
 function Wordmark({ className }: { className?: string }) {
@@ -50,9 +50,12 @@ function Wordmark({ className }: { className?: string }) {
   );
 }
 
-export function SiteHeader() {
+export function SiteHeader({ showFixtures = false }: { showFixtures?: boolean }) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const nav: NavItem[] = showFixtures
+    ? [...BASE_NAV, { label: "Fixtures", href: "/fixtures" }]
+    : BASE_NAV;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -84,7 +87,7 @@ export function SiteHeader() {
         </Link>
 
         <nav className="hidden items-center gap-7 lg:flex">
-          {NAV.map((l) => (
+          {nav.map((l) => (
             <Link
               key={l.label}
               href={l.href}
@@ -145,7 +148,7 @@ export function SiteHeader() {
           </button>
         </div>
         <nav className="flex flex-col gap-1 px-5 pt-10">
-          {NAV.map((l) => (
+          {nav.map((l) => (
             <Link
               key={l.label}
               href={l.href}

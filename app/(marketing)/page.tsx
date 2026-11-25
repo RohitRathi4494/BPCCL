@@ -19,7 +19,6 @@ import { CountdownChip } from "@/components/site/countdown-chip";
 import { Accordion } from "@/components/site/accordion";
 import { StatCounter } from "@/components/site/stat-counter";
 import { FoundersSection } from "@/components/site/founders-section";
-import { HomeGroundSections } from "@/components/site/home-ground-sections";
 import {
   Eyebrow,
   DisplayWordmark,
@@ -252,9 +251,6 @@ export default async function HomePage() {
 
       {/* ========================= FOUNDERS ========================= */}
       <FoundersSection />
-
-      {/* ============ GROUND / TESTIMONIALS / CLIENTS ============ */}
-      <HomeGroundSections settings={settings} />
 
       {/* ========================= FORMAT ========================= */}
       <section id="format" className="scroll-mt-24 bg-navy-900 text-white">

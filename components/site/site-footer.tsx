@@ -10,15 +10,17 @@ import {
   WhatsAppIcon,
 } from "@/components/site/social-icons";
 
-const linkCols = [
-  { label: "Home", href: "/" },
-  { label: "About", href: "/#about" },
-  { label: "The Ground", href: "/ballpark" },
-  { label: "Teams", href: "/franchises" },
-  { label: "Fixtures", href: "/fixtures" },
-  { label: "Sponsors", href: "/sponsors" },
-  { label: "Admin Login", href: "/admin/login" },
-];
+function footerLinks(showFixtures: boolean) {
+  return [
+    { label: "Home", href: "/" },
+    { label: "Register", href: "/register" },
+    { label: "Venue", href: "/ballpark" },
+    { label: "Franchises", href: "/franchises" },
+    ...(showFixtures ? [{ label: "Fixtures", href: "/fixtures" }] : []),
+    { label: "Sponsors", href: "/sponsors" },
+    { label: "Admin Login", href: "/admin/login" },
+  ];
+}
 
 function socialList() {
   const s = leagueConfig.socials;
@@ -58,7 +60,14 @@ function realContact(value: string): string | null {
   return v;
 }
 
-export function SiteFooter({ nextDateIso }: { nextDateIso?: string | null }) {
+export function SiteFooter({
+  nextDateIso,
+  showFixtures = false,
+}: {
+  nextDateIso?: string | null;
+  showFixtures?: boolean;
+}) {
+  const linkCols = footerLinks(showFixtures);
   const socials = socialList();
   const next = nextLine(nextDateIso ?? null);
   const venue = site.venue.full !== "Venue to be announced" ? site.venue.full : null;
