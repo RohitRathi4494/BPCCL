@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { MessageCircle, Phone, Navigation } from "lucide-react";
-import { Eyebrow, DisplayWordmark, RollButton } from "@/components/site/primitives";
+import { Eyebrow, RollButton } from "@/components/site/primitives";
 import { Reveal } from "@/components/site/reveal";
 import { GroundHero } from "@/components/site/ground-hero";
 import { MediaGallery } from "@/components/site/media-gallery";
@@ -101,9 +101,35 @@ export default async function BallparkPage() {
       <GroundHero videoUrl={heroVideo} posterUrl={heroPoster}>
         <div className="mx-auto w-full max-w-6xl px-5 pb-12 sm:pb-16">
           {groundName && <Eyebrow className="text-white/80">{groundName}</Eyebrow>}
-          <DisplayWordmark className="mt-3 text-[clamp(3.5rem,16vw,12rem)] text-white">
-            BALLPARK
-          </DisplayWordmark>
+          {/* Self-fitting wordmark: textLength locks the word to the viewBox
+              width and the SVG scales to the container, so "BALLPARK" always
+              shows in full and never clips (same trick as the footer). */}
+          <h1 className="mt-3 text-white">
+            <span className="sr-only">Ballpark</span>
+            <svg
+              aria-hidden
+              role="presentation"
+              viewBox="0 0 1000 200"
+              className="block w-full select-none overflow-visible"
+            >
+              <text
+                x="0"
+                y="165"
+                textAnchor="start"
+                textLength="1000"
+                lengthAdjust="spacingAndGlyphs"
+                fill="currentColor"
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontWeight: 900,
+                  fontSize: "190px",
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                BALLPARK
+              </text>
+            </svg>
+          </h1>
           <p className="mt-4 max-w-xl text-lg text-white/85">{tagline}</p>
           <div className="mt-7 flex flex-wrap gap-3">
             <RollButton href="/register" variant="gold">
