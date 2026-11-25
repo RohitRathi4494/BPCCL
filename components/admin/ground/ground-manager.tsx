@@ -30,16 +30,6 @@ import {
   setClientVisibility,
   reorderClients,
   deleteClient,
-  saveFact,
-  setFactVisibility,
-  reorderFacts,
-  deleteFact,
-  saveFaq,
-  setFaqVisibility,
-  reorderFaqs,
-  deleteFaq,
-  updateGroundSettings,
-  uploadHeroMedia,
 } from "@/app/admin/(protected)/ground/actions";
 import type { VideoPreview } from "@/app/admin/(protected)/ground/types";
 import {
@@ -89,44 +79,10 @@ export type ClientView = {
   isVisible: boolean;
   permission: boolean;
 };
-export type FactView = {
-  id: string;
-  label: string;
-  value: string | null;
-  icon: string | null;
-  isVisible: boolean;
-};
-export type FaqView = {
-  id: string;
-  question: string;
-  answer: string;
-  isVisible: boolean;
-};
-export type GroundInfo = {
-  ground_name: string;
-  ground_tagline: string;
-  ground_address: string;
-  ground_map_url: string;
-  ground_lat: string;
-  ground_lng: string;
-  ground_whatsapp: string;
-  youtube_channel_url: string;
-  stat_clients: string;
-  stat_years: string;
-  stat_matches_hosted: string;
-  min_age: string;
-  senior_age: string;
-  heroVideoUrl: string | null;
-  heroPosterUrl: string | null;
-};
-
 const TABS = [
   { key: "photos", label: "Photos" },
   { key: "videos", label: "Videos" },
   { key: "clients", label: "Clients" },
-  { key: "facts", label: "Ground info" },
-  { key: "faqs", label: "FAQ" },
-  { key: "settings", label: "Settings & hero" },
 ] as const;
 type TabKey = (typeof TABS)[number]["key"];
 
@@ -134,9 +90,6 @@ export function GroundManager(props: {
   photos: PhotoView[];
   videos: VideoView[];
   clients: ClientView[];
-  facts: FactView[];
-  faqs: FaqView[];
-  info: GroundInfo;
   r2Configured: boolean;
 }) {
   const [tab, setTab] = useState<TabKey>("photos");
@@ -145,8 +98,8 @@ export function GroundManager(props: {
     <div className="flex flex-col gap-5">
       {!props.r2Configured && (
         <p className="rounded-md border border-[var(--closed)]/40 bg-[var(--closed)]/5 px-4 py-3 text-sm text-[var(--closed)]">
-          Cloudflare R2 public storage isn&apos;t configured — photo, logo and hero uploads will
-          fail until the R2 env vars are set.
+          Cloudflare R2 public storage isn&apos;t configured — photo and logo uploads will fail
+          until the R2 env vars are set.
         </p>
       )}
 
@@ -171,9 +124,6 @@ export function GroundManager(props: {
       {tab === "photos" && <PhotosPanel photos={props.photos} />}
       {tab === "videos" && <VideosPanel videos={props.videos} />}
       {tab === "clients" && <ClientsPanel clients={props.clients} />}
-      {tab === "facts" && <FactsPanel facts={props.facts} />}
-      {tab === "faqs" && <FaqsPanel faqs={props.faqs} />}
-      {tab === "settings" && <SettingsPanel info={props.info} />}
     </div>
   );
 }
@@ -857,311 +807,5 @@ function ClientRow({ client, refresh }: { client: ClientView; refresh: () => voi
         <StatusLine status={status} />
       </div>
     </div>
-  );
-}
-
-// =============================================================================
-// FACTS
-// =============================================================================
-function FactsPanel({ facts }: { facts: FactView[] }) {
-  const refresh = useRefresh();
-  const [pending, start] = useTransition();
-  function onReorder(ids: string[]) {
-    const fd = new FormData();
-    fd.append("ids", JSON.stringify(ids));
-    start(async () => {
-      await reorderFacts(fd);
-      refresh();
-    });
-  }
-  return (
-    <Panel title="Ground facts" description="Icon + value + label chips (e.g. “Floodlit turf pitches”, “4”). Icon is an emoji or a lucide icon name.">
-      <AddFactForm refresh={refresh} />
-      {facts.length === 0 ? (
-        <p className="mt-5 text-sm text-muted-foreground">No facts yet.</p>
-      ) : (
-        <div className="mt-5">
-          <SortableList items={facts} pending={pending} onReorder={onReorder} renderItem={(f) => <FactRow fact={f} refresh={refresh} />} />
-        </div>
-      )}
-    </Panel>
-  );
-}
-
-function AddFactForm({ refresh }: { refresh: () => void }) {
-  const [form, setForm] = useState({ icon: "", value: "", label: "" });
-  const [saving, start] = useTransition();
-  const [err, setErr] = useState<string | null>(null);
-  function add() {
-    if (!form.label.trim()) {
-      setErr("Enter a label.");
-      return;
-    }
-    const fd = new FormData();
-    fd.append("icon", form.icon);
-    fd.append("value", form.value);
-    fd.append("label", form.label);
-    start(async () => {
-      const res = await saveFact(fd);
-      if (res.error) setErr(res.error);
-      else {
-        setForm({ icon: "", value: "", label: "" });
-        refresh();
-      }
-    });
-  }
-  return (
-    <div className="rounded-md border border-dashed border-input p-4">
-      <div className="grid gap-2 sm:grid-cols-[6rem_8rem_1fr_auto]">
-        <input value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })} placeholder="Icon" className={fieldClass} />
-        <input value={form.value} onChange={(e) => setForm({ ...form, value: e.target.value })} placeholder="Value" className={fieldClass} />
-        <input value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="Label" className={fieldClass} />
-        <button type="button" onClick={add} disabled={saving} className="inline-flex items-center gap-1 rounded-sm bg-primary px-3 py-1.5 text-sm text-primary-foreground disabled:opacity-50">
-          {saving && <Loader2 className="size-3.5 animate-spin" />} Add
-        </button>
-      </div>
-      {err && <p className="mt-1 text-xs text-[var(--closed)]">{err}</p>}
-    </div>
-  );
-}
-
-function FactRow({ fact, refresh }: { fact: FactView; refresh: () => void }) {
-  const { pending, status, run } = useGroundAction();
-  const [form, setForm] = useState({ icon: fact.icon ?? "", value: fact.value ?? "", label: fact.label });
-  function save() {
-    const fd = new FormData();
-    fd.append("id", fact.id);
-    fd.append("icon", form.icon);
-    fd.append("value", form.value);
-    fd.append("label", form.label);
-    run(saveFact, fd, refresh);
-  }
-  return (
-    <div className="flex flex-col gap-1.5">
-      <div className="grid gap-1.5 sm:grid-cols-[6rem_8rem_1fr]">
-        <input value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })} placeholder="Icon" className={fieldClass} />
-        <input value={form.value} onChange={(e) => setForm({ ...form, value: e.target.value })} placeholder="Value" className={fieldClass} />
-        <input value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="Label" className={fieldClass} />
-      </div>
-      <div className="flex flex-wrap items-center gap-2 text-xs">
-        <button type="button" onClick={save} disabled={pending} className="rounded-sm border border-input px-2.5 py-1 hover:border-primary disabled:opacity-50">
-          {pending ? "Saving…" : "Save"}
-        </button>
-        <ActionButton action={setFactVisibility} fields={{ id: fact.id, is_visible: (!fact.isVisible).toString() }} onDone={refresh}
-          className={"inline-flex items-center gap-1 rounded-sm border px-2.5 py-1 " + (fact.isVisible ? "border-primary bg-primary/10 text-primary" : "border-input")}>
-          {fact.isVisible ? <Eye className="size-3" /> : <EyeOff className="size-3" />} {fact.isVisible ? "Visible" : "Hidden"}
-        </ActionButton>
-        <ActionButton action={deleteFact} fields={{ id: fact.id }} confirm="Delete this fact?" onDone={refresh}
-          className="inline-flex items-center gap-1 rounded-sm border border-input px-2.5 py-1 text-[var(--closed)] hover:border-[var(--closed)]">
-          <Trash2 className="size-3" /> Delete
-        </ActionButton>
-      </div>
-      <StatusLine status={status} />
-    </div>
-  );
-}
-
-// =============================================================================
-// FAQs
-// =============================================================================
-function FaqsPanel({ faqs }: { faqs: FaqView[] }) {
-  const refresh = useRefresh();
-  const [pending, start] = useTransition();
-  function onReorder(ids: string[]) {
-    const fd = new FormData();
-    fd.append("ids", JSON.stringify(ids));
-    start(async () => {
-      await reorderFaqs(fd);
-      refresh();
-    });
-  }
-  return (
-    <Panel
-      title="FAQ"
-      description="Shown on the home page. Tokens: {{age_rule}} (eligibility), {{fee}} / {{fee_clause}} (fee) resolve from league settings — so ₹0 is never shown."
-    >
-      <AddFaqForm refresh={refresh} />
-      {faqs.length === 0 ? (
-        <p className="mt-5 text-sm text-muted-foreground">No FAQs yet.</p>
-      ) : (
-        <div className="mt-5">
-          <SortableList items={faqs} pending={pending} onReorder={onReorder} renderItem={(f) => <FaqRow faq={f} refresh={refresh} />} />
-        </div>
-      )}
-    </Panel>
-  );
-}
-
-function AddFaqForm({ refresh }: { refresh: () => void }) {
-  const [form, setForm] = useState({ question: "", answer: "" });
-  const [saving, start] = useTransition();
-  const [err, setErr] = useState<string | null>(null);
-  function add() {
-    if (!form.question.trim()) {
-      setErr("Enter the question.");
-      return;
-    }
-    const fd = new FormData();
-    fd.append("question", form.question);
-    fd.append("answer", form.answer);
-    start(async () => {
-      const res = await saveFaq(fd);
-      if (res.error) setErr(res.error);
-      else {
-        setForm({ question: "", answer: "" });
-        refresh();
-      }
-    });
-  }
-  return (
-    <div className="rounded-md border border-dashed border-input p-4">
-      <input value={form.question} onChange={(e) => setForm({ ...form, question: e.target.value })} placeholder="Question" className={fieldClass} />
-      <textarea value={form.answer} onChange={(e) => setForm({ ...form, answer: e.target.value })} placeholder="Answer" rows={2} className={fieldClass + " mt-2"} />
-      <div className="mt-2 flex justify-end">
-        <button type="button" onClick={add} disabled={saving} className="inline-flex items-center gap-1 rounded-sm bg-primary px-3 py-1.5 text-sm text-primary-foreground disabled:opacity-50">
-          {saving && <Loader2 className="size-3.5 animate-spin" />} Add FAQ
-        </button>
-      </div>
-      {err && <p className="mt-1 text-xs text-[var(--closed)]">{err}</p>}
-    </div>
-  );
-}
-
-function FaqRow({ faq, refresh }: { faq: FaqView; refresh: () => void }) {
-  const { pending, status, run } = useGroundAction();
-  const [form, setForm] = useState({ question: faq.question, answer: faq.answer });
-  const canPublish = form.answer.trim().length > 0;
-  function save() {
-    const fd = new FormData();
-    fd.append("id", faq.id);
-    fd.append("question", form.question);
-    fd.append("answer", form.answer);
-    run(saveFaq, fd, refresh);
-  }
-  return (
-    <div className="flex flex-col gap-1.5">
-      <input value={form.question} onChange={(e) => setForm({ ...form, question: e.target.value })} className={fieldClass} />
-      <textarea value={form.answer} onChange={(e) => setForm({ ...form, answer: e.target.value })} rows={2} className={fieldClass} />
-      <div className="flex flex-wrap items-center gap-2 text-xs">
-        <button type="button" onClick={save} disabled={pending} className="rounded-sm border border-input px-2.5 py-1 hover:border-primary disabled:opacity-50">
-          {pending ? "Saving…" : "Save"}
-        </button>
-        <ActionButton action={setFaqVisibility} fields={{ id: faq.id, is_visible: (!faq.isVisible).toString() }} onDone={refresh}
-          disabled={!faq.isVisible && !canPublish}
-          title={!faq.isVisible && !canPublish ? "Add an answer first" : undefined}
-          className={"inline-flex items-center gap-1 rounded-sm border px-2.5 py-1 disabled:opacity-40 " + (faq.isVisible ? "border-primary bg-primary/10 text-primary" : "border-input")}>
-          {faq.isVisible ? <Eye className="size-3" /> : <EyeOff className="size-3" />} {faq.isVisible ? "Visible" : "Hidden"}
-        </ActionButton>
-        <ActionButton action={deleteFaq} fields={{ id: faq.id }} confirm="Delete this FAQ?" onDone={refresh}
-          className="inline-flex items-center gap-1 rounded-sm border border-input px-2.5 py-1 text-[var(--closed)] hover:border-[var(--closed)]">
-          <Trash2 className="size-3" /> Delete
-        </ActionButton>
-      </div>
-      <StatusLine status={status} />
-    </div>
-  );
-}
-
-// =============================================================================
-// SETTINGS + HERO
-// =============================================================================
-function SettingsPanel({ info }: { info: GroundInfo }) {
-  const refresh = useRefresh();
-  const { pending, status, run } = useGroundAction();
-
-  function save(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    run(updateGroundSettings, new FormData(e.currentTarget), refresh);
-  }
-
-  return (
-    <div className="flex flex-col gap-5">
-      <Panel title="Ground & trust settings" description="Powers the home sections, the /ballpark page and SEO.">
-        <form onSubmit={save} className="grid gap-3 sm:grid-cols-2">
-          <Labeled label="Ground name"><input name="ground_name" defaultValue={info.ground_name} className={fieldClass} /></Labeled>
-          <Labeled label="Ground tagline"><input name="ground_tagline" defaultValue={info.ground_tagline} className={fieldClass} /></Labeled>
-          <Labeled label="Address" className="sm:col-span-2"><input name="ground_address" defaultValue={info.ground_address} className={fieldClass} /></Labeled>
-          <Labeled label="Google Maps link (Get directions)"><input name="ground_map_url" defaultValue={info.ground_map_url} className={fieldClass} /></Labeled>
-          <Labeled label="YouTube channel URL"><input name="youtube_channel_url" defaultValue={info.youtube_channel_url} className={fieldClass} /></Labeled>
-          <Labeled label="Latitude"><input name="ground_lat" defaultValue={info.ground_lat} className={fieldClass} /></Labeled>
-          <Labeled label="Longitude"><input name="ground_lng" defaultValue={info.ground_lng} className={fieldClass} /></Labeled>
-          <Labeled label="Booking WhatsApp (wa.me/… or number)" className="sm:col-span-2"><input name="ground_whatsapp" defaultValue={info.ground_whatsapp} className={fieldClass} /></Labeled>
-          <Labeled label="Stat: clients"><input name="stat_clients" defaultValue={info.stat_clients} inputMode="numeric" className={fieldClass} /></Labeled>
-          <Labeled label="Stat: years"><input name="stat_years" defaultValue={info.stat_years} inputMode="numeric" className={fieldClass} /></Labeled>
-          <Labeled label="Stat: matches hosted"><input name="stat_matches_hosted" defaultValue={info.stat_matches_hosted} inputMode="numeric" className={fieldClass} /></Labeled>
-          <Labeled label="Registration min age"><input name="min_age" defaultValue={info.min_age} inputMode="numeric" className={fieldClass} /></Labeled>
-          <Labeled label="Senior / eligibility age"><input name="senior_age" defaultValue={info.senior_age} inputMode="numeric" className={fieldClass} /></Labeled>
-          <div className="sm:col-span-2 flex items-center gap-3">
-            <button type="submit" disabled={pending} className="inline-flex items-center gap-1 rounded-sm bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50">
-              {pending && <Loader2 className="size-3.5 animate-spin" />} Save settings
-            </button>
-            <StatusLine status={status} />
-          </div>
-        </form>
-      </Panel>
-
-      <HeroMediaPanel info={info} />
-    </div>
-  );
-}
-
-function HeroMediaPanel({ info }: { info: GroundInfo }) {
-  const refresh = useRefresh();
-  const [pending, start] = useTransition();
-  const [err, setErr] = useState<string | null>(null);
-  function submit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setErr(null);
-    const form = e.currentTarget;
-    start(async () => {
-      const res = await uploadHeroMedia(new FormData(form));
-      if (res.error) setErr(res.error);
-      else {
-        form.reset();
-        refresh();
-      }
-    });
-  }
-  return (
-    <Panel title="Hero loop (/ballpark)" description="A short muted MP4 (6–10 s, ≤3 MB) + poster image. The poster shows on reduced-motion / Save-Data.">
-      <div className="mb-4 flex flex-wrap gap-6 text-xs text-muted-foreground">
-        <div>
-          Current video:{" "}
-          {info.heroVideoUrl ? (
-            <a href={info.heroVideoUrl} target="_blank" rel="noreferrer" className="text-primary underline">set</a>
-          ) : (
-            "none"
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          Current poster:{" "}
-          {info.heroPosterUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={info.heroPosterUrl} alt="" className="h-10 w-auto rounded-sm" />
-          ) : (
-            "none"
-          )}
-        </div>
-      </div>
-      <form onSubmit={submit} className="flex flex-col gap-3">
-        <Labeled label="Hero video (MP4, ≤3 MB)"><input type="file" name="video" accept="video/mp4" className="text-sm" /></Labeled>
-        <Labeled label="Hero poster (JPG/PNG/WebP)"><input type="file" name="poster" accept="image/*" className="text-sm" /></Labeled>
-        <div className="flex items-center gap-3">
-          <button type="submit" disabled={pending} className="inline-flex items-center gap-1 rounded-sm bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50">
-            {pending && <Loader2 className="size-3.5 animate-spin" />} Upload hero media
-          </button>
-          {err && <p className="text-xs text-[var(--closed)]">{err}</p>}
-        </div>
-      </form>
-    </Panel>
-  );
-}
-
-function Labeled({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
-  return (
-    <label className={"flex flex-col gap-1 " + (className ?? "")}>
-      <span className={labelClass}>{label}</span>
-      {children}
-    </label>
   );
 }
