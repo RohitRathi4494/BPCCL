@@ -389,6 +389,8 @@ export type Database = {
           stat_matches_hosted: number | null
           min_age: number
           senior_age: number
+          legends_also_trained: string[] | null
+          removal_contact_email: string | null
         }
         Insert: {
           auction_day_at?: string | null
@@ -440,6 +442,8 @@ export type Database = {
           stat_matches_hosted?: number | null
           min_age?: number
           senior_age?: number
+          legends_also_trained?: string[] | null
+          removal_contact_email?: string | null
         }
         Update: {
           auction_day_at?: string | null
@@ -491,6 +495,113 @@ export type Database = {
           stat_matches_hosted?: number | null
           min_age?: number
           senior_age?: number
+          legends_also_trained?: string[] | null
+          removal_contact_email?: string | null
+        }
+        Relationships: []
+      }
+      legends: {
+        Row: {
+          id: string
+          name: string
+          country: string | null
+          team_or_role: string | null
+          visit_type: string | null
+          visit_month: string | null
+          r2_key: string
+          alt_text: string
+          youtube_id: string | null
+          quote: string | null
+          is_featured: boolean
+          display_order: number
+          is_visible: boolean
+          permission_confirmed: boolean
+          permission_note: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          country?: string | null
+          team_or_role?: string | null
+          visit_type?: string | null
+          visit_month?: string | null
+          r2_key: string
+          alt_text: string
+          youtube_id?: string | null
+          quote?: string | null
+          is_featured?: boolean
+          display_order?: number
+          is_visible?: boolean
+          permission_confirmed?: boolean
+          permission_note?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          country?: string | null
+          team_or_role?: string | null
+          visit_type?: string | null
+          visit_month?: string | null
+          r2_key?: string
+          alt_text?: string
+          youtube_id?: string | null
+          quote?: string | null
+          is_featured?: boolean
+          display_order?: number
+          is_visible?: boolean
+          permission_confirmed?: boolean
+          permission_note?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      reels: {
+        Row: {
+          id: string
+          youtube_id: string
+          video_format: string
+          title: string | null
+          person_name: string
+          person_role: string | null
+          quote: string | null
+          duration_label: string | null
+          custom_poster_r2_key: string | null
+          display_order: number
+          is_visible: boolean
+          permission_confirmed: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          youtube_id: string
+          video_format?: string
+          title?: string | null
+          person_name: string
+          person_role?: string | null
+          quote?: string | null
+          duration_label?: string | null
+          custom_poster_r2_key?: string | null
+          display_order?: number
+          is_visible?: boolean
+          permission_confirmed?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          youtube_id?: string
+          video_format?: string
+          title?: string | null
+          person_name?: string
+          person_role?: string | null
+          quote?: string | null
+          duration_label?: string | null
+          custom_poster_r2_key?: string | null
+          display_order?: number
+          is_visible?: boolean
+          permission_confirmed?: boolean
+          created_at?: string
         }
         Relationships: []
       }
