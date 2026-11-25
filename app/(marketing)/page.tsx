@@ -19,6 +19,7 @@ import { CountdownChip } from "@/components/site/countdown-chip";
 import { Accordion } from "@/components/site/accordion";
 import { StatCounter } from "@/components/site/stat-counter";
 import { FoundersSection } from "@/components/site/founders-section";
+import { HomeGroundSections } from "@/components/site/home-ground-sections";
 import {
   Eyebrow,
   DisplayWordmark,
@@ -252,6 +253,9 @@ export default async function HomePage() {
       {/* ========================= FOUNDERS ========================= */}
       <FoundersSection />
 
+      {/* ============ GROUND / TESTIMONIALS / CLIENTS ============ */}
+      <HomeGroundSections settings={settings} />
+
       {/* ========================= FORMAT ========================= */}
       <section id="format" className="scroll-mt-24 bg-navy-900 text-white">
         <div className="mx-auto max-w-6xl px-5 py-20 sm:py-28">
@@ -443,19 +447,34 @@ export default async function HomePage() {
 
             <div className="mt-10 grid gap-3 sm:grid-cols-3">
               {[
-                { t: "Pro-standard ground", d: "Play under lights on a proper pitch." },
+                { t: "Pro-standard ground", d: "Play under lights on a proper pitch.", href: "/ballpark" },
                 { t: "Live auction", d: "Get drafted like a pro, for real." },
                 { t: "Network that matters", d: "Meet professionals across industries." },
-              ].map((b, i) => (
-                <div
-                  key={b.t}
-                  className="rounded-2xl border border-white/12 bg-white/5 p-4"
-                >
-                  <span className="eyebrow text-gold-400">{i + 1}/3</span>
-                  <p className="mt-2 font-display text-base font-semibold">{b.t}</p>
-                  <p className="mt-1 text-sm text-white/60">{b.d}</p>
-                </div>
-              ))}
+              ].map((b, i) => {
+                const cardClass =
+                  "group rounded-2xl border border-white/12 bg-white/5 p-4 transition-colors";
+                const content = (
+                  <>
+                    <span className="eyebrow text-gold-400">{i + 1}/3</span>
+                    <p className="mt-2 flex items-center gap-1 font-display text-base font-semibold">
+                      {b.t}
+                      {b.href && (
+                        <ArrowUpRight className="size-4 text-gold-400 opacity-0 transition-opacity group-hover:opacity-100" />
+                      )}
+                    </p>
+                    <p className="mt-1 text-sm text-white/60">{b.d}</p>
+                  </>
+                );
+                return b.href ? (
+                  <Link key={b.t} href={b.href} className={`${cardClass} hover:border-gold-400/50`}>
+                    {content}
+                  </Link>
+                ) : (
+                  <div key={b.t} className={cardClass}>
+                    {content}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

@@ -20,6 +20,13 @@ const remotePatterns: RemotePattern[] = [
     hostname: "**.r2.dev",
     pathname: "/**",
   },
+  {
+    // YouTube video thumbnails (i.ytimg.com/vi/<id>/hqdefault.jpg) used as
+    // lite-embed posters for hand-picked testimonial / ground videos.
+    protocol: "https",
+    hostname: "i.ytimg.com",
+    pathname: "/vi/**",
+  },
 ];
 
 // If a custom R2 public domain is configured, allow it too.
