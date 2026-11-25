@@ -64,11 +64,15 @@ create table if not exists public.ground_media (
   constraint ground_media_consent_gate check (consent_confirmed or not is_visible),
   -- Quote is a short pull-quote.
   constraint ground_media_quote_len check (quote is null or char_length(quote) <= 140),
-  -- A photo needs an object key + alt text; a video needs a youtube id.
+  -- A photo always needs an object key; a video always needs a youtube id.
   constraint ground_media_photo_shape
-    check (kind <> 'photo' or (r2_key is not null and alt_text is not null and btrim(alt_text) <> '')),
+    check (kind <> 'photo' or r2_key is not null),
   constraint ground_media_video_shape
-    check (kind <> 'video' or youtube_id is not null)
+    check (kind <> 'video' or youtube_id is not null),
+  -- A VISIBLE photo must have alt text (drafts may be uploaded without it; the
+  -- admin UI blocks the visibility toggle until alt text is entered).
+  constraint ground_media_photo_alt
+    check (kind <> 'photo' or not is_visible or (alt_text is not null and btrim(alt_text) <> ''))
 );
 
 -- One row per YouTube video (no duplicates).
