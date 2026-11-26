@@ -53,9 +53,14 @@ export function Eyebrow({
   variant?: "default" | "script";
   className?: string;
 }) {
+  // "script" is kept as an accepted value for callers, but now renders in the
+  // same normal tracked label style as the default eyebrow (cursive removed),
+  // just without the surrounding brackets.
   if (variant === "script") {
     return (
-      <span className={cn("eyebrow-script inline-block", className)}>{children}</span>
+      <span className={cn("eyebrow inline-flex items-center gap-1.5", className)}>
+        {children}
+      </span>
     );
   }
   const [open, close] =
@@ -166,7 +171,7 @@ type RollVariant = "gold" | "navy" | "outline" | "outline-dark";
 
 const rollVariants: Record<RollVariant, string> = {
   gold: "bg-gold-400 text-navy-950 hover:bg-gold-400",
-  navy: "bg-navy-900 text-white hover:bg-navy-900",
+  navy: "bg-navy-950 text-white hover:bg-navy-950",
   outline: "border border-navy-900/20 text-navy-900 hover:border-navy-900/40",
   "outline-dark": "border border-white/25 text-white hover:border-white/50",
 };

@@ -33,7 +33,7 @@ function initials(name: string): string {
 
 function FounderCard({ founder }: { founder: LeagueFounder }) {
   return (
-    <article className="group relative flex flex-col overflow-hidden rounded-[1.5rem] bg-white shadow-[0_26px_60px_-34px_rgba(11,31,75,0.55)] ring-1 ring-navy-900/10 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_44px_84px_-32px_rgba(11,31,75,0.5)]">
+    <article className="group relative flex flex-col overflow-hidden rounded-[1.5rem] bg-navy-950 shadow-[0_26px_60px_-34px_rgba(11,31,75,0.55)] ring-1 ring-white/10 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_44px_84px_-32px_rgba(11,31,75,0.5)]">
       {/* Portrait — natural photo, no overlay */}
       <div className="relative aspect-[4/5] w-full overflow-hidden bg-navy-950">
         {founder.photo ? (
@@ -54,19 +54,19 @@ function FounderCard({ founder }: { founder: LeagueFounder }) {
         )}
       </div>
 
-      {/* Card body — cursive signature name, gold flourish, role, then bio */}
+      {/* Card body — name (editorial display font, clear capitals), gold flourish, role, then bio */}
       <div className="flex flex-1 flex-col p-6 sm:p-7">
-        <span className="font-script text-[2.6rem] leading-none text-navy-900">
+        <span className="editorial-heading text-[2.1rem] leading-none text-white">
           {founder.name}
         </span>
         <span aria-hidden className="mt-2 flex items-center gap-2">
           <span className="h-px w-12 bg-gradient-to-r from-gold-400 to-transparent" />
           <BallGlyph className="text-[0.65rem] text-gold-400" />
         </span>
-        <span className="mt-2 text-[0.72rem] font-semibold uppercase tracking-[0.2em] text-gold-600">
+        <span className="mt-2 text-[0.72rem] font-semibold uppercase tracking-[0.2em] text-gold-400">
           {founder.role}
         </span>
-        <p className="mt-4 text-[15px] leading-relaxed text-muted-ink">
+        <p className="mt-4 text-[15px] leading-relaxed text-white/70">
           {founder.message}
         </p>
       </div>

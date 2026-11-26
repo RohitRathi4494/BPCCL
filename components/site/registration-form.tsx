@@ -405,7 +405,7 @@ export function RegistrationForm({
                 ["Auction day", "Franchises bid to draft you into a squad."],
               ].map(([t, d], i) => (
                 <li key={t} className="flex gap-3">
-                  <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-navy-900 text-xs font-bold text-white">{i + 1}</span>
+                  <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-navy-950 text-xs font-bold text-white">{i + 1}</span>
                   <div>
                     <p className="text-sm font-semibold text-navy-900">{t}</p>
                     <p className="text-xs text-muted-ink">{d}</p>
@@ -442,7 +442,7 @@ export function RegistrationForm({
                 className={cn(
                   "grid size-8 place-items-center rounded-full text-xs font-bold transition-colors",
                   step > s.n ? "bg-navy-700 text-white"
-                    : step === s.n ? "bg-navy-900 text-white"
+                    : step === s.n ? "bg-navy-950 text-white"
                     : "bg-navy-900/10 text-muted-ink",
                 )}
               >
@@ -473,7 +473,7 @@ export function RegistrationForm({
             <button
               type="button" disabled={busy}
               onClick={() => { setConfirmDuplicate(true); submit(docKeys.aadhaar, docKeys.payment, true); }}
-              className="inline-flex w-fit items-center gap-2 rounded-full border border-navy-900 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-navy-900 hover:bg-navy-900 hover:text-white disabled:opacity-70"
+              className="inline-flex w-fit items-center gap-2 rounded-full border border-navy-900 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-navy-900 hover:bg-navy-950 hover:text-white disabled:opacity-70"
             >
               {busy && <Loader2 className="size-3.5 animate-spin" />} Submit Anyway
             </button>
@@ -697,7 +697,7 @@ export function RegistrationForm({
           </button>
         ) : <span />}
         {step < 5 ? (
-          <button type="button" onClick={goNext} className="inline-flex items-center gap-1.5 rounded-full bg-navy-900 px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90">
+          <button type="button" onClick={goNext} className="inline-flex items-center gap-1.5 rounded-full bg-navy-950 px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90">
             Next <ArrowRight className="size-4" />
           </button>
         ) : (

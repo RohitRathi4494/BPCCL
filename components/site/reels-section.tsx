@@ -55,7 +55,7 @@ export function ReelsSection({
   }
 
   return (
-    <section className="bg-cream-100 text-[#0B1220]">
+    <section className="bg-navy-950 text-white">
       <div className="pt-20 pb-[88px] sm:pt-24">
         {/* Header */}
         <Reveal
@@ -64,13 +64,13 @@ export function ReelsSection({
           className="mx-auto mb-10 flex max-w-6xl flex-col gap-5 px-5 lg:flex-row lg:items-end lg:justify-between"
         >
           <div className="flex flex-col gap-3">
-            <Eyebrow variant="script" className="text-gold-600">
+            <Eyebrow variant="script" className="text-gold-400">
               Reels from the ground
             </Eyebrow>
-            <h2 className="editorial-heading max-w-2xl text-[clamp(2.25rem,4.4vw,3.75rem)] leading-[1.04] text-navy-900">
+            <h2 className="editorial-heading max-w-2xl text-[clamp(2.25rem,4.4vw,3.75rem)] leading-[1.04] text-white">
               Hear it from the people who play here.
             </h2>
-            <p className="max-w-xl text-[17px] text-[#4A5470]">
+            <p className="max-w-xl text-[17px] text-white/70">
               Cricketers and personalities on what makes Ballpark different. Tap a reel to
               watch.
             </p>
@@ -107,7 +107,7 @@ export function ReelsSection({
         {/* Below the rail */}
         <div className="mx-auto mt-6 flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-5">
           {canScroll ? (
-            <span className="text-sm text-[#4A5470] md:hidden">
+            <span className="text-sm text-white/70 md:hidden">
               ↔ Swipe or use the arrows to see more
             </span>
           ) : (
@@ -118,7 +118,7 @@ export function ReelsSection({
               href={channelUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="ml-auto inline-flex items-center gap-1.5 text-sm font-medium text-navy-900 hover:text-[#8A6510]"
+              className="ml-auto inline-flex items-center gap-1.5 text-sm font-medium text-white hover:text-gold-400"
             >
               Watch more on our YouTube channel <ArrowUpRight className="size-4" />
             </a>
@@ -145,7 +145,7 @@ function ReelArrow({
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="grid size-[52px] place-items-center rounded-full border border-[#C9C1AC] text-navy-900 transition-colors hover:bg-navy-900 hover:text-cream-100"
+      className="grid size-[52px] place-items-center rounded-full border border-white/25 text-white transition-colors hover:bg-white hover:text-navy-900"
     >
       {children}
     </button>
@@ -175,7 +175,7 @@ function ReelButton({
         })
       }
       aria-label={label}
-      className="group relative block h-[441px] w-[248px] overflow-hidden rounded-[18px] bg-navy-900 text-left"
+      className="group relative block h-[441px] w-[248px] overflow-hidden rounded-[18px] bg-navy-900 text-left ring-1 ring-white/10"
     >
       <Image
         src={reel.poster}

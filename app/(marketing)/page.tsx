@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { CalendarPlus, ArrowUpRight } from "lucide-react";
+import { CalendarPlus, ArrowUpRight, MapPin } from "lucide-react";
 import {
   InstagramIcon,
   LinkedInIcon,
@@ -120,20 +120,32 @@ export default async function HomePage() {
       <SeasonEventsJsonLd settings={settings} />
 
       {/* ========================= HERO ========================= */}
-      <section className="relative h-svh min-h-[640px] w-full overflow-hidden bg-navy-950">
-        <Image
-          src={leagueConfig.logos.hero}
-          alt="A corporate cricket ground at dusk under floodlights"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-center"
-        />
-        <div className="absolute inset-0 bg-gradient-to-tr from-navy-950/90 via-navy-950/40 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-navy-950/90 via-transparent to-transparent" />
+      <section className="relative w-full overflow-hidden bg-navy-950 sm:h-svh sm:min-h-[640px]">
+        {/* Hero image — a contained block on mobile, full-bleed behind the copy on desktop */}
+        <div className="relative h-[40vh] min-h-[240px] w-full sm:absolute sm:inset-0 sm:h-full sm:min-h-0">
+          <Image
+            src={leagueConfig.logos.hero}
+            alt={`${site.name} — The Ballpark`}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-center"
+          />
+          {/* Mobile: keep the photo clear; only the bottom sliver fades into the navy content below */}
+          <div
+            className="absolute inset-0 sm:hidden"
+            style={{
+              backgroundImage:
+                "linear-gradient(to top, #07142e 0%, rgba(7,20,46,0.55) 14%, transparent 38%)",
+            }}
+          />
+          {/* Desktop: full-bleed darkening so the overlaid copy stays legible */}
+          <div className="absolute inset-0 hidden bg-gradient-to-t from-navy-950/90 via-navy-950/40 to-transparent sm:block" />
+          <div className="absolute inset-0 hidden bg-gradient-to-tr from-navy-950/90 via-navy-950/40 to-transparent sm:block" />
+        </div>
 
-        <div className="relative z-10 mx-auto flex h-full max-w-6xl flex-col px-5 pt-24 pb-8 sm:pt-28">
-          {/* top row — crest + registration status */}
+        <div className="relative z-10 mx-auto flex max-w-6xl flex-col px-5 pb-12 pt-6 sm:h-full sm:pt-24 sm:pb-8">
+          {/* top row — registration status + crest (crest hidden on mobile; it's in the header) */}
           <div className="flex items-start justify-between gap-4">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 backdrop-blur">
               <span
@@ -150,24 +162,27 @@ export default async function HomePage() {
               width={260}
               height={272}
               priority
-              className="h-20 w-auto drop-shadow-[0_8px_30px_rgba(0,0,0,0.45)] sm:h-28"
+              className="hidden h-20 w-auto drop-shadow-[0_8px_30px_rgba(0,0,0,0.45)] sm:block sm:h-28"
             />
           </div>
 
-          {/* giant wordmark */}
-          <div className="mt-6 flex flex-1 flex-col items-center justify-center text-center sm:items-end sm:justify-start sm:text-right">
-            <Eyebrow className="text-white/80">
-              {site.name} · {site.season}
-            </Eyebrow>
-            <DisplayWordmark className="mt-2 text-[clamp(4.5rem,20vw,14rem)] text-white">
-              {site.shortName}
-            </DisplayWordmark>
-          </div>
-
-          {/* bottom row */}
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-            <div className="max-w-md">
-              <div className="flex flex-wrap items-center gap-3">
+          {/* main hero copy — below the image on mobile, anchored lower-left on desktop */}
+          <div className="mt-8 flex flex-col gap-8 sm:mt-auto sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex max-w-3xl flex-col items-start text-left lg:max-w-none">
+              <h1 className="font-heading text-[clamp(2.25rem,4.2vw,3.5rem)] font-semibold leading-[1.05] tracking-tight text-white lg:whitespace-nowrap">
+                {site.name}
+              </h1>
+              <span aria-hidden className="mt-6 h-1 w-24 rounded-full bg-gold-400" />
+              <p className="eyebrow mt-5 text-white/80">
+                {site.tagline} · {site.season}
+              </p>
+              {site.venue.full && (
+                <p className="mt-3 inline-flex items-center gap-2 text-white/75">
+                  <MapPin className="size-4 shrink-0 text-gold-400" aria-hidden />
+                  <span className="text-sm">{site.venue.full}</span>
+                </p>
+              )}
+              <div className="mt-8 flex flex-wrap items-center gap-3">
                 <RollButton href="/register" variant="gold">
                   {open ? "Register Now" : "View Teams"}
                 </RollButton>
@@ -175,14 +190,10 @@ export default async function HomePage() {
                   <CountdownChip target={nextDate.iso} label="Closes in" />
                 )}
               </div>
-              <p className="eyebrow mt-4 max-w-sm text-white/75">
-                Corporate professionals. A real player auction. Real teams. Play the
-                most competitive corporate T20 league around.
-              </p>
             </div>
 
             {heroSocials.length > 0 && (
-              <div className="flex gap-2.5">
+              <div className="hidden gap-2.5 sm:flex">
                 {heroSocials.map(({ label, href, Icon }) => (
                   <a
                     key={label}
@@ -212,7 +223,7 @@ export default async function HomePage() {
             "WHERE CORPORATE CRICKET BEGINS.",
           ].map((t) => (
             <span key={t} className="inline-flex items-center">
-              <span className="display-wordmark px-5 text-2xl text-white/90 sm:text-3xl">
+              <span className="display-wordmark px-5 text-base text-white/90 sm:text-lg">
                 {t}
               </span>
               <BallGlyph className="text-gold-400" />
@@ -222,11 +233,11 @@ export default async function HomePage() {
       </section>
 
       {/* ========================= ABOUT ========================= */}
-      <section id="about" className="scroll-mt-24 bg-white">
+      <section id="about" className="scroll-mt-24 bg-navy-950 text-white">
         <div className="mx-auto max-w-6xl px-5 py-20 sm:py-28">
           <Reveal className="flex flex-col gap-6">
-            <Eyebrow variant="script" className="text-gold-600">Corporate cricket, done right</Eyebrow>
-            <h2 className="editorial-heading max-w-3xl text-4xl text-ink-900 sm:text-5xl">
+            <Eyebrow variant="script" className="text-gold-400">Corporate cricket, done right</Eyebrow>
+            <h2 className="editorial-heading max-w-3xl text-4xl text-white sm:text-5xl">
               We&apos;re bringing working professionals together—across companies,
               roles and playing styles.
             </h2>
@@ -235,21 +246,21 @@ export default async function HomePage() {
           {leagueConfig.companies.length > 0 && (
             <Reveal className="mt-8 flex flex-wrap gap-2">
               {leagueConfig.companies.map((c) => (
-                <Chip key={c} className="border-navy-900/15 text-navy-900">
+                <Chip key={c} className="border-white/20 text-white">
                   {c}
                 </Chip>
               ))}
             </Reveal>
           )}
 
-          <div className="mt-12 flex flex-col items-start justify-between gap-6 border-t border-navy-900/10 pt-8 sm:flex-row sm:items-center">
-            <span className="eyebrow text-muted-ink">
+          <div className="mt-12 flex flex-col items-start justify-between gap-6 border-t border-white/10 pt-8 sm:flex-row sm:items-center">
+            <span className="eyebrow text-white/60">
               One league. Every industry. Pure competition.
             </span>
             {registeredCount >= 50 && (
               <AvatarStack count={registeredCount} label="players in the pool" />
             )}
-            <span className="eyebrow text-muted-ink">/ {site.season} · 2027</span>
+            <span className="eyebrow text-white/60">/ {site.season} · 2027</span>
           </div>
         </div>
       </section>
@@ -258,7 +269,7 @@ export default async function HomePage() {
       <FoundersSection />
 
       {/* ========================= FORMAT ========================= */}
-      <section id="format" className="scroll-mt-24 bg-navy-900 text-white">
+      <section id="format" className="scroll-mt-24 bg-navy-950 text-white">
         <div className="mx-auto max-w-6xl px-5 py-20 sm:py-28">
           <div className="flex flex-col gap-10 lg:flex-row lg:justify-between">
             <div className="lg:max-w-sm">
@@ -514,13 +525,13 @@ export default async function HomePage() {
 
       {/* ========================= SPONSORS ========================= */}
       {sponsors.length > 0 && (
-        <section className="border-y border-navy-900/10 bg-white py-12">
+        <section className="border-y border-white/10 bg-navy-950 py-12">
           <div className="mx-auto max-w-6xl px-5">
             <div className="mb-6 flex items-center justify-between">
-              <Eyebrow variant="script" className="text-gold-600">Our partners</Eyebrow>
+              <Eyebrow variant="script" className="text-gold-400">Our partners</Eyebrow>
               <Link
                 href="/sponsors"
-                className="text-sm font-medium text-navy-700 hover:text-gold-600"
+                className="text-sm font-medium text-white/70 hover:text-gold-400"
               >
                 Become a sponsor
               </Link>
@@ -568,7 +579,7 @@ export default async function HomePage() {
 
       {/* ========================= FAQ ========================= */}
       {faqItems.length > 0 && (
-        <section id="faq" className="scroll-mt-24 bg-white">
+        <section id="faq" className="scroll-mt-24 bg-cream-100">
           <div className="mx-auto max-w-3xl px-5 py-20 sm:py-28">
             <Eyebrow variant="script" className="text-gold-600">
               Good to know
@@ -600,7 +611,7 @@ export default async function HomePage() {
 function TeamRevealCard({ featured = false }: { featured?: boolean }) {
   return (
     <div
-      className={`group relative flex items-end overflow-hidden rounded-2xl border border-navy-900/10 bg-navy-900 ${
+      className={`group relative flex items-end overflow-hidden rounded-2xl border border-navy-900/10 bg-navy-950 ${
         featured ? "min-h-[20rem] md:row-span-2" : "min-h-[9.5rem]"
       }`}
     >

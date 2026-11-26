@@ -246,7 +246,7 @@ function GalleryTile({
       type="button"
       onClick={onOpen}
       aria-label={`View photo: ${photo.alt}`}
-      className={`group relative flex items-end overflow-hidden rounded-2xl border border-navy-900/10 bg-navy-900 text-left ${className ?? ""}`}
+      className={`group relative flex items-end overflow-hidden rounded-2xl border border-navy-900/10 bg-navy-950 text-left ${className ?? ""}`}
     >
       <Image
         src={photo.src}

@@ -144,13 +144,13 @@ export default async function BallparkPage() {
 
       {/* ===================== 2. FACILITIES ===================== */}
       {facts.length > 0 && (
-        <section className="bg-white">
+        <section className="bg-navy-950 text-white">
           <div className="mx-auto max-w-6xl px-5 py-20 sm:py-24">
             <Reveal className="mb-10 flex flex-col gap-3">
-              <Eyebrow variant="script" className="text-gold-600">
+              <Eyebrow variant="script" className="text-gold-400">
                 The facilities
               </Eyebrow>
-              <h2 className="editorial-heading text-4xl text-navy-900 sm:text-5xl">
+              <h2 className="editorial-heading text-4xl text-white sm:text-5xl">
                 Built for serious cricket.
               </h2>
             </Reveal>
@@ -183,7 +183,7 @@ export default async function BallparkPage() {
 
       {/* ===================== 5. CLIENTS ===================== */}
       {clients.length > 0 && (
-        <section className="bg-white">
+        <section className="bg-cream-100">
           <div className="mx-auto max-w-6xl px-5 py-16 sm:py-20">
             <Reveal className="mb-10 flex flex-col gap-3">
               <Eyebrow variant="script" className="text-gold-600">
@@ -214,7 +214,7 @@ export default async function BallparkPage() {
                     href={enquireHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 rounded-full bg-navy-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-navy-700"
+                    className="inline-flex items-center gap-2 rounded-full bg-navy-950 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-navy-700"
                   >
                     <MessageCircle className="size-4" /> WhatsApp
                   </a>

@@ -101,7 +101,7 @@ export default async function RegisterPage() {
                 Registration and the player auction are complete. Head over to the
                 franchises to see every team&apos;s line-up for {site.season}.
               </p>
-              <Link href="/franchises" className="inline-flex items-center gap-1.5 rounded-full bg-navy-900 px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90">
+              <Link href="/franchises" className="inline-flex items-center gap-1.5 rounded-full bg-navy-950 px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90">
                 View Teams <ArrowUpRight className="size-4" />
               </Link>
             </div>

@@ -145,11 +145,10 @@ export const leagueConfig: LeagueConfig = {
     },
   ],
   venue: {
-    // TODO: fill in the real venue once confirmed.
-    name: "Venue TBD",
+    name: "The Ballpark",
     area: "",
     city: "",
-    full: "Venue to be announced",
+    full: "The Ballpark",
   },
   // TODO: point this at the real production domain and keep it in sync with the
   // Vercel Production domain + NEXT_PUBLIC_SITE_URL.
@@ -163,7 +162,7 @@ export const leagueConfig: LeagueConfig = {
     email: "/brand/bpccl-logo.png",
     bigScreenBackground: "/auction-bg.png",
     poolsBackground: "/pool-bg.png",
-    hero: "/images/hero.webp",
+    hero: "/hero-sky.jpg",
     ground: "/ground.png",
   },
   // TODO: fill these in. Empty strings/arrays are hidden in the UI.
