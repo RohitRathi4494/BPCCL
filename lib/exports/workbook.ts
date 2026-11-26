@@ -125,6 +125,7 @@ type SquadMemberRow = {
     jersey_name: string | null;
     tshirt_size: string | null;
     lower_size: string | null;
+    sleeve_type: string | null;
   } | null;
 };
 
@@ -135,7 +136,7 @@ async function fetchSquadMembers(supabase: AnyClient): Promise<SquadMemberRow[]>
       "acquisition_type, display_as_owner, category_at_acquisition, price, created_at, " +
         "franchises(name, short_code), " +
         "players(full_name, registration_code, assigned_category, age, phone, " +
-        "jersey_number, jersey_name, tshirt_size, lower_size)",
+        "jersey_number, jersey_name, tshirt_size, lower_size, sleeve_type)",
     )
     .order("created_at", { ascending: true });
   if (error) throw new Error(error.message);
@@ -201,6 +202,7 @@ async function addRegistrationsSheet(wb: ExcelJS.Workbook, supabase: AnyClient) 
     jersey_name: asText(p.jersey_name),
     tshirt_size: asText(p.tshirt_size),
     lower_size: asText(p.lower_size),
+    sleeve_type: asText(p.sleeve_type),
     locality: asText(p.locality),
     company: asText(p.company),
     work_email: asText(p.work_email),
@@ -241,6 +243,7 @@ async function addRegistrationsSheet(wb: ExcelJS.Workbook, supabase: AnyClient) 
       { header: "Jersey Name", key: "jersey_name", width: 18 },
       { header: "T-Shirt", key: "tshirt_size", width: 10 },
       { header: "Lower", key: "lower_size", width: 10 },
+      { header: "Sleeves", key: "sleeve_type", width: 12 },
       { header: "Locality", key: "locality", width: 18 },
       { header: "Company", key: "company", width: 20 },
       { header: "Work Email", key: "work_email", width: 26 },
@@ -345,6 +348,7 @@ function squadRows(members: SquadMemberRow[]) {
     jersey_name: asText(m.players?.jersey_name),
     tshirt_size: asText(m.players?.tshirt_size),
     lower_size: asText(m.players?.lower_size),
+    sleeve_type: asText(m.players?.sleeve_type),
     locked_at: asText(m.created_at),
   }));
 }
@@ -355,6 +359,7 @@ const JERSEY_COLUMNS: ColumnDef[] = [
   { header: "Jersey Name", key: "jersey_name", width: 18 },
   { header: "T-Shirt", key: "tshirt_size", width: 10 },
   { header: "Lower", key: "lower_size", width: 10 },
+  { header: "Sleeves", key: "sleeve_type", width: 12 },
 ];
 
 const SQUAD_COLUMNS: ColumnDef[] = [

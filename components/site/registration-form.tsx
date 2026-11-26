@@ -20,6 +20,7 @@ import {
   TSHIRT_SIZES,
   LOWER_SIZES,
   OTHER_SIZE,
+  SLEEVE_TYPES,
   MIN_AGE,
   MAX_AGE,
   ROLE_GROUPS,
@@ -63,6 +64,7 @@ type FormValues = {
   tshirt_size_other: string;
   lower_size: string;
   lower_size_other: string;
+  sleeve_type: string;
   jersey_number: string;
   jersey_name: string;
   payment_utr: string;
@@ -74,6 +76,7 @@ const EMPTY_VALUES: FormValues = {
   full_name: "", dob: "", phone: "", email: "", company: "", work_email: "",
   photo_url: "", cricheroes_url: "", linkedin_url: "", roles: [],
   tshirt_size: "", tshirt_size_other: "", lower_size: "", lower_size_other: "",
+  sleeve_type: "",
   jersey_number: "", jersey_name: "", payment_utr: "", data_consent: false,
   ...EMPTY_STATS,
 };
@@ -84,7 +87,7 @@ const DRAFT_KEY = "bpccl-reg-draft";
 const STEPS = [
   { n: 1, label: "Personal" },
   { n: 2, label: "Cricket" },
-  { n: 3, label: "Kit" },
+  { n: 3, label: "Jersey" },
   { n: 4, label: "Docs & Pay" },
   { n: 5, label: "Review" },
 ] as const;
@@ -93,7 +96,7 @@ const STEPS = [
 const STEP_KEYS: Record<number, string[]> = {
   1: ["full_name", "dob", "phone", "email", "company", "work_email", "linkedin_url"],
   2: ["roles", "cricheroes_url", ...STAT_FIELDS.map((f) => f.key)],
-  3: ["tshirt_size", "lower_size", "jersey_number", "jersey_name"],
+  3: ["tshirt_size", "lower_size", "sleeve_type", "jersey_number", "jersey_name"],
   4: ["photo_url", "aadhaar_doc_key", "payment_utr", "payment_screenshot_key", "data_consent"],
 };
 
@@ -122,6 +125,7 @@ function validate(v: FormValues, hasAadhaar: boolean, hasPayment: boolean): Reco
   const sizeOk = (sel: string, other: string) => (sel === OTHER_SIZE ? other.trim().length > 0 : sel.length > 0);
   if (!sizeOk(v.tshirt_size, v.tshirt_size_other)) e.tshirt_size = "Please select a size.";
   if (!sizeOk(v.lower_size, v.lower_size_other)) e.lower_size = "Please select a size.";
+  if (!v.sleeve_type) e.sleeve_type = "Please pick a sleeve type.";
   if (!v.jersey_number.trim()) e.jersey_number = "Enter your jersey number.";
   else if (!/^\d{1,3}$/.test(v.jersey_number)) e.jersey_number = "Jersey number must be 1–3 digits.";
   if (!v.jersey_name.trim()) e.jersey_name = "Enter the name for your jersey.";
@@ -175,6 +179,9 @@ export function RegistrationForm({
   const [confirmDuplicate, setConfirmDuplicate] = useState(false);
   const [copied, setCopied] = useState<"upi" | "code" | null>(null);
   const [draftLoaded, setDraftLoaded] = useState(false);
+  // Client-side submit error (e.g. the on-submit private-doc upload failing),
+  // surfaced so a failed submit is never a silent dead-end on the Review step.
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Load the saved draft (text fields only) once on mount. Deferred out of the
   // effect body so it isn't a synchronous setState-in-effect.
@@ -302,6 +309,7 @@ export function RegistrationForm({
     s("tshirt_size_other", values.tshirt_size_other);
     s("lower_size", values.lower_size);
     s("lower_size_other", values.lower_size_other);
+    s("sleeve_type", values.sleeve_type);
     s("jersey_number", values.jersey_number);
     s("jersey_name", values.jersey_name);
     s("payment_utr", values.payment_utr);
@@ -324,12 +332,23 @@ export function RegistrationForm({
       if (firstStep) setStep(firstStep);
       return;
     }
+    setSubmitError(null);
     setUploading(true);
     // Reuse keys if already uploaded (e.g. the duplicate-confirm re-submit).
     const aKey = docKeys.aadhaar || (await aadhaarRef.current!.upload());
     const pKey = aKey ? docKeys.payment || (await paymentRef.current!.upload()) : null;
     setUploading(false);
-    if (!aKey || !pKey) return;
+    if (!aKey || !pKey) {
+      // The upload (direct-to-storage PUT) failed — surface it instead of
+      // silently returning, and jump to the Docs step where the per-file error
+      // is shown so the user isn't stranded on Review with no feedback.
+      setSubmitError(
+        "We couldn't upload your documents. Please check your connection and try submitting again. If it keeps failing, contact us.",
+      );
+      setStep(4);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
     setDocKeys({ aadhaar: aKey, payment: pKey });
     submit(aKey, pKey, confirmDuplicate);
   }
@@ -443,6 +462,9 @@ export function RegistrationForm({
       {state.status === "error" && state.message && (
         <p className="rounded-lg border border-ball-red/30 bg-ball-red/5 px-4 py-3 text-sm text-ball-red">{state.message}</p>
       )}
+      {submitError && (
+        <p className="rounded-lg border border-ball-red/30 bg-ball-red/5 px-4 py-3 text-sm text-ball-red">{submitError}</p>
+      )}
       {state.status === "duplicate" && (
         <div className="flex items-start gap-3 rounded-lg border border-gold-600/40 bg-gold-400/10 px-4 py-3">
           <AlertTriangle className="mt-0.5 size-4 shrink-0 text-gold-600" />
@@ -533,7 +555,7 @@ export function RegistrationForm({
 
       {/* STEP 3 — Kit */}
       {stepPanel(3, <>
-        <h3 className="editorial-heading text-2xl text-navy-900">Kit &amp; jersey</h3>
+        <h3 className="editorial-heading text-2xl text-navy-900">Jersey Details</h3>
         <div className="grid gap-8 lg:grid-cols-[1fr_auto]">
           <div className="grid gap-5 sm:grid-cols-2">
             <Field label="T-Shirt Size" htmlFor="tshirt_size" required error={err("tshirt_size")}>
@@ -556,6 +578,21 @@ export function RegistrationForm({
                 {values.lower_size === OTHER_SIZE && (<input value={values.lower_size_other} onChange={set("lower_size_other")} className={fieldClass} placeholder="Enter your size" />)}
               </div>
             </Field>
+            <div className="sm:col-span-2">
+              <Field label="Sleeve Type" htmlFor="sleeve_type" required error={err("sleeve_type")}>
+                <div className="grid grid-cols-2 gap-2">
+                  {SLEEVE_TYPES.map((s) => {
+                    const checked = values.sleeve_type === s;
+                    return (
+                      <label key={s} className={cn("flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2.5 text-sm transition-colors", checked ? "border-navy-700 bg-navy-700/5 text-navy-900" : "border-navy-900/15 text-ink-900 hover:border-navy-700/40")}>
+                        <input type="radio" name="sleeve_type" checked={checked} onChange={set("sleeve_type")} value={s} className="size-4 shrink-0 accent-navy-700" />
+                        {s}
+                      </label>
+                    );
+                  })}
+                </div>
+              </Field>
+            </div>
             <Field label="Number on Jersey" htmlFor="jersey_number" required error={err("jersey_number")}>
               <input id="jersey_number" inputMode="numeric" maxLength={3} value={values.jersey_number} onChange={set("jersey_number")} className={fieldClass} placeholder="e.g. 7" />
             </Field>
@@ -637,9 +674,10 @@ export function RegistrationForm({
         <ReviewBlock title="Cricket" onEdit={() => goEdit(2)} rows={[
           ["Roles", values.roles.join(", ")], ["CricHeroes", values.cricheroes_url],
         ]} />
-        <ReviewBlock title="Kit" onEdit={() => goEdit(3)} rows={[
+        <ReviewBlock title="Jersey Details" onEdit={() => goEdit(3)} rows={[
           ["T-Shirt", values.tshirt_size === OTHER_SIZE ? values.tshirt_size_other : values.tshirt_size],
           ["Lower", values.lower_size === OTHER_SIZE ? values.lower_size_other : values.lower_size],
+          ["Sleeves", values.sleeve_type],
           ["Jersey", `${values.jersey_name} · ${values.jersey_number}`],
         ]} />
         <ReviewBlock title="Documents & Payment" onEdit={() => goEdit(4)} rows={[

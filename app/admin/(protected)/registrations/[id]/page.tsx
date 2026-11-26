@@ -118,6 +118,7 @@ export default async function ReviewPlayerPage({
               <EditAgeForm playerId={player.id} age={player.age} />
               <Detail label="T-Shirt Size" value={player.tshirt_size} />
               <Detail label="Lower Size" value={player.lower_size} />
+              <Detail label="Sleeve Type" value={player.sleeve_type} />
               <Detail label="Jersey Number" value={player.jersey_number} />
               <Detail label="Jersey Name" value={player.jersey_name} />
               <Detail

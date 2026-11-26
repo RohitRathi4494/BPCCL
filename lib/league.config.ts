@@ -122,7 +122,7 @@ export const leagueConfig: LeagueConfig = {
   // the Founders section entirely.
   founders: [
     {
-      name: "Aashish Kapur",
+      name: "Ashish Kapur",
       role: "Founder",
       // TODO: replace with Aashish's own words.
       message:

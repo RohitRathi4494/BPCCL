@@ -89,6 +89,7 @@ function PlayerDetails({ p }: { p: Player }) {
         <Field label="Age" value={p.age} />
         <Field label="T-Shirt Size" value={p.tshirt_size} />
         <Field label="Lower Size" value={p.lower_size} />
+        <Field label="Sleeve Type" value={p.sleeve_type} />
         <Field label="Jersey Number" value={p.jersey_number} />
         <Field label="Jersey Name" value={p.jersey_name} />
         <Field

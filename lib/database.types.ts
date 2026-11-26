@@ -874,6 +874,7 @@ export type Database = {
           lower_size: string | null
           matches_played: string | null
           medical_injury: string | null
+          sleeve_type: string | null
           phone: string
           photo_url: string | null
           preferred_category: string | null
@@ -927,6 +928,7 @@ export type Database = {
           lower_size?: string | null
           matches_played?: string | null
           medical_injury?: string | null
+          sleeve_type?: string | null
           phone: string
           photo_url?: string | null
           preferred_category?: string | null
@@ -980,6 +982,7 @@ export type Database = {
           lower_size?: string | null
           matches_played?: string | null
           medical_injury?: string | null
+          sleeve_type?: string | null
           phone?: string
           photo_url?: string | null
           preferred_category?: string | null

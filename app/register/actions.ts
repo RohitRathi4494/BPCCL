@@ -7,6 +7,7 @@ import {
   TSHIRT_SIZES,
   LOWER_SIZES,
   OTHER_SIZE,
+  SLEEVE_TYPES,
   PLAYER_ROLES,
   STAT_FIELDS,
   DEFAULT_REGISTRATION_FEE,
@@ -152,6 +153,11 @@ export async function submitRegistration(
   const lower = resolveSize(get("lower_size"), get("lower_size_other"), LOWER_SIZES);
   if (lower.error) errors.lower_size = lower.error;
 
+  const sleeve_type = get("sleeve_type");
+  if (!sleeve_type) errors.sleeve_type = "Please pick a sleeve type.";
+  else if (!(SLEEVE_TYPES as readonly string[]).includes(sleeve_type))
+    errors.sleeve_type = "Pick a valid sleeve type.";
+
   if (!jersey_number) errors.jersey_number = "Enter your jersey number.";
   else if (!/^\d{1,3}$/.test(jersey_number))
     errors.jersey_number = "Jersey number must be 1–3 digits.";
@@ -229,6 +235,7 @@ export async function submitRegistration(
     linkedin_url,
     tshirt_size: tshirt.value,
     lower_size: lower.value,
+    sleeve_type,
     jersey_number,
     jersey_name,
     roles,

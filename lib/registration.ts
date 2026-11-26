@@ -116,6 +116,8 @@ export function ageBucketOf(age: number | null | undefined): AgeBucketKey | null
 export const TSHIRT_SIZES = ["36", "38", "40", "42", "44", "46"] as const;
 export const LOWER_SIZES = ["30", "32", "34", "36", "38"] as const;
 export const OTHER_SIZE = "Other";
+/** Jersey sleeve preference. */
+export const SLEEVE_TYPES = ["Half Sleeves", "Full Sleeves"] as const;
 
 /** Fallback registration fee (₹) if league_settings can't be read. */
 export const DEFAULT_REGISTRATION_FEE = 3000;
