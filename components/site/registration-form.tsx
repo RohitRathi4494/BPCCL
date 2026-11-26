@@ -184,7 +184,17 @@ export function RegistrationForm({
         const raw = localStorage.getItem(DRAFT_KEY);
         if (raw) {
           const saved = JSON.parse(raw) as Partial<FormValues>;
-          setValues((v) => ({ ...v, ...saved, photo_url: "" }));
+          // Never restore files or contact/payment PII, even from a draft that
+          // predates the no-PII change above (defence against a stale draft).
+          setValues((v) => ({
+            ...v,
+            ...saved,
+            photo_url: "",
+            phone: "",
+            email: "",
+            work_email: "",
+            payment_utr: "",
+          }));
         }
       } catch {}
       setDraftLoaded(true);
@@ -192,12 +202,22 @@ export function RegistrationForm({
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  // Persist the draft (never files) whenever values change.
+  // Persist the draft (never files) whenever values change. Contact / payment
+  // PII is deliberately NOT persisted: the draft lives in the browser, so on a
+  // shared or public device it must never carry one person's phone/email/UTR
+  // into the next person's form.
   useEffect(() => {
     if (!draftLoaded) return;
     try {
-      const { photo_url: _p, ...rest } = values;
-      void _p;
+      const {
+        photo_url: _p,
+        phone: _ph,
+        email: _em,
+        work_email: _we,
+        payment_utr: _utr,
+        ...rest
+      } = values;
+      void _p; void _ph; void _em; void _we; void _utr;
       localStorage.setItem(DRAFT_KEY, JSON.stringify(rest));
     } catch {}
   }, [values, draftLoaded]);
@@ -208,6 +228,15 @@ export function RegistrationForm({
       try { localStorage.removeItem(DRAFT_KEY); } catch {}
     }
   }, [state.status]);
+
+  // Surface a server-side error/duplicate result: scroll the banner (rendered at
+  // the top of the form) into view, so a failed submit from the Review step
+  // never looks like the button silently "stuck".
+  useEffect(() => {
+    if (state.status === "error" || state.status === "duplicate") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [state]);
 
   const set =
     (key: keyof FormValues) =>
@@ -384,7 +413,7 @@ export function RegistrationForm({
   );
 
   return (
-    <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-8">
+    <form onSubmit={(e) => e.preventDefault()} autoComplete="off" className="flex flex-col gap-8">
       {/* Progress */}
       <div>
         <div className="flex items-center justify-between">
@@ -435,26 +464,26 @@ export function RegistrationForm({
         <h3 className="editorial-heading text-2xl text-navy-900">Personal details</h3>
         <div className="grid gap-5 sm:grid-cols-2">
           <Field label="Full Name" htmlFor="full_name" required error={err("full_name")}>
-            <input id="full_name" value={values.full_name} onChange={set("full_name")} className={fieldClass} placeholder="Your full name" />
+            <input id="full_name" autoComplete="off" value={values.full_name} onChange={set("full_name")} className={fieldClass} placeholder="Your full name" />
           </Field>
           <Field label="Date of Birth" htmlFor="dob" required error={err("dob")} hint={`Open to players aged ${MIN_AGE}+ (as of 1 Jan 2027)`}>
             <input id="dob" type="date" value={values.dob} onChange={set("dob")} className={cn(fieldClass, "appearance-none")} />
           </Field>
           <Field label="Contact Number" htmlFor="phone" required error={err("phone")}>
-            <input id="phone" type="tel" inputMode="tel" value={values.phone} onChange={set("phone")} className={fieldClass} placeholder="10-digit mobile" />
+            <input id="phone" type="tel" inputMode="tel" autoComplete="off" value={values.phone} onChange={set("phone")} className={fieldClass} placeholder="10-digit mobile" />
           </Field>
           <Field label="Email ID" htmlFor="email" required error={err("email")}>
-            <input id="email" type="email" inputMode="email" value={values.email} onChange={set("email")} className={fieldClass} placeholder="you@email.com" />
+            <input id="email" type="email" inputMode="email" autoComplete="off" value={values.email} onChange={set("email")} className={fieldClass} placeholder="you@email.com" />
           </Field>
           <Field label="Company" htmlFor="company" required error={err("company")}>
-            <input id="company" value={values.company} onChange={set("company")} className={fieldClass} placeholder="Where you work" />
+            <input id="company" autoComplete="off" value={values.company} onChange={set("company")} className={fieldClass} placeholder="Where you work" />
           </Field>
           <Field label="Work Email" htmlFor="work_email" required error={err("work_email")} hint="Prefer your company email; a personal email is fine.">
-            <input id="work_email" type="email" inputMode="email" value={values.work_email} onChange={set("work_email")} className={fieldClass} placeholder="you@company.com" />
+            <input id="work_email" type="email" inputMode="email" autoComplete="off" value={values.work_email} onChange={set("work_email")} className={fieldClass} placeholder="you@company.com" />
           </Field>
           <div className="sm:col-span-2">
             <Field label="LinkedIn Profile Link" htmlFor="linkedin_url" required error={err("linkedin_url")}>
-              <input id="linkedin_url" value={values.linkedin_url} onChange={set("linkedin_url")} className={fieldClass} placeholder="linkedin.com/in/…" />
+              <input id="linkedin_url" autoComplete="off" value={values.linkedin_url} onChange={set("linkedin_url")} className={fieldClass} placeholder="linkedin.com/in/…" />
             </Field>
           </div>
         </div>
