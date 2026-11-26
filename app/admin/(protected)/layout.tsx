@@ -29,6 +29,7 @@ const adminNav: AdminNavGroup[] = [
     ],
   },
   { label: "Ground & Trust", href: "/admin/ground" },
+  { label: "Legends & Reels", href: "/admin/showcase" },
   { label: "Exports", href: "/admin/exports" },
   {
     label: "Season",

@@ -4,7 +4,6 @@ import { Eyebrow, RollButton } from "@/components/site/primitives";
 import { Reveal } from "@/components/site/reveal";
 import { GroundHero } from "@/components/site/ground-hero";
 import { MediaGallery } from "@/components/site/media-gallery";
-import { TestimonialsRow } from "@/components/site/testimonials-row";
 import { ClientWall } from "@/components/site/client-logos";
 import { FactsGrid } from "@/components/site/ground-facts";
 import { MapEmbed } from "@/components/site/map-embed";
@@ -15,6 +14,10 @@ import {
   getGroundFacts,
   getClients,
 } from "@/lib/queries/ground";
+import { getVisibleLegends } from "@/lib/queries/legends";
+import { getVisibleReels } from "@/lib/queries/reels";
+import { LegendsSection } from "@/components/site/legends-section";
+import { ReelsSection } from "@/components/site/reels-section";
 import { publicStorageConfigured, publicObjectUrl } from "@/lib/storage";
 import { whatsappLink, telLink, mapsEmbedSrc } from "@/lib/ground/contact";
 import { leagueConfig } from "@/lib/league.config";
@@ -43,19 +46,19 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function BallparkPage() {
-  const [settings, photos, groundVideos, testimonialVideos, facts, clients] = await Promise.all([
+  const [settings, photos, groundVideos, facts, clients, legends, reels] = await Promise.all([
     getLeagueSettings(),
     getGroundPhotos("ground"),
     getGroundVideos("ground"),
-    getGroundVideos("testimonial", 10),
     getGroundFacts(),
     getClients(),
+    getVisibleLegends(),
+    getVisibleReels(),
   ]);
 
   const tagline = settings?.ground_tagline?.trim() || DEFAULT_TAGLINE;
   const groundName = settings?.ground_name?.trim() || null;
   const address = settings?.ground_address?.trim() || null;
-  const channelUrl = settings?.youtube_channel_url?.trim() || null;
 
   const heroVideo = urlFor(settings?.hero_video_r2_key);
   const heroPoster =
@@ -176,19 +179,21 @@ export default async function BallparkPage() {
         </section>
       )}
 
-      {/* ===================== 4. VIDEOS ===================== */}
-      {testimonialVideos.length > 0 && (
-        <section id="videos" className="scroll-mt-24 bg-navy-950 text-white">
-          <div className="mx-auto max-w-6xl px-5 py-20 sm:py-24">
-            <Reveal className="mb-8 flex flex-col gap-3">
-              <Eyebrow brackets="square" className="text-gold-400">
-                FROM THE PROS
-              </Eyebrow>
-              <h2 className="editorial-heading text-4xl sm:text-5xl">Heard on the ground</h2>
-            </Reveal>
-            <TestimonialsRow videos={testimonialVideos} channelUrl={channelUrl} />
-          </div>
-        </section>
+      {/* ============ 4. LEGENDS & REELS (shared with the home page) ============
+          The same admin-managed "Legends & Reels" content shown on the home
+          page also renders here, so the venue page carries the player photos
+          and feedback reels. Gated identically to the home page: legends show
+          with 1+ visible entry, reels show once there are 3+ visible. */}
+      {legends.length > 0 && (
+        <LegendsSection
+          legends={legends}
+          alsoTrained={settings?.legends_also_trained ?? []}
+          removalEmail={settings?.removal_contact_email ?? null}
+        />
+      )}
+
+      {reels.length >= 3 && (
+        <ReelsSection reels={reels} channelUrl={settings?.youtube_channel_url ?? null} />
       )}
 
       {/* ===================== 5. CLIENTS ===================== */}

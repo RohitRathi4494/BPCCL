@@ -11,6 +11,10 @@ import { getLeagueSettings } from "@/lib/queries/settings";
 import { getSponsors } from "@/lib/queries/sponsors";
 import { getPublicFranchises } from "@/lib/queries/franchises";
 import { getVisibleFaqs } from "@/lib/queries/ground";
+import { getVisibleLegends } from "@/lib/queries/legends";
+import { getVisibleReels } from "@/lib/queries/reels";
+import { LegendsSection } from "@/components/site/legends-section";
+import { ReelsSection } from "@/components/site/reels-section";
 import { ageRuleChip } from "@/lib/ground/age";
 import { renderFaqAnswer } from "@/lib/ground/faq";
 import { SeasonEventsJsonLd } from "@/components/site/structured-data";
@@ -60,11 +64,13 @@ function icsHref(title: string, iso: string): string {
 }
 
 export default async function HomePage() {
-  const [settings, sponsors, franchises, faqs] = await Promise.all([
+  const [settings, sponsors, franchises, faqs, legends, reels] = await Promise.all([
     getLeagueSettings(),
     getSponsors(),
     getPublicFranchises(),
     getVisibleFaqs(),
+    getVisibleLegends(),
+    getVisibleReels(),
   ]);
 
   // Approved-player count (public view). Shown only when it's a meaningful
@@ -215,6 +221,20 @@ export default async function HomePage() {
           ))}
         </Marquee>
       </section>
+
+      {/* ================= LEGENDS AT BALLPARK (Section A) ================= */}
+      {legends.length > 0 && (
+        <LegendsSection
+          legends={legends}
+          alsoTrained={settings?.legends_also_trained ?? []}
+          removalEmail={settings?.removal_contact_email ?? null}
+        />
+      )}
+
+      {/* ===================== REELS (Section B) ===================== */}
+      {reels.length >= 3 && (
+        <ReelsSection reels={reels} channelUrl={settings?.youtube_channel_url ?? null} />
+      )}
 
       {/* ========================= ABOUT ========================= */}
       <section id="about" className="scroll-mt-24 bg-white">

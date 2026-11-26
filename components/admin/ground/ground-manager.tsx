@@ -81,7 +81,7 @@ export type ClientView = {
 };
 const TABS = [
   { key: "photos", label: "Photos" },
-  { key: "videos", label: "Videos" },
+  { key: "videos", label: "Ground clips" },
   { key: "clients", label: "Clients" },
 ] as const;
 type TabKey = (typeof TABS)[number]["key"];
@@ -395,8 +395,8 @@ function VideosPanel({ videos }: { videos: VideoView[] }) {
 
   return (
     <Panel
-      title="Videos"
-      description="Hand-pick YouTube videos (max 10 visible per section). Paste any YouTube link — we verify it's embeddable before saving."
+      title="Ground clips"
+      description="Short YouTube tour / facility clips for the /ballpark gallery (max 10 visible). Paste any YouTube link — we verify it's embeddable before saving. Player-feedback reels are managed under “Legends & Reels”."
       action={
         <ActionButton
           action={async () => recheckVideos()}
@@ -435,7 +435,7 @@ function AddVideoForm({ refresh }: { refresh: () => void }) {
   const [checking, startCheck] = useTransition();
   const [saving, startSave] = useTransition();
   const [fields, setFields] = useState({
-    section: "testimonial",
+    section: "ground",
     person_name: "",
     person_role: "",
     quote: "",
@@ -474,7 +474,7 @@ function AddVideoForm({ refresh }: { refresh: () => void }) {
       else {
         setUrl("");
         setPreview(null);
-        setFields({ section: "testimonial", person_name: "", person_role: "", quote: "", is_featured: false, consent_confirmed: false });
+        setFields({ section: "ground", person_name: "", person_role: "", quote: "", is_featured: false, consent_confirmed: false });
         refresh();
       }
     });
@@ -510,14 +510,6 @@ function AddVideoForm({ refresh }: { refresh: () => void }) {
               Detected as a {preview.format === "short" ? "Short (9:16)" : "normal video (16:9)"}.
             </p>
             <div className="grid gap-1.5 sm:grid-cols-2">
-              <select
-                value={fields.section}
-                onChange={(e) => setFields({ ...fields, section: e.target.value })}
-                className={fieldClass}
-              >
-                <option value="testimonial">Testimonial (player feedback)</option>
-                <option value="ground">Ground (training / facility clip)</option>
-              </select>
               <input
                 value={fields.person_name}
                 onChange={(e) => setFields({ ...fields, person_name: e.target.value })}
@@ -603,10 +595,6 @@ function VideoRow({ video, refresh }: { video: VideoView; refresh: () => void })
         </div>
         <input value={form.quote} maxLength={140} onChange={(e) => setForm({ ...form, quote: e.target.value })} placeholder="Quote (≤140)" className={fieldClass} />
         <div className="flex flex-wrap items-center gap-3 text-xs">
-          <select value={form.section} onChange={(e) => setForm({ ...form, section: e.target.value as "ground" | "testimonial" })} className="rounded-sm border border-input bg-background px-2 py-1">
-            <option value="testimonial">Testimonial</option>
-            <option value="ground">Ground</option>
-          </select>
           <select value={form.video_format} onChange={(e) => setForm({ ...form, video_format: e.target.value as "video" | "short" })} className="rounded-sm border border-input bg-background px-2 py-1">
             <option value="video">Video (16:9)</option>
             <option value="short">Short (9:16)</option>

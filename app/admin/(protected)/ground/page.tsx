@@ -74,9 +74,9 @@ export default async function AdminGroundPage() {
       <div>
         <h1 className="font-heading text-2xl font-bold text-foreground">Ground &amp; Trust</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Photos, hand-picked testimonial videos and client logos for the home page and
-          /ballpark. Nothing shows publicly until it&apos;s marked visible (and consent /
-          permission is confirmed).
+          Photos, ground tour clips and client logos for the home page and /ballpark.
+          Player-feedback reels live under &ldquo;Legends &amp; Reels&rdquo;. Nothing shows
+          publicly until it&apos;s marked visible (and consent / permission is confirmed).
         </p>
       </div>
       <GroundManager photos={photos} videos={videos} clients={clients} r2Configured={r2} />
