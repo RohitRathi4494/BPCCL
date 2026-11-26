@@ -90,7 +90,7 @@ export default async function RegisterPage() {
       </aside>
 
       {/* ---- Right form area ---- */}
-      <main className="px-5 py-10 sm:px-10 sm:py-14">
+      <main className="bg-cream-100 px-5 py-10 sm:px-10 sm:py-14">
         <div className="mx-auto max-w-3xl">
           {registrationOpen ? (
             <RegistrationForm registrationFee={fee} upiId={settings?.upi_id ?? null} upiQrUrl={settings?.upi_qr_url ?? null} />

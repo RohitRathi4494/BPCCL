@@ -123,6 +123,33 @@
   --lime-soft: var(--gold-soft);
 }
 
+/* ---------------------------------------------------------------------------
+   Dark navy theme context. Scope it to any subtree (e.g. a <section>) to flip
+   the semantic design tokens from the light base to the brand's navy surface:
+   text goes white, cards become navy-900, borders become faint white, and the
+   primary/accent roles become gold (matching the home page's navy sections +
+   gold CTAs). Pair with `bg-navy-950` on the same element.
+   -------------------------------------------------------------------------- */
+.theme-navy {
+  --background: var(--navy-950);
+  --foreground: #ffffff;
+  --card: var(--navy-900);
+  --card-foreground: #ffffff;
+  --popover: var(--navy-900);
+  --popover-foreground: #ffffff;
+  --primary: var(--gold-400);
+  --primary-foreground: var(--navy-950);
+  --secondary: var(--navy-900);
+  --secondary-foreground: #ffffff;
+  --muted: var(--navy-900);
+  --muted-foreground: rgba(255, 255, 255, 0.62);
+  --accent: var(--gold-400);
+  --accent-foreground: var(--navy-950);
+  --border: rgba(255, 255, 255, 0.12);
+  --input: rgba(255, 255, 255, 0.2);
+  --ring: var(--gold-400);
+}
+
 @layer base {
   * {
     @apply border-border;

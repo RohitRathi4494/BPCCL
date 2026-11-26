@@ -31,7 +31,7 @@ export default async function FranchisesPage() {
   return (
     <>
       {/* ---- Hero ---- */}
-      <section className="lamp-glow border-b border-border">
+      <section className="theme-navy bg-navy-950 border-b border-border">
         <div className="mx-auto max-w-6xl px-5 pt-28 pb-12 sm:pt-36">
           <span className="font-mono text-xs tracking-[0.28em] text-primary uppercase">
             The League · {site.season}
@@ -56,7 +56,7 @@ export default async function FranchisesPage() {
       </section>
 
       {/* ---- Franchise grid ---- */}
-      <section>
+      <section className="theme-navy bg-navy-950">
         <div className="mx-auto max-w-6xl px-5 py-16">
           {franchises.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground">
@@ -195,7 +195,7 @@ export default async function FranchisesPage() {
       </section>
 
       {/* ---- Closing CTA ---- */}
-      <section className="border-t border-border">
+      <section className="bg-cream-100 border-t border-border">
         <div className="mx-auto flex max-w-6xl flex-col items-start gap-6 px-5 py-16 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground uppercase sm:text-3xl">

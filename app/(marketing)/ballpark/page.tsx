@@ -56,11 +56,15 @@ export default async function BallparkPage() {
   const address = settings?.ground_address?.trim() || null;
 
   const heroVideo = urlFor(settings?.hero_video_r2_key);
+  // Hero image priority: an admin-set hero poster, else a gallery photo the admin
+  // explicitly marked "Featured", else a FIXED brand image. We deliberately do
+  // NOT fall back to photos[0] — that made the venue hero change every time a new
+  // gallery photo was uploaded. To pick a specific ground photo for the hero,
+  // mark it "Featured" in the admin, or upload a dedicated hero poster.
   const heroPoster =
     urlFor(settings?.hero_poster_r2_key) ??
     photos.find((p) => p.isFeatured)?.src ??
-    photos[0]?.src ??
-    null;
+    leagueConfig.logos.hero;
 
   const bookHref = whatsappLink(settings?.ground_whatsapp, BOOK_MESSAGE);
   const enquireHref = whatsappLink(settings?.ground_whatsapp);

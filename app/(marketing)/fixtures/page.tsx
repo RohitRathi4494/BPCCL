@@ -225,7 +225,7 @@ export default async function FixturesPage() {
   return (
     <>
       {/* Hero */}
-      <section className="lamp-glow border-b border-border">
+      <section className="theme-navy bg-navy-950 border-b border-border">
         <div className="mx-auto max-w-6xl px-5 pt-28 pb-12 sm:pt-36">
           <span className="font-mono text-xs tracking-[0.28em] text-primary uppercase">
             The Season · {site.season}
@@ -243,7 +243,7 @@ export default async function FixturesPage() {
 
       {/* Points table */}
       {hasStandings && (
-        <section className="border-b border-border">
+        <section className="bg-cream-100 border-b border-border">
           <div className="mx-auto max-w-6xl px-5 py-14">
             <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground uppercase">
               Points <span className="text-primary">Table</span>
@@ -258,7 +258,7 @@ export default async function FixturesPage() {
       )}
 
       {/* Schedule */}
-      <section>
+      <section className="theme-navy bg-navy-950">
         <div className="mx-auto max-w-6xl px-5 py-14">
           <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground uppercase">
             Match <span className="text-primary">Schedule</span>

@@ -32,7 +32,7 @@ export default async function SponsorsPage() {
   return (
     <>
       {/* Header */}
-      <section className="lamp-glow">
+      <section className="theme-navy bg-navy-950">
         <div className="mx-auto max-w-6xl px-5 pt-28 pb-10 sm:pt-36">
           <span className="font-mono text-xs tracking-[0.28em] text-primary uppercase">
             Partnerships
@@ -50,7 +50,7 @@ export default async function SponsorsPage() {
       </section>
 
       {/* Partner line-up */}
-      <section className="border-t border-border">
+      <section className="bg-cream-100 border-t border-border">
         <div className="mx-auto max-w-6xl space-y-12 px-5 py-16">
           {/* Marquee spotlight(s) */}
           {spotlights.length > 0 && (
@@ -99,7 +99,7 @@ export default async function SponsorsPage() {
       </section>
 
       {/* Enquiry */}
-      <section className="border-t border-border">
+      <section className="theme-navy bg-navy-950 border-t border-border">
         <div className="mx-auto max-w-3xl px-5 py-20">
           <SectionHeading
             kicker="Get In Touch"
