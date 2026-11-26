@@ -10,13 +10,10 @@ import { MapEmbed } from "@/components/site/map-embed";
 import { getLeagueSettings } from "@/lib/queries/settings";
 import {
   getGroundPhotos,
-  getGroundVideos,
   getGroundFacts,
   getClients,
 } from "@/lib/queries/ground";
-import { getVisibleLegends } from "@/lib/queries/legends";
 import { getVisibleReels } from "@/lib/queries/reels";
-import { LegendsSection } from "@/components/site/legends-section";
 import { ReelsSection } from "@/components/site/reels-section";
 import { publicStorageConfigured, publicObjectUrl } from "@/lib/storage";
 import { whatsappLink, telLink, mapsEmbedSrc } from "@/lib/ground/contact";
@@ -46,13 +43,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function BallparkPage() {
-  const [settings, photos, groundVideos, facts, clients, legends, reels] = await Promise.all([
+  const [settings, photos, facts, clients, reels] = await Promise.all([
     getLeagueSettings(),
-    getGroundPhotos("ground"),
-    getGroundVideos("ground"),
+    getGroundPhotos(),
     getGroundFacts(),
     getClients(),
-    getVisibleLegends(),
     getVisibleReels(),
   ]);
 
@@ -165,7 +160,7 @@ export default async function BallparkPage() {
       )}
 
       {/* ===================== 3. GALLERY ===================== */}
-      {(photos.length > 0 || groundVideos.length > 0) && (
+      {photos.length > 0 && (
         <section id="gallery" className="scroll-mt-24 bg-cream-100">
           <div className="mx-auto max-w-6xl px-5 py-20 sm:py-24">
             <Reveal className="mb-10 flex flex-col gap-3">
@@ -174,25 +169,15 @@ export default async function BallparkPage() {
               </Eyebrow>
               <h2 className="editorial-heading text-4xl text-navy-900 sm:text-5xl">The gallery</h2>
             </Reveal>
-            <MediaGallery photos={photos} videos={groundVideos} layout="masonry" />
+            <MediaGallery photos={photos} layout="masonry" />
           </div>
         </section>
       )}
 
-      {/* ============ 4. LEGENDS & REELS (shared with the home page) ============
-          The same admin-managed "Legends & Reels" content shown on the home
-          page also renders here, so the venue page carries the player photos
-          and feedback reels. Gated identically to the home page: legends show
-          with 1+ visible entry, reels show once there are 3+ visible. */}
-      {legends.length > 0 && (
-        <LegendsSection
-          legends={legends}
-          alsoTrained={settings?.legends_also_trained ?? []}
-          removalEmail={settings?.removal_contact_email ?? null}
-        />
-      )}
-
-      {reels.length >= 3 && (
+      {/* ============ 4. REELS (shared with the home page) ============
+          The same admin-managed reels shown on the home page also render here,
+          so the venue page carries the player / personality feedback clips. */}
+      {reels.length > 0 && (
         <ReelsSection reels={reels} channelUrl={settings?.youtube_channel_url ?? null} />
       )}
 

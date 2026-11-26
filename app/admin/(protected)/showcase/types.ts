@@ -13,8 +13,7 @@ export type ShowcaseState = { error?: string; ok?: boolean; message?: string };
 /** Max reels that may be VISIBLE at once (the public rail is capped to match). */
 export const MAX_VISIBLE_REELS = 12;
 
-/** Legend portrait + quote limits (mirrors the DB CHECK constraints). */
-export const LEGEND_QUOTE_MAX = 140;
+/** Reel quote limit (mirrors the DB CHECK constraint). */
 export const REEL_QUOTE_MAX = 90;
 
 export type ReelPreview =

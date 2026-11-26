@@ -21,9 +21,6 @@ import {
   setMediaVisibility,
   reorderMedia,
   deleteGroundMedia,
-  previewYouTube,
-  addGroundVideo,
-  recheckVideos,
   uploadClientLogo,
   saveClient,
   setClientPermission,
@@ -31,14 +28,29 @@ import {
   reorderClients,
   deleteClient,
 } from "@/app/admin/(protected)/ground/actions";
-import type { VideoPreview } from "@/app/admin/(protected)/ground/types";
+import {
+  previewReel,
+  uploadReelPoster,
+  addReel,
+  updateReel,
+  setReelPermission,
+  setReelVisibility,
+  reorderReels,
+  deleteReel,
+  recheckReels,
+  updateShowcaseSettings,
+} from "@/app/admin/(protected)/showcase/actions";
+import {
+  MAX_VISIBLE_REELS,
+  REEL_QUOTE_MAX,
+  type ReelPreview,
+} from "@/app/admin/(protected)/showcase/types";
 import {
   ActionButton,
   Panel,
   SortableList,
   StatusLine,
   fieldClass,
-  labelClass,
   useGroundAction,
 } from "@/components/admin/ground/shared";
 
@@ -47,7 +59,6 @@ import {
 // ---------------------------------------------------------------------------
 export type PhotoView = {
   id: string;
-  section: "ground" | "testimonial";
   title: string | null;
   caption: string | null;
   alt: string | null;
@@ -56,19 +67,19 @@ export type PhotoView = {
   isVisible: boolean;
   consent: boolean;
 };
-export type VideoView = {
+export type ReelView = {
   id: string;
-  section: "ground" | "testimonial";
   youtubeId: string;
   format: "video" | "short";
   title: string | null;
-  personName: string | null;
+  personName: string;
   personRole: string | null;
   quote: string | null;
+  durationLabel: string | null;
+  hasCustomPoster: boolean;
   poster: string;
-  isFeatured: boolean;
   isVisible: boolean;
-  consent: boolean;
+  permission: boolean;
 };
 export type ClientView = {
   id: string;
@@ -79,17 +90,23 @@ export type ClientView = {
   isVisible: boolean;
   permission: boolean;
 };
+export type ShowcaseSettingsView = {
+  youtubeChannelUrl: string;
+};
+
 const TABS = [
   { key: "photos", label: "Photos" },
-  { key: "videos", label: "Ground clips" },
+  { key: "reels", label: "Reels" },
   { key: "clients", label: "Clients" },
 ] as const;
 type TabKey = (typeof TABS)[number]["key"];
 
 export function GroundManager(props: {
   photos: PhotoView[];
-  videos: VideoView[];
+  reels: ReelView[];
   clients: ClientView[];
+  settings: ShowcaseSettingsView;
+  visibleReels: number;
   r2Configured: boolean;
 }) {
   const [tab, setTab] = useState<TabKey>("photos");
@@ -122,7 +139,13 @@ export function GroundManager(props: {
       </div>
 
       {tab === "photos" && <PhotosPanel photos={props.photos} />}
-      {tab === "videos" && <VideosPanel videos={props.videos} />}
+      {tab === "reels" && (
+        <ReelsPanel
+          reels={props.reels}
+          visibleReels={props.visibleReels}
+          channelUrl={props.settings.youtubeChannelUrl}
+        />
+      )}
       {tab === "clients" && <ClientsPanel clients={props.clients} />}
     </div>
   );
@@ -134,11 +157,96 @@ function useRefresh() {
 }
 
 // =============================================================================
-// PHOTOS
+// Reusable image upload (shows a cropped preview at the given aspect ratio).
+// =============================================================================
+function ImageUpload({
+  aspect,
+  previewUrl,
+  action,
+  onUploaded,
+  label,
+  maxEdge,
+  targetBytes,
+}: {
+  aspect: string; // e.g. "9 / 16"
+  previewUrl: string | null;
+  action: (fd: FormData) => Promise<{ key?: string; url?: string; error?: string }>;
+  onUploaded: (key: string, url: string) => void;
+  label: string;
+  maxEdge: number;
+  targetBytes: number;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function handle(file: File) {
+    setErr(null);
+    setBusy(true);
+    try {
+      const { blob, type } = await compressImage(file, { maxEdge, targetBytes });
+      const fd = new FormData();
+      fd.append("file", blob, `img.${type === "image/webp" ? "webp" : "jpg"}`);
+      const res = await action(fd);
+      if (res.error || !res.key || !res.url) setErr(res.error ?? "Upload failed.");
+      else onUploaded(res.key, res.url);
+    } catch {
+      setErr("Couldn't process that image.");
+    } finally {
+      setBusy(false);
+      if (ref.current) ref.current.value = "";
+    }
+  }
+
+  return (
+    <div className="flex items-start gap-3">
+      <div
+        className="relative w-24 shrink-0 overflow-hidden rounded-md border border-border bg-muted"
+        style={{ aspectRatio: aspect }}
+      >
+        {previewUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={previewUrl} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <span className="grid h-full w-full place-items-center text-muted-foreground/50">
+            <Upload className="size-5" />
+          </span>
+        )}
+        {busy && (
+          <span className="absolute inset-0 grid place-items-center bg-background/60">
+            <Loader2 className="size-5 animate-spin text-primary" />
+          </span>
+        )}
+      </div>
+      <div className="flex flex-col gap-1">
+        <button
+          type="button"
+          onClick={() => ref.current?.click()}
+          disabled={busy}
+          className="inline-flex items-center gap-1 rounded-sm border border-input px-2.5 py-1 text-xs hover:border-primary disabled:opacity-50"
+        >
+          <Upload className="size-3" /> {label}
+        </button>
+        <span className="text-[10px] text-muted-foreground">Cropped to {aspect.replace(/ /g, "")}.</span>
+        {err && <span className="text-[10px] text-[var(--closed)]">{err}</span>}
+        <input
+          ref={ref}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => e.target.files?.[0] && handle(e.target.files[0])}
+        />
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// PHOTOS — one gallery (ground shots + legends/stars at the ground). Shown on
+// the home page and /ballpark. No section split: every photo is one gallery.
 // =============================================================================
 function PhotosPanel({ photos }: { photos: PhotoView[] }) {
   const refresh = useRefresh();
-  const [section, setSection] = useState<"ground" | "testimonial">("ground");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -152,7 +260,6 @@ function PhotosPanel({ photos }: { photos: PhotoView[] }) {
         const { blob, type } = await compressImage(file, { maxEdge: 1600, targetBytes: 250_000 });
         const fd = new FormData();
         fd.append("file", blob, `photo.${type === "image/webp" ? "webp" : "jpg"}`);
-        fd.append("section", section);
         const res = await uploadGroundPhoto(fd);
         if (res.error) {
           setError(res.error);
@@ -171,21 +278,9 @@ function PhotosPanel({ photos }: { photos: PhotoView[] }) {
   return (
     <Panel
       title="Photos"
-      description="Drag in JPG/PNG images — they're compressed in your browser and uploaded as hidden drafts. Add alt text, confirm consent, then publish."
+      description="The ground gallery — facilities, match days and the stars who've played here. Drag in JPG/PNG images; they're compressed in your browser and uploaded as hidden drafts. Add alt text, confirm consent, then publish. Shown on the home page and /ballpark."
     >
       <div className="mb-5 flex flex-col gap-3">
-        <label className="flex items-center gap-2 text-sm">
-          <span className={labelClass}>Section</span>
-          <select
-            value={section}
-            onChange={(e) => setSection(e.target.value as "ground" | "testimonial")}
-            className="rounded-sm border border-input bg-background px-2 py-1 text-sm"
-          >
-            <option value="ground">Ground / facilities</option>
-            <option value="testimonial">Testimonial</option>
-          </select>
-        </label>
-
         <div
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => {
@@ -221,21 +316,12 @@ function PhotosPanel({ photos }: { photos: PhotoView[] }) {
         {error && <p className="text-xs text-[var(--closed)]">{error}</p>}
       </div>
 
-      <ReorderableMedia items={photos} refresh={refresh} kind="photo" />
+      <ReorderablePhotos items={photos} refresh={refresh} />
     </Panel>
   );
 }
 
-// Shared reorder wrapper for media (photos share list; videos use their own row)
-function ReorderableMedia({
-  items,
-  refresh,
-  kind,
-}: {
-  items: PhotoView[];
-  refresh: () => void;
-  kind: "photo";
-}) {
+function ReorderablePhotos({ items, refresh }: { items: PhotoView[]; refresh: () => void }) {
   const [pending, start] = useTransition();
   function onReorder(ids: string[]) {
     const fd = new FormData();
@@ -245,9 +331,7 @@ function ReorderableMedia({
       refresh();
     });
   }
-  if (items.length === 0)
-    return <p className="text-sm text-muted-foreground">No photos yet.</p>;
-  void kind;
+  if (items.length === 0) return <p className="text-sm text-muted-foreground">No photos yet.</p>;
   return (
     <SortableList
       items={items}
@@ -264,7 +348,6 @@ function PhotoRow({ photo, refresh }: { photo: PhotoView; refresh: () => void })
     title: photo.title ?? "",
     caption: photo.caption ?? "",
     alt_text: photo.alt ?? "",
-    section: photo.section,
     is_featured: photo.isFeatured,
   });
   const canPublish = photo.consent && form.alt_text.trim().length > 0;
@@ -275,7 +358,6 @@ function PhotoRow({ photo, refresh }: { photo: PhotoView; refresh: () => void })
     fd.append("title", form.title);
     fd.append("caption", form.caption);
     fd.append("alt_text", form.alt_text);
-    fd.append("section", form.section);
     if (form.is_featured) fd.append("is_featured", "on");
     run(updateGroundMedia, fd, refresh);
   }
@@ -308,14 +390,6 @@ function PhotoRow({ photo, refresh }: { photo: PhotoView; refresh: () => void })
           className={fieldClass}
         />
         <div className="flex flex-wrap items-center gap-3 text-xs">
-          <select
-            value={form.section}
-            onChange={(e) => setForm({ ...form, section: e.target.value as "ground" | "testimonial" })}
-            className="rounded-sm border border-input bg-background px-2 py-1"
-          >
-            <option value="ground">Ground</option>
-            <option value="testimonial">Testimonial</option>
-          </select>
           <label className="inline-flex items-center gap-1">
             <input
               type="checkbox"
@@ -378,103 +452,126 @@ function PhotoRow({ photo, refresh }: { photo: PhotoView; refresh: () => void })
 }
 
 // =============================================================================
-// VIDEOS
+// REELS — short YouTube clips from people who play at Ballpark. Shown on the
+// home page and /ballpark.
 // =============================================================================
-function VideosPanel({ videos }: { videos: VideoView[] }) {
+function ReelsPanel({
+  reels,
+  visibleReels,
+  channelUrl,
+}: {
+  reels: ReelView[];
+  visibleReels: number;
+  channelUrl: string;
+}) {
   const refresh = useRefresh();
   const [pending, start] = useTransition();
-
   function onReorder(ids: string[]) {
     const fd = new FormData();
     fd.append("ids", JSON.stringify(ids));
     start(async () => {
-      await reorderMedia(fd);
+      await reorderReels(fd);
       refresh();
     });
   }
-
+  const atCap = visibleReels >= MAX_VISIBLE_REELS;
   return (
-    <Panel
-      title="Ground clips"
-      description="Short YouTube tour / facility clips for the /ballpark gallery (max 10 visible). Paste any YouTube link — we verify it's embeddable before saving. Player-feedback reels are managed under “Legends & Reels”."
-      action={
-        <ActionButton
-          action={async () => recheckVideos()}
-          fields={{}}
-          onDone={(r) => {
-            if (r.message) window.alert(r.message);
-            refresh();
-          }}
-          className="inline-flex items-center gap-1 rounded-sm border border-input px-3 py-1.5 text-xs hover:border-primary"
-        >
-          Check videos
-        </ActionButton>
-      }
-    >
-      <AddVideoForm refresh={refresh} />
-      {videos.length === 0 ? (
-        <p className="mt-5 text-sm text-muted-foreground">No videos yet.</p>
-      ) : (
-        <div className="mt-5">
-          <SortableList
-            items={videos}
-            pending={pending}
-            onReorder={onReorder}
-            renderItem={(v) => <VideoRow video={v} refresh={refresh} />}
-          />
-        </div>
-      )}
-    </Panel>
+    <div className="flex flex-col gap-5">
+      <Panel
+        title="Reels"
+        description={`Short YouTube clips from the people who play at Ballpark. Paste any YouTube link — we verify it's embeddable before saving. Up to ${MAX_VISIBLE_REELS} can be visible (${visibleReels} now).`}
+        action={
+          <ActionButton
+            action={async () => recheckReels()}
+            fields={{}}
+            onDone={(r) => {
+              if (r.message) window.alert(r.message);
+              refresh();
+            }}
+            className="inline-flex items-center gap-1 rounded-sm border border-input px-3 py-1.5 text-xs hover:border-primary"
+          >
+            Check all videos
+          </ActionButton>
+        }
+      >
+        {atCap && (
+          <p className="mb-3 rounded-sm border border-amber-500/40 bg-amber-500/5 px-3 py-2 text-xs text-amber-700 dark:text-amber-400">
+            You have {MAX_VISIBLE_REELS} reels visible — the maximum. Hide one before publishing another.
+          </p>
+        )}
+        <AddReelForm refresh={refresh} atCap={atCap} />
+        {reels.length === 0 ? (
+          <p className="mt-5 text-sm text-muted-foreground">No reels yet.</p>
+        ) : (
+          <div className="mt-5">
+            <SortableList
+              items={reels}
+              pending={pending}
+              onReorder={onReorder}
+              renderItem={(r) => <ReelRow reel={r} refresh={refresh} atCap={atCap} />}
+            />
+          </div>
+        )}
+      </Panel>
+      <ChannelUrlPanel channelUrl={channelUrl} refresh={refresh} />
+    </div>
   );
 }
 
-function AddVideoForm({ refresh }: { refresh: () => void }) {
+function AddReelForm({ refresh, atCap }: { refresh: () => void; atCap: boolean }) {
   const [url, setUrl] = useState("");
-  const [preview, setPreview] = useState<Extract<VideoPreview, { ok: true }> | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [preview, setPreview] = useState<Extract<ReelPreview, { ok: true }> | null>(null);
   const [checking, startCheck] = useTransition();
   const [saving, startSave] = useTransition();
+  const [err, setErr] = useState<string | null>(null);
+  const [poster, setPoster] = useState<{ key: string; url: string } | null>(null);
   const [fields, setFields] = useState({
-    section: "ground",
     person_name: "",
     person_role: "",
     quote: "",
-    is_featured: false,
-    consent_confirmed: false,
+    duration_label: "",
+    video_format: "video" as "video" | "short",
+    permission_confirmed: false,
+    is_visible: false,
   });
 
   function doPreview() {
-    setError(null);
+    setErr(null);
     setPreview(null);
     const fd = new FormData();
     fd.append("url", url);
     startCheck(async () => {
-      const res = await previewYouTube(fd);
-      if (res.ok) setPreview(res);
-      else setError(res.error);
+      const res = await previewReel(fd);
+      if (res.ok) {
+        setPreview(res);
+        setFields((f) => ({ ...f, video_format: res.format }));
+      } else setErr(res.error);
     });
   }
 
   function doAdd() {
     if (!preview) return;
-    setError(null);
+    setErr(null);
+    if (!fields.person_name.trim()) return setErr("Enter the person's name.");
     const fd = new FormData();
     fd.append("url", url);
     fd.append("title", preview.title);
-    fd.append("video_format", preview.format);
-    fd.append("section", fields.section);
+    fd.append("video_format", fields.video_format);
     fd.append("person_name", fields.person_name);
     fd.append("person_role", fields.person_role);
     fd.append("quote", fields.quote);
-    if (fields.is_featured) fd.append("is_featured", "on");
-    if (fields.consent_confirmed) fd.append("consent_confirmed", "on");
+    fd.append("duration_label", fields.duration_label);
+    if (poster) fd.append("custom_poster_r2_key", poster.key);
+    if (fields.permission_confirmed) fd.append("permission_confirmed", "on");
+    if (fields.is_visible) fd.append("is_visible", "on");
     startSave(async () => {
-      const res = await addGroundVideo(fd);
-      if (res.error) setError(res.error);
+      const res = await addReel(fd);
+      if (res.error) setErr(res.error);
       else {
         setUrl("");
         setPreview(null);
-        setFields({ section: "ground", person_name: "", person_role: "", quote: "", is_featured: false, consent_confirmed: false });
+        setPoster(null);
+        setFields({ person_name: "", person_role: "", quote: "", duration_label: "", video_format: "video", permission_confirmed: false, is_visible: false });
         refresh();
       }
     });
@@ -482,68 +579,57 @@ function AddVideoForm({ refresh }: { refresh: () => void }) {
 
   return (
     <div className="rounded-md border border-dashed border-input p-4">
+      <p className="mb-3 text-xs font-medium text-muted-foreground">Add a reel</p>
       <div className="flex flex-col gap-2 sm:flex-row">
-        <input
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="Paste a YouTube link (watch, youtu.be, shorts, embed…)"
-          className={fieldClass}
-        />
-        <button
-          type="button"
-          onClick={doPreview}
-          disabled={checking || !url.trim()}
-          className="inline-flex shrink-0 items-center gap-1 rounded-sm border border-input px-3 py-2 text-sm hover:border-primary disabled:opacity-50"
-        >
+        <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="Paste a YouTube link (watch, youtu.be, shorts, embed…)" className={fieldClass} />
+        <button type="button" onClick={doPreview} disabled={checking || !url.trim()} className="inline-flex shrink-0 items-center gap-1 rounded-sm border border-input px-3 py-2 text-sm hover:border-primary disabled:opacity-50">
           {checking && <Loader2 className="size-3.5 animate-spin" />} Preview
         </button>
       </div>
-      {error && <p className="mt-2 text-xs text-[var(--closed)]">{error}</p>}
+      {err && <p className="mt-2 text-xs text-[var(--closed)]">{err}</p>}
 
       {preview && (
         <div className="mt-3 flex flex-col gap-3 sm:flex-row">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={preview.poster} alt="" className="h-28 w-48 shrink-0 rounded-sm object-cover" />
-          <div className="flex flex-1 flex-col gap-1.5">
+          <img src={preview.poster} alt="" className="h-40 w-28 shrink-0 rounded-sm object-cover" />
+          <div className="flex flex-1 flex-col gap-2">
             <p className="text-sm font-medium">{preview.title}</p>
-            <p className="text-xs text-muted-foreground">
-              Detected as a {preview.format === "short" ? "Short (9:16)" : "normal video (16:9)"}.
-            </p>
             <div className="grid gap-1.5 sm:grid-cols-2">
-              <input
-                value={fields.person_name}
-                onChange={(e) => setFields({ ...fields, person_name: e.target.value })}
-                placeholder="Person name"
-                className={fieldClass}
-              />
-              <input
-                value={fields.person_role}
-                onChange={(e) => setFields({ ...fields, person_role: e.target.value })}
-                placeholder="Person role (e.g. Former international, South Africa)"
-                className={fieldClass}
-              />
-              <input
-                value={fields.quote}
-                maxLength={140}
-                onChange={(e) => setFields({ ...fields, quote: e.target.value })}
-                placeholder="Short quote (≤140 chars)"
-                className={fieldClass}
+              <input value={fields.person_name} onChange={(e) => setFields({ ...fields, person_name: e.target.value })} placeholder="Person name (required)" className={fieldClass} />
+              <input value={fields.person_role} onChange={(e) => setFields({ ...fields, person_role: e.target.value })} placeholder="Person role" className={fieldClass} />
+              <input value={fields.duration_label} onChange={(e) => setFields({ ...fields, duration_label: e.target.value })} placeholder="Duration label (e.g. 0:42)" className={fieldClass} />
+              <select value={fields.video_format} onChange={(e) => setFields({ ...fields, video_format: e.target.value as "video" | "short" })} className={fieldClass}>
+                <option value="short">Short (9:16)</option>
+                <option value="video">Video (16:9)</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <input value={fields.quote} maxLength={REEL_QUOTE_MAX} onChange={(e) => setFields({ ...fields, quote: e.target.value })} placeholder="Short quote (optional)" className={fieldClass} />
+              <span className="text-right text-[10px] text-muted-foreground">{fields.quote.length}/{REEL_QUOTE_MAX}</span>
+            </div>
+            <div>
+              <p className="mb-1 text-[11px] text-muted-foreground">
+                Custom 9:16 poster (recommended — the YouTube thumbnail is landscape)
+              </p>
+              <ImageUpload
+                aspect="9 / 16"
+                previewUrl={poster?.url ?? null}
+                action={uploadReelPoster}
+                onUploaded={(key, url) => setPoster({ key, url })}
+                label="Upload poster"
+                maxEdge={1080}
+                targetBytes={200_000}
               />
             </div>
             <div className="flex flex-wrap items-center gap-3 text-xs">
               <label className="inline-flex items-center gap-1">
-                <input type="checkbox" checked={fields.is_featured} onChange={(e) => setFields({ ...fields, is_featured: e.target.checked })} /> Featured
+                <input type="checkbox" checked={fields.permission_confirmed} onChange={(e) => setFields({ ...fields, permission_confirmed: e.target.checked })} /> Permission confirmed
               </label>
-              <label className="inline-flex items-center gap-1">
-                <input type="checkbox" checked={fields.consent_confirmed} onChange={(e) => setFields({ ...fields, consent_confirmed: e.target.checked })} /> Consent confirmed
+              <label className="inline-flex items-center gap-1" title={atCap ? "You're at the visible-reels cap" : undefined}>
+                <input type="checkbox" checked={fields.is_visible} disabled={atCap || !fields.permission_confirmed} onChange={(e) => setFields({ ...fields, is_visible: e.target.checked })} /> Visible now
               </label>
-              <button
-                type="button"
-                onClick={doAdd}
-                disabled={saving}
-                className="inline-flex items-center gap-1 rounded-sm bg-primary px-3 py-1.5 text-primary-foreground disabled:opacity-50"
-              >
-                {saving && <Loader2 className="size-3.5 animate-spin" />} Add video
+              <button type="button" onClick={doAdd} disabled={saving} className="inline-flex items-center gap-1 rounded-sm bg-primary px-3 py-1.5 text-primary-foreground disabled:opacity-50">
+                {saving && <Loader2 className="size-3.5 animate-spin" />} Add reel
               </button>
             </div>
           </div>
@@ -553,82 +639,86 @@ function AddVideoForm({ refresh }: { refresh: () => void }) {
   );
 }
 
-function VideoRow({ video, refresh }: { video: VideoView; refresh: () => void }) {
+function ReelRow({ reel, refresh, atCap }: { reel: ReelView; refresh: () => void; atCap: boolean }) {
   const { pending, status, run } = useGroundAction();
   const [form, setForm] = useState({
-    title: video.title ?? "",
-    person_name: video.personName ?? "",
-    person_role: video.personRole ?? "",
-    quote: video.quote ?? "",
-    section: video.section,
-    video_format: video.format,
-    is_featured: video.isFeatured,
+    title: reel.title ?? "",
+    person_name: reel.personName,
+    person_role: reel.personRole ?? "",
+    quote: reel.quote ?? "",
+    duration_label: reel.durationLabel ?? "",
+    video_format: reel.format,
   });
+  const [newPoster, setNewPoster] = useState<{ key: string; url: string } | null>(null);
 
   function save() {
     const fd = new FormData();
-    fd.append("id", video.id);
-    fd.append("title", form.title);
-    fd.append("person_name", form.person_name);
-    fd.append("person_role", form.person_role);
-    fd.append("quote", form.quote);
-    fd.append("section", form.section);
-    fd.append("video_format", form.video_format);
-    if (form.is_featured) fd.append("is_featured", "on");
-    run(updateGroundMedia, fd, refresh);
+    fd.append("id", reel.id);
+    Object.entries(form).forEach(([k, v]) => fd.append(k, v));
+    if (newPoster) fd.append("custom_poster_r2_key", newPoster.key);
+    run(updateReel, fd, refresh);
   }
+
+  const blockVisible = !reel.isVisible && (atCap || !reel.permission);
 
   return (
     <div className="flex flex-col gap-2 sm:flex-row">
-      <div className="relative h-24 w-40 shrink-0">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={video.poster} alt="" className="h-full w-full rounded-sm object-cover" />
-        <span className="absolute bottom-1 left-1 inline-flex items-center gap-1 rounded-sm bg-black/70 px-1.5 py-0.5 text-[10px] text-white">
-          <Film className="size-3" /> {video.format === "short" ? "Short" : "Video"}
-        </span>
+      <div className="flex shrink-0 flex-col gap-2">
+        <div className="relative h-40 w-24 overflow-hidden rounded-sm">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={newPoster?.url ?? reel.poster} alt="" className="h-full w-full object-cover" />
+          <span className="absolute bottom-1 left-1 inline-flex items-center gap-1 rounded-sm bg-black/70 px-1.5 py-0.5 text-[10px] text-white">
+            <Film className="size-3" /> {reel.format === "short" ? "Short" : "Video"}
+          </span>
+        </div>
+        <ImageUpload
+          aspect="9 / 16"
+          previewUrl={null}
+          action={uploadReelPoster}
+          onUploaded={(key, url) => setNewPoster({ key, url })}
+          label="Poster"
+          maxEdge={1080}
+          targetBytes={200_000}
+        />
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Title" className={fieldClass} />
         <div className="grid gap-1.5 sm:grid-cols-2">
           <input value={form.person_name} onChange={(e) => setForm({ ...form, person_name: e.target.value })} placeholder="Person name" className={fieldClass} />
           <input value={form.person_role} onChange={(e) => setForm({ ...form, person_role: e.target.value })} placeholder="Person role" className={fieldClass} />
-        </div>
-        <input value={form.quote} maxLength={140} onChange={(e) => setForm({ ...form, quote: e.target.value })} placeholder="Quote (≤140)" className={fieldClass} />
-        <div className="flex flex-wrap items-center gap-3 text-xs">
-          <select value={form.video_format} onChange={(e) => setForm({ ...form, video_format: e.target.value as "video" | "short" })} className="rounded-sm border border-input bg-background px-2 py-1">
-            <option value="video">Video (16:9)</option>
+          <input value={form.duration_label} onChange={(e) => setForm({ ...form, duration_label: e.target.value })} placeholder="Duration (e.g. 0:42)" className={fieldClass} />
+          <select value={form.video_format} onChange={(e) => setForm({ ...form, video_format: e.target.value as "video" | "short" })} className="rounded-sm border border-input bg-background px-2 py-1 text-sm">
             <option value="short">Short (9:16)</option>
+            <option value="video">Video (16:9)</option>
           </select>
-          <label className="inline-flex items-center gap-1">
-            <input type="checkbox" checked={form.is_featured} onChange={(e) => setForm({ ...form, is_featured: e.target.checked })} /> <Star className="size-3" /> Featured
-          </label>
+        </div>
+        <input value={form.quote} maxLength={REEL_QUOTE_MAX} onChange={(e) => setForm({ ...form, quote: e.target.value })} placeholder={`Quote ≤${REEL_QUOTE_MAX}`} className={fieldClass} />
+        <div className="flex flex-wrap items-center gap-2 text-xs">
           <button type="button" onClick={save} disabled={pending} className="rounded-sm border border-input px-2.5 py-1 hover:border-primary disabled:opacity-50">
             {pending ? "Saving…" : "Save"}
           </button>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 text-xs">
           <ActionButton
-            action={setMediaConsent}
-            fields={{ id: video.id, consent_confirmed: (!video.consent).toString() }}
+            action={setReelPermission}
+            fields={{ id: reel.id, permission_confirmed: (!reel.permission).toString() }}
             onDone={refresh}
-            className={"inline-flex items-center gap-1 rounded-sm border px-2.5 py-1 " + (video.consent ? "border-primary/50 text-primary" : "border-input hover:border-primary")}
+            className={"inline-flex items-center gap-1 rounded-sm border px-2.5 py-1 " + (reel.permission ? "border-primary/50 text-primary" : "border-input hover:border-primary")}
           >
-            <CheckCircle2 className="size-3" /> {video.consent ? "Consent confirmed" : "Confirm consent"}
+            <CheckCircle2 className="size-3" /> {reel.permission ? "Permission confirmed" : "Confirm permission"}
           </ActionButton>
           <ActionButton
-            action={setMediaVisibility}
-            fields={{ id: video.id, is_visible: (!video.isVisible).toString() }}
+            action={setReelVisibility}
+            fields={{ id: reel.id, is_visible: (!reel.isVisible).toString() }}
             onDone={refresh}
-            disabled={!video.isVisible && !video.consent}
-            title={!video.isVisible && !video.consent ? "Confirm consent first" : undefined}
-            className={"inline-flex items-center gap-1 rounded-sm border px-2.5 py-1 disabled:opacity-40 " + (video.isVisible ? "border-primary bg-primary/10 text-primary" : "border-input")}
+            disabled={blockVisible}
+            title={blockVisible ? (atCap ? "At the visible-reels cap — hide one first" : "Confirm permission first") : undefined}
+            className={"inline-flex items-center gap-1 rounded-sm border px-2.5 py-1 disabled:opacity-40 " + (reel.isVisible ? "border-primary bg-primary/10 text-primary" : "border-input")}
           >
-            {video.isVisible ? <Eye className="size-3" /> : <EyeOff className="size-3" />} {video.isVisible ? "Visible" : "Hidden"}
+            {reel.isVisible ? <Eye className="size-3" /> : <EyeOff className="size-3" />} {reel.isVisible ? "Visible" : "Hidden"}
           </ActionButton>
           <ActionButton
-            action={deleteGroundMedia}
-            fields={{ id: video.id }}
-            confirm="Remove this video?"
+            action={deleteReel}
+            fields={{ id: reel.id }}
+            confirm="Delete this reel?"
             onDone={refresh}
             className="inline-flex items-center gap-1 rounded-sm border border-input px-2.5 py-1 text-[var(--closed)] hover:border-[var(--closed)]"
           >
@@ -638,6 +728,37 @@ function VideoRow({ video, refresh }: { video: VideoView; refresh: () => void })
         <StatusLine status={status} />
       </div>
     </div>
+  );
+}
+
+function ChannelUrlPanel({ channelUrl, refresh }: { channelUrl: string; refresh: () => void }) {
+  const [url, setUrl] = useState(channelUrl);
+  const [saving, start] = useTransition();
+  const [status, setStatus] = useState<{ error?: string; ok?: boolean } | null>(null);
+  function save() {
+    setStatus(null);
+    const fd = new FormData();
+    fd.append("youtube_channel_url", url);
+    start(async () => {
+      const res = await updateShowcaseSettings(fd);
+      setStatus(res);
+      if (res.ok) refresh();
+    });
+  }
+  return (
+    <Panel
+      title="YouTube channel"
+      description="Linked under the reels rail as “Watch more on our YouTube channel”. Leave blank to hide the link."
+    >
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://youtube.com/@yourchannel" className={fieldClass} />
+        <button type="button" onClick={save} disabled={saving} className="inline-flex shrink-0 items-center gap-1 rounded-sm bg-primary px-3 py-1.5 text-sm text-primary-foreground disabled:opacity-50">
+          {saving && <Loader2 className="size-3.5 animate-spin" />} Save
+        </button>
+      </div>
+      {status?.error && <p className="mt-1 text-xs text-[var(--closed)]">{status.error}</p>}
+      {status?.ok && <p className="mt-1 text-xs text-primary">Saved.</p>}
+    </Panel>
   );
 }
 

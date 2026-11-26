@@ -28,8 +28,7 @@ const adminNav: AdminNavGroup[] = [
       { label: "Pools", href: "/pools/edit" },
     ],
   },
-  { label: "Ground & Trust", href: "/admin/ground" },
-  { label: "Legends & Reels", href: "/admin/showcase" },
+  { label: "Venue & Showcase", href: "/admin/ground" },
   { label: "Exports", href: "/admin/exports" },
   {
     label: "Season",

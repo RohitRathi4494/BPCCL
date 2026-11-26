@@ -10,10 +10,9 @@ import { createClient } from "@/lib/supabase/server";
 import { getLeagueSettings } from "@/lib/queries/settings";
 import { getSponsors } from "@/lib/queries/sponsors";
 import { getPublicFranchises } from "@/lib/queries/franchises";
-import { getVisibleFaqs } from "@/lib/queries/ground";
-import { getVisibleLegends } from "@/lib/queries/legends";
+import { getVisibleFaqs, getGroundPhotos } from "@/lib/queries/ground";
 import { getVisibleReels } from "@/lib/queries/reels";
-import { LegendsSection } from "@/components/site/legends-section";
+import { MediaGallery } from "@/components/site/media-gallery";
 import { ReelsSection } from "@/components/site/reels-section";
 import { ageRuleChip } from "@/lib/ground/age";
 import { renderFaqAnswer } from "@/lib/ground/faq";
@@ -64,12 +63,12 @@ function icsHref(title: string, iso: string): string {
 }
 
 export default async function HomePage() {
-  const [settings, sponsors, franchises, faqs, legends, reels] = await Promise.all([
+  const [settings, sponsors, franchises, faqs, photos, reels] = await Promise.all([
     getLeagueSettings(),
     getSponsors(),
     getPublicFranchises(),
     getVisibleFaqs(),
-    getVisibleLegends(),
+    getGroundPhotos(),
     getVisibleReels(),
   ]);
 
@@ -222,17 +221,25 @@ export default async function HomePage() {
         </Marquee>
       </section>
 
-      {/* ================= LEGENDS AT BALLPARK (Section A) ================= */}
-      {legends.length > 0 && (
-        <LegendsSection
-          legends={legends}
-          alsoTrained={settings?.legends_also_trained ?? []}
-          removalEmail={settings?.removal_contact_email ?? null}
-        />
+      {/* ================= GALLERY (ground + stars at Ballpark) ================= */}
+      {photos.length > 0 && (
+        <section id="gallery" className="scroll-mt-24 bg-cream-100">
+          <div className="mx-auto max-w-6xl px-5 py-20 sm:py-28">
+            <Reveal className="mb-10 flex flex-col gap-3">
+              <Eyebrow variant="script" className="text-gold-600">
+                Inside Ballpark
+              </Eyebrow>
+              <h2 className="editorial-heading text-4xl text-navy-900 sm:text-5xl">
+                The ground, and the players who&apos;ve graced it.
+              </h2>
+            </Reveal>
+            <MediaGallery photos={photos} layout="feature" />
+          </div>
+        </section>
       )}
 
-      {/* ===================== REELS (Section B) ===================== */}
-      {reels.length >= 3 && (
+      {/* ===================== REELS ===================== */}
+      {reels.length > 0 && (
         <ReelsSection reels={reels} channelUrl={settings?.youtube_channel_url ?? null} />
       )}
 
