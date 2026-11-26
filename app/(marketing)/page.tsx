@@ -155,7 +155,7 @@ export default async function HomePage() {
           </div>
 
           {/* giant wordmark */}
-          <div className="mt-6 flex flex-1 flex-col items-center justify-start text-center sm:items-end sm:text-right">
+          <div className="mt-6 flex flex-1 flex-col items-center justify-center text-center sm:items-end sm:justify-start sm:text-right">
             <Eyebrow className="text-white/80">
               {site.name} · {site.season}
             </Eyebrow>
