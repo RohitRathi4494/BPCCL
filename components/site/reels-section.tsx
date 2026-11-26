@@ -61,11 +61,11 @@ export function ReelsSection({
         <Reveal
           as="div"
           stagger={false}
-          className="mx-auto mb-10 flex max-w-[1280px] flex-col gap-5 px-5 lg:flex-row lg:items-end lg:justify-between"
+          className="mx-auto mb-10 flex max-w-6xl flex-col gap-5 px-5 lg:flex-row lg:items-end lg:justify-between"
         >
           <div className="flex flex-col gap-3">
-            <Eyebrow brackets="square" className="text-[#8A6510]">
-              REELS FROM THE GROUND
+            <Eyebrow variant="script" className="text-gold-600">
+              Reels from the ground
             </Eyebrow>
             <h2 className="editorial-heading max-w-2xl text-[clamp(2.25rem,4.4vw,3.75rem)] leading-[1.04] text-navy-900">
               Hear it from the people who play here.
@@ -87,23 +87,25 @@ export function ReelsSection({
           )}
         </Reveal>
 
-        {/* Rail */}
-        <ul
-          ref={railRef}
-          tabIndex={0}
-          aria-label="Reels — use the left and right arrow keys to scroll"
-          onKeyDown={onRailKey}
-          className="flex snap-x snap-mandatory gap-5 overflow-x-auto px-[max(24px,calc((100%-1232px)/2))] pb-4 focus-visible:outline-2 focus-visible:outline-gold-400 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        >
-          {reels.map((r) => (
-            <li key={r.id} className="shrink-0 snap-start">
-              <ReelButton reel={r} onPlay={setActive} />
-            </li>
-          ))}
-        </ul>
+        {/* Rail — aligned to the standard max-w-6xl container, scrolls within it */}
+        <div className="mx-auto max-w-6xl px-5">
+          <ul
+            ref={railRef}
+            tabIndex={0}
+            aria-label="Reels — use the left and right arrow keys to scroll"
+            onKeyDown={onRailKey}
+            className="flex snap-x snap-mandatory gap-5 overflow-x-auto pb-4 focus-visible:outline-2 focus-visible:outline-gold-400 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {reels.map((r) => (
+              <li key={r.id} className="shrink-0 snap-start">
+                <ReelButton reel={r} onPlay={setActive} />
+              </li>
+            ))}
+          </ul>
+        </div>
 
         {/* Below the rail */}
-        <div className="mx-auto mt-6 flex max-w-[1280px] flex-wrap items-center justify-between gap-x-6 gap-y-2 px-5">
+        <div className="mx-auto mt-6 flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-5">
           {canScroll ? (
             <span className="text-sm text-[#4A5470] md:hidden">
               ↔ Swipe or use the arrows to see more

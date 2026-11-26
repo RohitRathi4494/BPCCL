@@ -12,7 +12,7 @@ import { getSponsors } from "@/lib/queries/sponsors";
 import { getPublicFranchises } from "@/lib/queries/franchises";
 import { getVisibleFaqs, getGroundPhotos } from "@/lib/queries/ground";
 import { getVisibleReels } from "@/lib/queries/reels";
-import { MediaGallery } from "@/components/site/media-gallery";
+import { ImageAutoSlider } from "@/components/ui/image-auto-slider";
 import { ReelsSection } from "@/components/site/reels-section";
 import { ageRuleChip } from "@/lib/ground/age";
 import { renderFaqAnswer } from "@/lib/ground/faq";
@@ -220,28 +220,6 @@ export default async function HomePage() {
           ))}
         </Marquee>
       </section>
-
-      {/* ================= GALLERY (ground + stars at Ballpark) ================= */}
-      {photos.length > 0 && (
-        <section id="gallery" className="scroll-mt-24 bg-cream-100">
-          <div className="mx-auto max-w-6xl px-5 py-20 sm:py-28">
-            <Reveal className="mb-10 flex flex-col gap-3">
-              <Eyebrow variant="script" className="text-gold-600">
-                Inside Ballpark
-              </Eyebrow>
-              <h2 className="editorial-heading text-4xl text-navy-900 sm:text-5xl">
-                The ground, and the players who&apos;ve graced it.
-              </h2>
-            </Reveal>
-            <MediaGallery photos={photos} layout="feature" />
-          </div>
-        </section>
-      )}
-
-      {/* ===================== REELS ===================== */}
-      {reels.length > 0 && (
-        <ReelsSection reels={reels} channelUrl={settings?.youtube_channel_url ?? null} />
-      )}
 
       {/* ========================= ABOUT ========================= */}
       <section id="about" className="scroll-mt-24 bg-white">
@@ -562,6 +540,30 @@ export default async function HomePage() {
               ))}
           </Marquee>
         </section>
+      )}
+
+      {/* ================= GALLERY (ground + stars at Ballpark) ================= */}
+      {photos.length > 0 && (
+        <section id="gallery" className="scroll-mt-24 bg-cream-100">
+          <div className="mx-auto max-w-6xl px-5 py-20 sm:py-28">
+            <Reveal className="mb-10 flex flex-col gap-3">
+              <Eyebrow variant="script" className="text-gold-600">
+                Inside Ballpark
+              </Eyebrow>
+              <h2 className="editorial-heading text-4xl text-navy-900 sm:text-5xl">
+                The ground, and the players who&apos;ve graced it.
+              </h2>
+            </Reveal>
+            <ImageAutoSlider
+              images={photos.map((p) => ({ src: p.src, alt: p.alt }))}
+            />
+          </div>
+        </section>
+      )}
+
+      {/* ===================== REELS ===================== */}
+      {reels.length > 0 && (
+        <ReelsSection reels={reels} channelUrl={settings?.youtube_channel_url ?? null} />
       )}
 
       {/* ========================= FAQ ========================= */}
