@@ -137,7 +137,7 @@ export const leagueConfig: LeagueConfig = {
         "shared sense of achievement.\n\n" +
         "I look forward to welcoming all the teams to The BallPark and to " +
         "building a league that grows stronger with every season.",
-      photo: "/founders/aashish-kapur.png",
+      photo: "/founders/aashish-kapur.webp",
     },
     {
       name: "Ayush Soni",
@@ -148,7 +148,7 @@ export const leagueConfig: LeagueConfig = {
         "a growing sporting legacy.\n\n" +
         "I look forward to an exciting first season and to making BPCCL a league " +
         "that everyone is proud to be part of.",
-      photo: "/founders/ayush-soni.png",
+      photo: "/founders/ayush-soni.webp",
     },
   ],
   venue: {
