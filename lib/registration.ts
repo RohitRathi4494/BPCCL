@@ -120,7 +120,13 @@ export const OTHER_SIZE = "Other";
 export const SLEEVE_TYPES = ["Half Sleeves", "Full Sleeves"] as const;
 
 /** Fallback registration fee (₹) if league_settings can't be read. */
-export const DEFAULT_REGISTRATION_FEE = 3000;
+export const DEFAULT_REGISTRATION_FEE = 500;
+
+/**
+ * Fee (₹) a player pays only if they are picked by a franchise in the auction.
+ * This is separate from (and in addition to) the registration fee above.
+ */
+export const AUCTION_SELECTION_FEE = 3000;
 
 /** Player photo upload (Supabase Storage). */
 export const PHOTO_BUCKET = "player-photos";

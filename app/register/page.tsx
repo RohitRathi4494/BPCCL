@@ -63,6 +63,11 @@ export default async function RegisterPage() {
             </div>
             <span className="text-[11px] text-white/45">payable by UPI</span>
           </div>
+          <p className="rounded-xl border border-gold-400/25 bg-gold-400/10 p-4 text-[13px] leading-relaxed text-white/80">
+            <span className="font-semibold text-gold-400">Note:</span> If you are picked
+            by a franchise in the auction, a further selection fee of{" "}
+            <span className="font-semibold text-white">₹3,000</span> is payable.
+          </p>
           {registrationOpen && closesAt && (
             <CountdownChip target={closesAt} label="Closes in" className="self-start" />
           )}

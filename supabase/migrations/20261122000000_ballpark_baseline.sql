@@ -70,7 +70,7 @@ update public.league_settings
   set season = 'Season 1',
       franchise_count = 8,          -- TODO: set the real franchise count
       registration_open = true,
-      registration_fee = 0,         -- TODO: set the real registration fee
+      registration_fee = 500,       -- Season 1 registration fee (₹)
       registration_closes_at = null,
       auction_day_at = null,
       season_starts_at = null,

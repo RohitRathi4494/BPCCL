@@ -5,8 +5,8 @@
  *
  * Supported tokens:
  *   {{age_rule}}    → the full eligibility clause (from league_settings).
- *   {{fee}}         → "₹3,000" when a fee is set; a neutral phrase otherwise.
- *   {{fee_clause}}  → " of ₹3,000" when set; "" otherwise (so the sentence still
+ *   {{fee}}         → "₹500" when a fee is set; a neutral phrase otherwise.
+ *   {{fee_clause}}  → " of ₹500" when set; "" otherwise (so the sentence still
  *                     reads correctly with no fee).
  *
  * Pure — safe for Server and Client Components.

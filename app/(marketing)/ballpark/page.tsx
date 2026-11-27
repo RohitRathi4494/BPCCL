@@ -252,7 +252,7 @@ export default async function BallparkPage() {
       <section className="bg-gold-400">
         <div className="mx-auto flex max-w-6xl flex-col items-start gap-8 px-5 py-20 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="editorial-heading max-w-xl text-4xl text-navy-950 sm:text-5xl">
-            Play where the pros practise.
+            Play where the pros practice.
           </h2>
           <RollButton href="/register" variant="navy" className="shrink-0">
             Register Now

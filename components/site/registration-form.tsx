@@ -69,6 +69,7 @@ type FormValues = {
   jersey_name: string;
   payment_utr: string;
   data_consent: boolean;
+  terms_accepted: boolean;
 } & StatValues;
 
 const EMPTY_STATS = Object.fromEntries(STAT_FIELDS.map((f) => [f.key, ""])) as StatValues;
@@ -78,6 +79,7 @@ const EMPTY_VALUES: FormValues = {
   tshirt_size: "", tshirt_size_other: "", lower_size: "", lower_size_other: "",
   sleeve_type: "",
   jersey_number: "", jersey_name: "", payment_utr: "", data_consent: false,
+  terms_accepted: false,
   ...EMPTY_STATS,
 };
 
@@ -137,6 +139,7 @@ function validate(v: FormValues, hasAadhaar: boolean, hasPayment: boolean): Reco
   if (!v.payment_utr.trim()) e.payment_utr = "Enter your UPI transaction ID (UTR).";
   else if (!/^\d{12}$/.test(v.payment_utr.trim())) e.payment_utr = "The UTR must be exactly 12 digits.";
   if (!v.data_consent) e.data_consent = "Please consent to the verification use of your documents.";
+  if (!v.terms_accepted) e.terms_accepted = "Please accept the terms & conditions to submit.";
   return e;
 }
 
@@ -201,6 +204,7 @@ export function RegistrationForm({
             email: "",
             work_email: "",
             payment_utr: "",
+            terms_accepted: false,
           }));
         }
       } catch {}
@@ -222,9 +226,10 @@ export function RegistrationForm({
         email: _em,
         work_email: _we,
         payment_utr: _utr,
+        terms_accepted: _tc,
         ...rest
       } = values;
-      void _p; void _ph; void _em; void _we; void _utr;
+      void _p; void _ph; void _em; void _we; void _utr; void _tc;
       localStorage.setItem(DRAFT_KEY, JSON.stringify(rest));
     } catch {}
   }, [values, draftLoaded]);
@@ -686,6 +691,27 @@ export function RegistrationForm({
           ["UTR", values.payment_utr], ["Amount", `₹${feeText}`],
           ["Payment proof", docSel.payment ? "Ready" : "—"],
         ]} />
+        <div className="rounded-xl border border-gold-500/30 bg-gold-400/10 p-4">
+          <p className="text-sm text-ink-900">
+            <span className="font-semibold">Please note:</span> the ₹{feeText} paid now is
+            your registration fee. If you are picked by a franchise in the auction, a
+            further selection fee of <span className="font-semibold">₹3,000</span> is payable.
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-navy-900/10 bg-white p-4">
+          <label className="flex items-start gap-3 text-sm text-ink-900">
+            <input type="checkbox" name="terms_accepted" checked={values.terms_accepted} onChange={set("terms_accepted")} className="mt-0.5 size-4 shrink-0 accent-navy-700" />
+            <span>
+              I have read and accept the <span className="font-semibold">Terms &amp; Conditions</span>:
+              the registration fee is non-refundable; if I am selected in the auction I agree to
+              pay the ₹3,000 selection fee; I confirm the information I have provided is accurate;
+              and I agree to abide by the league&apos;s rules and code of conduct.
+            </span>
+          </label>
+          <Err msg={err("terms_accepted")} />
+        </div>
+
         <p className="text-xs text-muted-ink">By submitting, your documents are uploaded securely and your registration is sent for review.</p>
       </>)}
 
@@ -701,7 +727,7 @@ export function RegistrationForm({
             Next <ArrowRight className="size-4" />
           </button>
         ) : (
-          <button type="button" onClick={handleSubmit} disabled={busy} className="inline-flex items-center gap-2 rounded-full bg-gold-400 px-7 py-3 text-sm font-bold uppercase tracking-wide text-navy-950 transition-opacity hover:opacity-90 disabled:opacity-70">
+          <button type="button" onClick={handleSubmit} disabled={busy || !values.terms_accepted} className="inline-flex items-center gap-2 rounded-full bg-gold-400 px-7 py-3 text-sm font-bold uppercase tracking-wide text-navy-950 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60">
             {busy && <Loader2 className="size-4 animate-spin" />}
             {uploading ? "Uploading…" : pending ? "Submitting…" : "Submit Registration"}
           </button>
