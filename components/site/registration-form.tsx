@@ -89,7 +89,7 @@ const DRAFT_KEY = "bpccl-reg-draft";
 const STEPS = [
   { n: 1, label: "Personal" },
   { n: 2, label: "Cricket" },
-  { n: 3, label: "Jersey" },
+  { n: 3, label: "Jersey Details" },
   { n: 4, label: "Docs & Pay" },
   { n: 5, label: "Review" },
 ] as const;
@@ -547,7 +547,7 @@ export function RegistrationForm({
         </div>
         <div className="flex flex-col gap-2">
           <span className={labelClass}>Career Stats <span className="text-ball-red">*</span></span>
-          <p className="text-xs text-muted-ink">Enter <span className="font-medium text-ink-900">NA</span> for any stat that doesn&apos;t apply.</p>
+          <p className="text-xs text-muted-ink">Please enter the stats shown on your <span className="font-medium text-ink-900">CricHeroes</span> profile. Enter <span className="font-medium text-ink-900">NA</span> for any stat that doesn&apos;t apply.</p>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {STAT_FIELDS.map((f) => (
               <Field key={f.key} label={f.label} htmlFor={f.key} required error={err(f.key)}>

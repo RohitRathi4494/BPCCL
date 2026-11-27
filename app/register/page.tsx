@@ -7,7 +7,7 @@ import { RegistrationGate } from "@/components/site/registration-gate";
 import { CountdownChip } from "@/components/site/countdown-chip";
 import { WhatsAppIcon } from "@/components/site/social-icons";
 import { getLeagueSettings } from "@/lib/queries/settings";
-import { MIN_AGE, DEFAULT_REGISTRATION_FEE } from "@/lib/registration";
+import { MIN_AGE, DEFAULT_REGISTRATION_FEE, DEFAULT_UPI_ID, DEFAULT_UPI_QR_URL } from "@/lib/registration";
 import { site } from "@/lib/site";
 import { leagueConfig } from "@/lib/league.config";
 
@@ -100,7 +100,7 @@ export default async function RegisterPage() {
         <div className="mx-auto max-w-3xl">
           {registrationOpen ? (
             <RegistrationGate>
-              <RegistrationForm registrationFee={fee} upiId={settings?.upi_id ?? null} upiQrUrl={settings?.upi_qr_url ?? null} />
+              <RegistrationForm registrationFee={fee} upiId={settings?.upi_id ?? DEFAULT_UPI_ID} upiQrUrl={settings?.upi_qr_url ?? DEFAULT_UPI_QR_URL} />
             </RegistrationGate>
           ) : (
             <div className="flex flex-col items-start gap-5 rounded-2xl border border-navy-900/10 bg-white p-8 sm:p-12">

@@ -123,6 +123,14 @@ export const SLEEVE_TYPES = ["Half Sleeves", "Full Sleeves"] as const;
 export const DEFAULT_REGISTRATION_FEE = 500;
 
 /**
+ * Fallback UPI payment details used on the registration form when
+ * league_settings doesn't carry them. The admin-set `upi_id` / `upi_qr_url`
+ * in league_settings always override these.
+ */
+export const DEFAULT_UPI_ID = "8800553510@pthdfc";
+export const DEFAULT_UPI_QR_URL = "/registration-upi-qr.jpeg";
+
+/**
  * Fee (₹) a player pays only if they are picked by a franchise in the auction.
  * This is separate from (and in addition to) the registration fee above.
  */
