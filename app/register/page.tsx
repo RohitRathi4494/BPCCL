@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Check, ArrowUpRight } from "lucide-react";
 import { RegistrationForm } from "@/components/site/registration-form";
+import { RegistrationGate } from "@/components/site/registration-gate";
 import { CountdownChip } from "@/components/site/countdown-chip";
 import { WhatsAppIcon } from "@/components/site/social-icons";
 import { getLeagueSettings } from "@/lib/queries/settings";
@@ -98,7 +99,9 @@ export default async function RegisterPage() {
       <main className="bg-cream-100 px-5 py-10 sm:px-10 sm:py-14">
         <div className="mx-auto max-w-3xl">
           {registrationOpen ? (
-            <RegistrationForm registrationFee={fee} upiId={settings?.upi_id ?? null} upiQrUrl={settings?.upi_qr_url ?? null} />
+            <RegistrationGate>
+              <RegistrationForm registrationFee={fee} upiId={settings?.upi_id ?? null} upiQrUrl={settings?.upi_qr_url ?? null} />
+            </RegistrationGate>
           ) : (
             <div className="flex flex-col items-start gap-5 rounded-2xl border border-navy-900/10 bg-white p-8 sm:p-12">
               <h2 className="editorial-heading text-3xl text-navy-900">Registrations are closed</h2>
