@@ -11,6 +11,7 @@ import {
   ArrowLeft,
   Pencil,
   CheckCircle2,
+  Download,
 } from "lucide-react";
 import {
   submitRegistration,
@@ -646,8 +647,23 @@ export function RegistrationForm({
               )}
             </div>
             {upiQrUrl && (
-              <div className="shrink-0 rounded-lg border border-navy-900/10 bg-white p-2">
-                <Image src={upiQrUrl} alt="UPI payment QR" width={120} height={120} unoptimized className="size-28 object-contain" />
+              <div className="flex shrink-0 flex-col items-center gap-1.5">
+                <a
+                  href={upiQrUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Tap to view the QR full size"
+                  className="block rounded-lg border border-navy-900/10 bg-white p-2 transition-colors hover:border-navy-700"
+                >
+                  <Image src={upiQrUrl} alt="UPI payment QR" width={120} height={120} unoptimized className="size-28 object-contain" />
+                </a>
+                <a
+                  href={upiQrUrl}
+                  download="BPCCL-payment-qr.jpeg"
+                  className="inline-flex items-center gap-1 text-xs font-medium text-navy-700 hover:text-gold-600"
+                >
+                  <Download className="size-3" /> Save QR
+                </a>
               </div>
             )}
           </div>
