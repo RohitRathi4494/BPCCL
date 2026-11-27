@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { CalendarPlus, ArrowUpRight, MapPin } from "lucide-react";
+import { CalendarPlus, ArrowUpRight, MapPin, BookOpen } from "lucide-react";
 import {
   InstagramIcon,
   LinkedInIcon,
@@ -241,6 +241,23 @@ export default async function HomePage() {
               We&apos;re bringing working professionals together—across companies,
               roles and playing styles.
             </h2>
+            {leagueConfig.handbookUrl && (
+              <div className="flex flex-col gap-2">
+                <p className="max-w-xl text-white/70">
+                  Everything about the league—format, rules, fees and auction—lives
+                  in our official handbook.
+                </p>
+                <a
+                  href={leagueConfig.handbookUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex w-fit items-center gap-2 rounded-full border border-white/25 px-5 py-3 text-sm font-semibold text-white transition-colors hover:border-gold-400 hover:text-gold-400"
+                >
+                  <BookOpen className="size-4" /> Read the Official Handbook
+                  <ArrowUpRight className="size-4" />
+                </a>
+              </div>
+            )}
           </Reveal>
 
           {leagueConfig.companies.length > 0 && (

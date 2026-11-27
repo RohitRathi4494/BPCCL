@@ -103,6 +103,11 @@ export type LeagueConfig = {
   venueCoordinates: string;
   /** Participating company / industry names for the "about" chips. Empty = hidden. */
   companies: string[];
+  /**
+   * Public link to the official league handbook (e.g. a Google Drive view URL).
+   * Opened in a new tab from the home-page "about" section. Empty = hidden.
+   */
+  handbookUrl: string;
 };
 
 export const leagueConfig: LeagueConfig = {
@@ -172,6 +177,8 @@ export const leagueConfig: LeagueConfig = {
   // TODO: real venue coordinates once the ground is confirmed.
   venueCoordinates: "",
   companies: [],
+  handbookUrl:
+    "https://drive.google.com/file/d/152hnx4UjldBS9jGKhBn483-zMeUkUnHU/view?usp=sharing",
 };
 
 export default leagueConfig;
