@@ -63,12 +63,16 @@ function FounderCard({ founder }: { founder: LeagueFounder }) {
           <span className="h-px w-12 bg-gradient-to-r from-gold-400 to-transparent" />
           <BallGlyph className="text-[0.65rem] text-gold-400" />
         </span>
-        <span className="mt-2 text-[0.72rem] font-semibold uppercase tracking-[0.2em] text-gold-400">
-          {founder.role}
+        <span className="mt-2 flex flex-col gap-0.5 text-[0.72rem] font-semibold uppercase tracking-[0.2em] text-gold-400">
+          {founder.role.split("\n").map((line, i) => (
+            <span key={i}>{line}</span>
+          ))}
         </span>
-        <p className="mt-4 text-[15px] leading-relaxed text-white/70">
-          {founder.message}
-        </p>
+        <div className="mt-4 flex flex-col gap-3 text-[15px] leading-relaxed text-white/70">
+          {founder.message.split(/\n\n+/).map((para, i) => (
+            <p key={i}>{para}</p>
+          ))}
+        </div>
       </div>
     </article>
   );

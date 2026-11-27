@@ -128,24 +128,26 @@ export const leagueConfig: LeagueConfig = {
   founders: [
     {
       name: "Ashish Kapur",
-      role: "Founder",
-      // TODO: replace with Aashish's own words.
+      role: "Co-conceptualizer, BPCCL\nDirector, BallPark Sports India",
       message:
-        "We built Ballpark for everyone who still lives for the game long after " +
-        "the office lights go off. A real auction, real teams, floodlit nights — " +
-        "the whole point is to make Season 1 feel exactly like the cricket we " +
-        "grew up dreaming about.",
+        "For me, the BallPark Corporate Cricket League is much more than a " +
+        "cricket tournament. It is an opportunity to bring professionals, " +
+        "entrepreneurs and corporate leaders together through the spirit of " +
+        "sport, creating meaningful connections, lasting friendships and a " +
+        "shared sense of achievement.\n\n" +
+        "I look forward to welcoming all the teams to The BallPark and to " +
+        "building a league that grows stronger with every season.",
       photo: "/founders/aashish-kapur.jpeg",
     },
     {
       name: "Ayush Soni",
-      role: "Co-Founder",
-      // TODO: replace with Ayush's own words.
+      role: "Co-conceptualizer, BPCCL",
       message:
-        "This league is as much about the people as the cricket. You'll meet " +
-        "professionals from every industry, bond over a shared love for the " +
-        "game, and walk away with a network — and memories — that outlast the " +
-        "final over.",
+        "Our vision for BPCCL is to create a competitive yet enjoyable platform " +
+        "where every team can build connections, create memories and be part of " +
+        "a growing sporting legacy.\n\n" +
+        "I look forward to an exciting first season and to making BPCCL a league " +
+        "that everyone is proud to be part of.",
       photo: "/founders/ayush-soni.jpeg",
     },
   ],
