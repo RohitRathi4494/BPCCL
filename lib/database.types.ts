@@ -873,12 +873,14 @@ export type Database = {
           locality: string | null
           lower_size: string | null
           matches_played: string | null
+          medical_history: string | null
           medical_injury: string | null
           sleeve_type: string | null
           phone: string
           photo_url: string | null
           preferred_category: string | null
           previous_team: string | null
+          professional_cricket_history: string | null
           registration_code: string | null
           registration_fee_agreed: boolean
           rejection_reason: string | null
@@ -927,12 +929,14 @@ export type Database = {
           locality?: string | null
           lower_size?: string | null
           matches_played?: string | null
+          medical_history?: string | null
           medical_injury?: string | null
           sleeve_type?: string | null
           phone: string
           photo_url?: string | null
           preferred_category?: string | null
           previous_team?: string | null
+          professional_cricket_history?: string | null
           registration_code?: string | null
           registration_fee_agreed?: boolean
           rejection_reason?: string | null
@@ -981,12 +985,14 @@ export type Database = {
           locality?: string | null
           lower_size?: string | null
           matches_played?: string | null
+          medical_history?: string | null
           medical_injury?: string | null
           sleeve_type?: string | null
           phone?: string
           photo_url?: string | null
           preferred_category?: string | null
           previous_team?: string | null
+          professional_cricket_history?: string | null
           registration_code?: string | null
           registration_fee_agreed?: boolean
           rejection_reason?: string | null

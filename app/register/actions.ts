@@ -94,6 +94,10 @@ export async function submitRegistration(
   const aadhaar_doc_key = get("aadhaar_doc_key");
   const payment_screenshot_key = get("payment_screenshot_key");
   const payment_utr = get("payment_utr");
+  // Optional free-text history fields (capped to a sane length; null when blank).
+  const professional_cricket_history =
+    get("professional_cricket_history").slice(0, 2000) || null;
+  const medical_history = get("medical_history").slice(0, 2000) || null;
   const data_consent = formData.get("data_consent") === "on";
   const confirmDuplicate = formData.get("confirm_duplicate") === "true";
 
@@ -240,6 +244,8 @@ export async function submitRegistration(
     jersey_name,
     roles,
     ...stats,
+    professional_cricket_history,
+    medical_history,
     aadhaar_doc_key,
     payment_screenshot_key,
     payment_utr,

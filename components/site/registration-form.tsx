@@ -61,6 +61,8 @@ type FormValues = {
   cricheroes_url: string;
   linkedin_url: string;
   roles: string[];
+  professional_cricket_history: string;
+  medical_history: string;
   tshirt_size: string;
   tshirt_size_other: string;
   lower_size: string;
@@ -77,6 +79,7 @@ const EMPTY_STATS = Object.fromEntries(STAT_FIELDS.map((f) => [f.key, ""])) as S
 const EMPTY_VALUES: FormValues = {
   full_name: "", dob: "", phone: "", email: "", company: "", work_email: "",
   photo_url: "", cricheroes_url: "", linkedin_url: "", roles: [],
+  professional_cricket_history: "", medical_history: "",
   tshirt_size: "", tshirt_size_other: "", lower_size: "", lower_size_other: "",
   sleeve_type: "",
   jersey_number: "", jersey_name: "", payment_utr: "", data_consent: false,
@@ -205,6 +208,7 @@ export function RegistrationForm({
             email: "",
             work_email: "",
             payment_utr: "",
+            medical_history: "",
             terms_accepted: false,
           }));
         }
@@ -227,10 +231,11 @@ export function RegistrationForm({
         email: _em,
         work_email: _we,
         payment_utr: _utr,
+        medical_history: _mh,
         terms_accepted: _tc,
         ...rest
       } = values;
-      void _p; void _ph; void _em; void _we; void _utr; void _tc;
+      void _p; void _ph; void _em; void _we; void _utr; void _mh; void _tc;
       localStorage.setItem(DRAFT_KEY, JSON.stringify(rest));
     } catch {}
   }, [values, draftLoaded]);
@@ -311,6 +316,8 @@ export function RegistrationForm({
     s("work_email", values.work_email);
     s("cricheroes_url", values.cricheroes_url);
     s("linkedin_url", values.linkedin_url);
+    s("professional_cricket_history", values.professional_cricket_history);
+    s("medical_history", values.medical_history);
     s("tshirt_size", values.tshirt_size);
     s("tshirt_size_other", values.tshirt_size_other);
     s("lower_size", values.lower_size);
@@ -557,6 +564,12 @@ export function RegistrationForm({
             ))}
           </div>
         </div>
+        <Field label="Professional Cricketing History (optional)" htmlFor="professional_cricket_history" hint="Any board, state, district, university or professional/club cricket you have played — level, teams and years. Leave blank if none.">
+          <textarea id="professional_cricket_history" rows={3} maxLength={2000} value={values.professional_cricket_history} onChange={set("professional_cricket_history")} className={cn(fieldClass, "resize-y")} placeholder="e.g. District U-19 (2010–2012), club cricket for…" />
+        </Field>
+        <Field label="Medical History (optional)" htmlFor="medical_history" hint="Any medical condition, allergy or injury the league should be aware of. Leave blank if none.">
+          <textarea id="medical_history" rows={3} maxLength={2000} value={values.medical_history} onChange={set("medical_history")} className={cn(fieldClass, "resize-y")} placeholder="e.g. Recovering knee injury; asthma…" />
+        </Field>
       </>)}
 
       {/* STEP 3 — Kit */}
@@ -694,6 +707,8 @@ export function RegistrationForm({
         ]} />
         <ReviewBlock title="Cricket" onEdit={() => goEdit(2)} rows={[
           ["Roles", values.roles.join(", ")], ["CricHeroes", values.cricheroes_url],
+          ["Pro cricket history", values.professional_cricket_history],
+          ["Medical history", values.medical_history],
         ]} />
         <ReviewBlock title="Jersey Details" onEdit={() => goEdit(3)} rows={[
           ["T-Shirt", values.tshirt_size === OTHER_SIZE ? values.tshirt_size_other : values.tshirt_size],

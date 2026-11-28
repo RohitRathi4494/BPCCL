@@ -204,6 +204,26 @@ export default async function ReviewPlayerPage({
               />
             </div>
 
+            {/* Optional self-reported history (professional cricket + medical). */}
+            <div className="mt-6 grid gap-5">
+              <div className="flex flex-col gap-1">
+                <span className="font-mono text-[10px] tracking-[0.16em] text-muted-foreground uppercase">
+                  Professional Cricketing History
+                </span>
+                <span className="text-sm whitespace-pre-wrap text-foreground">
+                  {player.professional_cricket_history || "—"}
+                </span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="font-mono text-[10px] tracking-[0.16em] text-muted-foreground uppercase">
+                  Medical History
+                </span>
+                <span className="text-sm whitespace-pre-wrap text-foreground">
+                  {player.medical_history || "—"}
+                </span>
+              </div>
+            </div>
+
             <hr className="crease-rule my-6 w-full" />
 
             {/* Payment capture + verification (screenshot via presigned URL). */}
